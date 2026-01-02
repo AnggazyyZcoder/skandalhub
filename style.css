@@ -2009,3 +2009,74 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(90deg, #9d4edd, #c77dff);
 }
+
+/* ===== MESSAGES FOR EMPTY STATE ===== */
+.no-videos-message, .no-results {
+    text-align: center;
+    padding: 3rem 2rem;
+    grid-column: 1 / -1;
+    background: rgba(28, 10, 46, 0.6);
+    border-radius: 15px;
+    border: 2px dashed rgba(157, 78, 221, 0.3);
+}
+
+.no-videos-message i, .no-results i {
+    font-size: 3rem;
+    color: #9d4edd;
+    margin-bottom: 1rem;
+}
+
+.no-videos-message h3, .no-results h3 {
+    color: #fff;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.no-videos-message p, .no-results p {
+    color: #c77dff;
+    margin-bottom: 1.5rem;
+}
+
+.admin-link {
+    display: inline-block;
+    background: linear-gradient(90deg, #7c3aed, #9d4edd);
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.admin-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
+}
+
+/* ===== STATUS MESSAGES ===== */
+.status-success, .status-error, .status-info {
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-success {
+    background: rgba(39, 174, 96, 0.2);
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+}
+
+.status-error {
+    background: rgba(235, 87, 87, 0.2);
+    color: #eb5757;
+    border: 1px solid rgba(235, 87, 87, 0.3);
+}
+
+.status-info {
+    background: rgba(29, 161, 242, 0.2);
+    color: #1da1f2;
+    border: 1px solid rgba(29, 161, 242, 0.3);
+}

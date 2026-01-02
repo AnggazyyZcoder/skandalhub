@@ -166,7 +166,8 @@ function simulateLoading() {
 
 async function loadData() {
     try {
-        const response = await fetch(CONFIG.BIN_URL + '/latest', {
+        console.log('Loading data from JSONBin...');
+        const response = await fetch(`${CONFIG.BIN_URL}/latest`, {
             headers: {
                 'X-Master-Key': CONFIG.API_KEY,
                 'Content-Type': 'application/json'
@@ -174,23 +175,38 @@ async function loadData() {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to load data');
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
         
         const data = await response.json();
-        const record = data.record;
+        console.log('Data loaded from JSONBin:', data);
         
-        // Inisialisasi data jika kosong
-        if (!record.videos) {
-            record.videos = getDefaultVideos();
+        // Pastikan data memiliki struktur yang benar
+        if (!data.record) {
+            throw new Error('No record found in JSONBin');
         }
         
-        if (!record.keys) {
+        const record = data.record;
+        
+        // Inisialisasi jika kosong
+        if (!record.videos || !Array.isArray(record.videos)) {
+            record.videos = [];
+            console.log('Videos array initialized as empty');
+        }
+        
+        if (!record.keys || !Array.isArray(record.keys)) {
             record.keys = [];
+            console.log('Keys array initialized as empty');
+        }
+        
+        if (!record.lastUpdated) {
+            record.lastUpdated = new Date().toISOString();
         }
         
         appState.videos = record.videos;
         appState.keys = record.keys;
+        
+        console.log(`Loaded ${appState.videos.length} videos and ${appState.keys.length} keys`);
         
         // Simpan untuk admin jika di halaman admin
         if (window.location.pathname.includes('admin.html')) {
@@ -199,13 +215,38 @@ async function loadData() {
         
         return record;
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading data from JSONBin:', error);
         
-        // Gunakan data default jika error
-        appState.videos = getDefaultVideos();
+        // Coba load data default dari JSONBin sekali lagi dengan metode berbeda
+        try {
+            console.log('Trying alternative method to load data...');
+            const response = await fetch(CONFIG.BIN_URL, {
+                headers: {
+                    'X-Master-Key': CONFIG.API_KEY,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Data loaded with alternative method:', data);
+                
+                if (data.record) {
+                    appState.videos = data.record.videos || [];
+                    appState.keys = data.record.keys || [];
+                    return data.record;
+                }
+            }
+        } catch (secondError) {
+            console.error('Second attempt failed:', secondError);
+        }
+        
+        // Jika masih gagal, gunakan array kosong
+        console.log('Using empty arrays as fallback');
+        appState.videos = [];
         appState.keys = [];
         
-        return { videos: appState.videos, keys: appState.keys };
+        return { videos: [], keys: [], lastUpdated: new Date().toISOString() };
     }
 }
 
@@ -217,140 +258,38 @@ async function saveData() {
             lastUpdated: new Date().toISOString()
         };
         
+        console.log('Saving data to JSONBin:', data);
+        
         const response = await fetch(CONFIG.BIN_URL, {
             method: 'PUT',
             headers: {
                 'X-Master-Key': CONFIG.API_KEY,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Bin-Versioning': 'false'
             },
             body: JSON.stringify(data)
         });
         
         if (!response.ok) {
-            throw new Error('Failed to save data');
+            const errorText = await response.text();
+            throw new Error(`Failed to save data: ${response.status} - ${errorText}`);
         }
         
-        console.log('Data saved successfully');
+        const result = await response.json();
+        console.log('Data saved successfully:', result);
         return true;
     } catch (error) {
-        console.error('Error saving data:', error);
+        console.error('Error saving data to JSONBin:', error);
+        
+        // Show error notification
+        if (window.location.pathname.includes('admin.html')) {
+            showUploadStatus(`Gagal menyimpan ke database: ${error.message}`, 'error');
+        } else {
+            showNotification(`Gagal menyimpan data: ${error.message}`, 'error');
+        }
+        
         return false;
     }
-}
-
-function getDefaultVideos() {
-    return [
-        {
-            id: 1,
-            name: 'ANGGAZYY SERIES - Episode 1',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '1:30',
-            vip: false,
-            views: 3500,
-            likes: 1200,
-            uploadDate: '2025-01-15'
-        },
-        {
-            id: 2,
-            name: 'EXCLUSIVE VIP CONTENT - Premium',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '2:15',
-            vip: true,
-            views: 1800,
-            likes: 850,
-            uploadDate: '2025-01-14'
-        },
-        {
-            id: 3,
-            name: 'MOMENT SERIES - Special Edition',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '45s',
-            vip: false,
-            views: 4200,
-            likes: 2100,
-            uploadDate: '2025-01-13'
-        },
-        {
-            id: 4,
-            name: 'PREMIUM VIP - Exclusive Access',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '3:20',
-            vip: true,
-            views: 1200,
-            likes: 600,
-            uploadDate: '2025-01-12'
-        },
-        {
-            id: 5,
-            name: 'TRENDING NOW - Hot Video',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '1:50',
-            vip: false,
-            views: 5800,
-            likes: 3200,
-            uploadDate: '2025-01-11'
-        },
-        {
-            id: 6,
-            name: 'VIP EXCLUSIVE - Members Only',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '2:45',
-            vip: true,
-            views: 900,
-            likes: 450,
-            uploadDate: '2025-01-10'
-        },
-        {
-            id: 7,
-            name: 'DAILY CONTENT - New Release',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '1:15',
-            vip: false,
-            views: 3100,
-            likes: 1500,
-            uploadDate: '2025-01-09'
-        },
-        {
-            id: 8,
-            name: 'SPECIAL VIP - Limited Time',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '4:10',
-            vip: true,
-            views: 750,
-            likes: 380,
-            uploadDate: '2025-01-08'
-        },
-        {
-            id: 9,
-            name: 'POPULAR VIDEO - Trending Now',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '2:20',
-            vip: false,
-            views: 6700,
-            likes: 4100,
-            uploadDate: '2025-01-07'
-        },
-        {
-            id: 10,
-            name: 'VIP ACCESS - Premium Content',
-            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            duration: '3:45',
-            vip: true,
-            views: 1100,
-            likes: 550,
-            uploadDate: '2025-01-06'
-        }
-    ];
 }
 
 // ===== VIDEO RENDERING =====
@@ -365,6 +304,20 @@ function renderTrendingVideos() {
         .slice(0, 10);
     
     container.innerHTML = '';
+    
+    if (trendingVideos.length === 0) {
+        container.innerHTML = `
+            <div class="no-videos-message">
+                <i class="fas fa-video-slash"></i>
+                <h3>Belum ada video</h3>
+                <p>Upload video pertama Anda dari panel admin</p>
+                <a href="admin.html" target="_blank" class="admin-link">
+                    <i class="fas fa-user-shield"></i> Buka Admin Panel
+                </a>
+            </div>
+        `;
+        return;
+    }
     
     trendingVideos.forEach(video => {
         const videoCard = createVideoCard(video);
@@ -386,18 +339,41 @@ function renderNewVideos() {
     
     container.innerHTML = '';
     
+    if (pageVideos.length === 0) {
+        container.innerHTML = `
+            <div class="no-videos-message">
+                <i class="fas fa-film"></i>
+                <h3>Belum ada konten</h3>
+                <p>Tambahkan video baru untuk memulai</p>
+            </div>
+        `;
+        return;
+    }
+    
     pageVideos.forEach(video => {
         const videoCard = createVideoCard(video);
         container.appendChild(videoCard);
     });
     
     // Update pagination info
-    document.getElementById('currentPage').textContent = appState.currentVideoPage;
-    document.getElementById('totalPages').textContent = Math.ceil(appState.videos.length / appState.videosPerPage);
+    const currentPageEl = document.getElementById('currentPage');
+    const totalPagesEl = document.getElementById('totalPages');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
     
-    // Enable/disable pagination buttons
-    document.getElementById('prevPage').disabled = appState.currentVideoPage === 1;
-    document.getElementById('nextPage').disabled = appState.currentVideoPage >= Math.ceil(appState.videos.length / appState.videosPerPage);
+    if (currentPageEl && totalPagesEl) {
+        const totalPages = Math.max(1, Math.ceil(appState.videos.length / appState.videosPerPage));
+        currentPageEl.textContent = appState.currentVideoPage;
+        totalPagesEl.textContent = totalPages;
+        
+        // Enable/disable pagination buttons
+        if (prevPageBtn) {
+            prevPageBtn.disabled = appState.currentVideoPage === 1;
+        }
+        if (nextPageBtn) {
+            nextPageBtn.disabled = appState.currentVideoPage >= totalPages;
+        }
+    }
 }
 
 function createVideoCard(video) {
@@ -411,30 +387,30 @@ function createVideoCard(video) {
     
     // Format durasi
     let durationDisplay = video.duration;
-    if (video.duration.includes('s')) {
+    if (video.duration && video.duration.includes('s')) {
         const seconds = video.duration.replace('s', '');
         durationDisplay = `0:${seconds.padStart(2, '0')}`;
     }
     
     card.innerHTML = `
         <div class="video-thumbnail">
-            <img src="${video.thumbnail || CONFIG.DEFAULT_THUMBNAIL}" alt="${video.name}">
+            <img src="${video.thumbnail || CONFIG.DEFAULT_THUMBNAIL}" alt="${video.name}" onerror="this.src='${CONFIG.DEFAULT_THUMBNAIL}'">
             ${video.vip ? `
                 <div class="vip-overlay">
                     <i class="fas fa-lock"></i>
                     <p>VIP CONTENT</p>
                 </div>
             ` : ''}
-            <div class="video-duration">${durationDisplay}</div>
+            <div class="video-duration">${durationDisplay || '0:00'}</div>
         </div>
         <div class="video-info">
-            <h3 class="video-title">${video.name}</h3>
+            <h3 class="video-title">${video.name || 'Untitled Video'}</h3>
             <div class="video-meta">
                 <span class="video-views">
-                    <i class="fas fa-eye"></i> ${video.views.toLocaleString()} views
+                    <i class="fas fa-eye"></i> ${(video.views || 0).toLocaleString()} views
                 </span>
                 <span class="video-likes">
-                    <i class="${likeIcon}"></i> ${video.likes.toLocaleString()}
+                    <i class="${likeIcon}"></i> ${(video.likes || 0).toLocaleString()}
                 </span>
             </div>
             <div class="video-uploader">
@@ -632,7 +608,7 @@ function performSearch() {
     }
     
     const filteredVideos = appState.videos.filter(video => 
-        video.name.toLowerCase().includes(query)
+        video.name && video.name.toLowerCase().includes(query)
     );
     
     const container = document.getElementById('newVideos');
@@ -644,8 +620,8 @@ function performSearch() {
         container.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
-                <h3>No videos found</h3>
-                <p>Try a different search term</p>
+                <h3>Video tidak ditemukan</h3>
+                <p>Coba dengan kata kunci lain</p>
             </div>
         `;
         return;
@@ -657,7 +633,10 @@ function performSearch() {
     });
     
     // Hide pagination when searching
-    document.querySelector('.section-footer').style.display = 'none';
+    const sectionFooter = document.querySelector('.section-footer');
+    if (sectionFooter) {
+        sectionFooter.style.display = 'none';
+    }
 }
 
 function filterVideos(filter) {
@@ -679,6 +658,17 @@ function filterVideos(filter) {
     
     container.innerHTML = '';
     
+    if (filteredVideos.length === 0) {
+        container.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-filter"></i>
+                <h3>Tidak ada video ${filter === 'vip' ? 'VIP' : 'gratis'}</h3>
+                <p>${filter === 'vip' ? 'Upload video VIP dari panel admin' : 'Semua video saat ini adalah VIP'}</p>
+            </div>
+        `;
+        return;
+    }
+    
     filteredVideos.forEach(video => {
         const videoCard = createVideoCard(video);
         container.appendChild(videoCard);
@@ -692,51 +682,72 @@ function filterVideos(filter) {
 }
 
 function updatePagination() {
-    const totalPages = Math.ceil(appState.videos.length / appState.videosPerPage);
-    document.getElementById('currentPage').textContent = appState.currentVideoPage;
-    document.getElementById('totalPages').textContent = totalPages;
+    const totalPages = Math.max(1, Math.ceil(appState.videos.length / appState.videosPerPage));
+    const currentPageEl = document.getElementById('currentPage');
+    const totalPagesEl = document.getElementById('totalPages');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    
+    if (currentPageEl) currentPageEl.textContent = appState.currentVideoPage;
+    if (totalPagesEl) totalPagesEl.textContent = totalPages;
     
     // Enable/disable buttons
-    document.getElementById('prevPage').disabled = appState.currentVideoPage === 1;
-    document.getElementById('nextPage').disabled = appState.currentVideoPage >= totalPages;
+    if (prevPageBtn) prevPageBtn.disabled = appState.currentVideoPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = appState.currentVideoPage >= totalPages;
 }
 
 function watchVideo(videoId) {
     const video = appState.videos.find(v => v.id === videoId);
-    if (!video) return;
+    if (!video) {
+        showNotification('Video tidak ditemukan', 'error');
+        return;
+    }
     
     // Increment view count
-    video.views++;
+    video.views = (video.views || 0) + 1;
     
     // Save to database
     saveData();
     
     // Update video modal
-    document.getElementById('modalVideoTitle').textContent = video.name;
-    document.getElementById('modalViewCount').textContent = video.views.toLocaleString();
-    document.getElementById('modalLikeCount').textContent = video.likes.toLocaleString();
+    const modalTitle = document.getElementById('modalVideoTitle');
+    const modalViewCount = document.getElementById('modalViewCount');
+    const modalLikeCount = document.getElementById('modalLikeCount');
+    
+    if (modalTitle) modalTitle.textContent = video.name;
+    if (modalViewCount) modalViewCount.textContent = (video.views || 0).toLocaleString();
+    if (modalLikeCount) modalLikeCount.textContent = (video.likes || 0).toLocaleString();
     
     // Set video source
     const videoPlayer = document.getElementById('videoPlayer');
-    videoPlayer.src = video.videoUrl;
+    if (videoPlayer) {
+        videoPlayer.src = video.videoUrl;
+    }
     
     // Check if liked
     const likeBtn = document.getElementById('likeBtn');
-    const isLiked = appState.likedVideos.includes(videoId);
-    if (isLiked) {
-        likeBtn.classList.add('liked');
-        likeBtn.innerHTML = `<i class="fas fa-heart"></i> <span id="modalLikeCount">${video.likes.toLocaleString()}</span>`;
-    } else {
-        likeBtn.classList.remove('liked');
-        likeBtn.innerHTML = `<i class="far fa-heart"></i> <span id="modalLikeCount">${video.likes.toLocaleString()}</span>`;
+    if (likeBtn) {
+        const isLiked = appState.likedVideos.includes(videoId);
+        if (isLiked) {
+            likeBtn.classList.add('liked');
+            likeBtn.innerHTML = `<i class="fas fa-heart"></i> <span id="modalLikeCount">${(video.likes || 0).toLocaleString()}</span>`;
+        } else {
+            likeBtn.classList.remove('liked');
+            likeBtn.innerHTML = `<i class="far fa-heart"></i> <span id="modalLikeCount">${(video.likes || 0).toLocaleString()}</span>`;
+        }
     }
     
     // Show modal
-    document.getElementById('videoModal').classList.add('active');
+    const videoModal = document.getElementById('videoModal');
+    if (videoModal) {
+        videoModal.classList.add('active');
+    }
     
     // Play video
     setTimeout(() => {
-        videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+        if (videoPlayer) {
+            videoPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+        }
     }, 300);
 }
 
@@ -746,65 +757,86 @@ function showVIPPopup(videoId) {
     
     if (videoId) {
         const video = appState.videos.find(v => v.id === videoId);
-        if (!video) return;
+        if (!video) {
+            showNotification('Video tidak ditemukan', 'error');
+            return;
+        }
         
         appState.currentVIPVideo = video;
         
         // Update video details
-        videoDetails.innerHTML = `
-            <h3>${video.name}</h3>
-            <p><i class="fas fa-clock"></i> Durasi: ${video.duration}</p>
-            <p><i class="fas fa-eye"></i> Views: ${video.views.toLocaleString()}</p>
-        `;
+        if (videoDetails) {
+            videoDetails.innerHTML = `
+                <h3>${video.name}</h3>
+                <p><i class="fas fa-clock"></i> Durasi: ${video.duration || '0:00'}</p>
+                <p><i class="fas fa-eye"></i> Views: ${(video.views || 0).toLocaleString()}</p>
+            `;
+        }
     } else {
         appState.currentVIPVideo = null;
-        videoDetails.innerHTML = `
-            <h3>Akses VIP Penuh</h3>
-            <p>Dapatkan akses ke semua konten VIP dengan memasukkan kunci Anda</p>
-        `;
+        if (videoDetails) {
+            videoDetails.innerHTML = `
+                <h3>Akses VIP Penuh</h3>
+                <p>Dapatkan akses ke semua konten VIP dengan memasukkan kunci Anda</p>
+            `;
+        }
     }
     
     // Update key usage
     updateKeyUsageDisplay();
     
     // Clear error message
-    document.getElementById('keyErrorMessage').textContent = '';
+    const errorMessage = document.getElementById('keyErrorMessage');
+    if (errorMessage) {
+        errorMessage.textContent = '';
+    }
     
     // Clear input
-    document.getElementById('vipKeyInput').value = '';
+    const vipKeyInput = document.getElementById('vipKeyInput');
+    if (vipKeyInput) {
+        vipKeyInput.value = '';
+    }
     
     // Show popup
-    vipPopup.classList.add('active');
+    if (vipPopup) {
+        vipPopup.classList.add('active');
+    }
 }
 
 function updateKeyUsageDisplay() {
-    const remainingUses = appState.keyUses;
-    document.getElementById('remainingUses').textContent = remainingUses;
+    const remainingUses = appState.keyUses || 0;
+    const remainingUsesEl = document.getElementById('remainingUses');
+    const usageFillEl = document.getElementById('usageFill');
+    const keyStatusEl = document.getElementById('keyStatus');
     
-    const usagePercent = (remainingUses / 30) * 100;
-    document.getElementById('usageFill').style.width = `${usagePercent}%`;
+    if (remainingUsesEl) remainingUsesEl.textContent = remainingUses;
+    if (usageFillEl) usageFillEl.style.width = `${(remainingUses / 30) * 100}%`;
     
     // Update key status message
-    const keyStatus = document.getElementById('keyStatus');
-    if (remainingUses <= 0) {
-        keyStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Kunci Anda telah habis. Silakan minta kunci baru.`;
-        keyStatus.style.background = 'rgba(255, 71, 87, 0.2)';
-        keyStatus.style.color = '#ff4757';
-    } else if (remainingUses <= 10) {
-        keyStatus.innerHTML = `<i class="fas fa-info-circle"></i> Sisa penggunaan: ${remainingUses} dari 30. Segera minta kunci baru.`;
-        keyStatus.style.background = 'rgba(255, 193, 7, 0.2)';
-        keyStatus.style.color = '#ffc107';
-    } else {
-        keyStatus.innerHTML = `<i class="fas fa-info-circle"></i> Setiap kunci dapat digunakan untuk membuka 30 video VIP`;
-        keyStatus.style.background = 'rgba(29, 161, 242, 0.2)';
-        keyStatus.style.color = '#1da1f2';
+    if (keyStatusEl) {
+        if (remainingUses <= 0) {
+            keyStatusEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Kunci Anda telah habis. Silakan minta kunci baru.`;
+            keyStatusEl.style.background = 'rgba(255, 71, 87, 0.2)';
+            keyStatusEl.style.color = '#ff4757';
+        } else if (remainingUses <= 10) {
+            keyStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> Sisa penggunaan: ${remainingUses} dari 30. Segera minta kunci baru.`;
+            keyStatusEl.style.background = 'rgba(255, 193, 7, 0.2)';
+            keyStatusEl.style.color = '#ffc107';
+        } else {
+            keyStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> Setiap kunci dapat digunakan untuk membuka 30 video VIP`;
+            keyStatusEl.style.background = 'rgba(29, 161, 242, 0.2)';
+            keyStatusEl.style.color = '#1da1f2';
+        }
     }
 }
 
 function validateVIPKey() {
     const keyInput = document.getElementById('vipKeyInput');
-    const key = keyInput.value.trim();
     const errorMessage = document.getElementById('keyErrorMessage');
+    
+    if (!keyInput || !errorMessage) return;
+    
+    const key = keyInput.value.trim();
     
     // Clear previous error
     errorMessage.textContent = '';
@@ -815,7 +847,7 @@ function validateVIPKey() {
     }
     
     // Check if key exists in database
-    const validKey = appState.keys.find(k => k.key === key && k.uses > 0);
+    const validKey = appState.keys.find(k => k.key === key && (k.uses || 0) > 0);
     
     if (!validKey) {
         errorMessage.textContent = 'Kunci tidak valid atau sudah habis';
@@ -827,11 +859,11 @@ function validateVIPKey() {
     
     // Set usage
     appState.userKey = key;
-    appState.keyUses = validKey.uses;
+    appState.keyUses = validKey.uses || 0;
     localStorage.setItem('skandalhub_key_uses', appState.keyUses);
     
     // Update key usage in database
-    validKey.uses--;
+    validKey.uses = (validKey.uses || 0) - 1;
     saveData();
     
     // Update display
@@ -842,14 +874,17 @@ function validateVIPKey() {
         unlockVIPVideo(appState.currentVIPVideo.id);
     } else {
         // Just close popup if no specific video
-        document.getElementById('vipPopup').classList.remove('active');
+        const vipPopup = document.getElementById('vipPopup');
+        if (vipPopup) {
+            vipPopup.classList.remove('active');
+        }
         showNotification('Kunci VIP berhasil divalidasi!', 'success');
     }
 }
 
 function unlockVIPVideo(videoId) {
     // Decrement key uses
-    appState.keyUses--;
+    appState.keyUses = Math.max(0, (appState.keyUses || 0) - 1);
     localStorage.setItem('skandalhub_key_uses', appState.keyUses);
     
     // Update key in database
@@ -870,7 +905,10 @@ function unlockVIPVideo(videoId) {
     }
     
     // Close VIP popup
-    document.getElementById('vipPopup').classList.remove('active');
+    const vipPopup = document.getElementById('vipPopup');
+    if (vipPopup) {
+        vipPopup.classList.remove('active');
+    }
     
     // Watch the video
     watchVideo(videoId);
@@ -878,10 +916,14 @@ function unlockVIPVideo(videoId) {
 
 function toggleLike() {
     const likeBtn = document.getElementById('likeBtn');
-    const videoTitle = document.getElementById('modalVideoTitle').textContent;
+    const videoTitle = document.getElementById('modalVideoTitle');
     
-    // Find video by name (simplified approach)
-    const video = appState.videos.find(v => v.name === videoTitle);
+    if (!likeBtn || !videoTitle) return;
+    
+    const videoName = videoTitle.textContent;
+    
+    // Find video by name
+    const video = appState.videos.find(v => v.name === videoName);
     if (!video) return;
     
     const videoId = video.id;
@@ -889,16 +931,16 @@ function toggleLike() {
     
     if (isLiked) {
         // Unlike
-        video.likes--;
+        video.likes = Math.max(0, (video.likes || 0) - 1);
         appState.likedVideos = appState.likedVideos.filter(id => id !== videoId);
         likeBtn.classList.remove('liked');
-        likeBtn.innerHTML = `<i class="far fa-heart"></i> <span id="modalLikeCount">${video.likes.toLocaleString()}</span>`;
+        likeBtn.innerHTML = `<i class="far fa-heart"></i> <span id="modalLikeCount">${(video.likes || 0).toLocaleString()}</span>`;
     } else {
         // Like
-        video.likes++;
+        video.likes = (video.likes || 0) + 1;
         appState.likedVideos.push(videoId);
         likeBtn.classList.add('liked');
-        likeBtn.innerHTML = `<i class="fas fa-heart"></i> <span id="modalLikeCount">${video.likes.toLocaleString()}</span>`;
+        likeBtn.innerHTML = `<i class="fas fa-heart"></i> <span id="modalLikeCount">${(video.likes || 0).toLocaleString()}</span>`;
     }
     
     // Save to localStorage
@@ -936,7 +978,7 @@ function showNotification(message, type = 'info') {
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
         <div class="notification-content">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
             <span>${message}</span>
         </div>
         <button class="notification-close"><i class="fas fa-times"></i></button>
@@ -1057,13 +1099,13 @@ function setupAdminEventListeners() {
         toggleFree.addEventListener('click', () => {
             toggleFree.classList.add('active');
             toggleVIP.classList.remove('active');
-            vipHiddenInput.value = 'false';
+            if (vipHiddenInput) vipHiddenInput.value = 'false';
         });
         
         toggleVIP.addEventListener('click', () => {
             toggleVIP.classList.add('active');
             toggleFree.classList.remove('active');
-            vipHiddenInput.value = 'true';
+            if (vipHiddenInput) vipHiddenInput.value = 'true';
         });
     }
     
@@ -1133,11 +1175,12 @@ async function handleUpload(e) {
     e.preventDefault();
     
     // Get form values
-    const name = document.getElementById('videoName').value;
-    const videoUrl = document.getElementById('videoLink').value;
-    const duration = document.getElementById('videoDuration').value;
-    const isVIP = document.getElementById('videoVIP').value === 'true';
-    const thumbnail = document.getElementById('thumbnailLink').value || CONFIG.DEFAULT_THUMBNAIL;
+    const name = document.getElementById('videoName')?.value;
+    const videoUrl = document.getElementById('videoLink')?.value;
+    const duration = document.getElementById('videoDuration')?.value;
+    const vipHiddenInput = document.getElementById('videoVIP');
+    const isVIP = vipHiddenInput ? vipHiddenInput.value === 'true' : false;
+    const thumbnail = document.getElementById('thumbnailLink')?.value || CONFIG.DEFAULT_THUMBNAIL;
     
     // Validation
     if (!name || !videoUrl || !duration) {
@@ -1145,9 +1188,14 @@ async function handleUpload(e) {
         return;
     }
     
+    // Generate new ID
+    const newId = appState.videos.length > 0 
+        ? Math.max(...appState.videos.map(v => v.id)) + 1 
+        : 1;
+    
     // Create new video object
     const newVideo = {
-        id: appState.videos.length > 0 ? Math.max(...appState.videos.map(v => v.id)) + 1 : 1,
+        id: newId,
         name: name,
         videoUrl: videoUrl,
         thumbnail: thumbnail,
@@ -1171,9 +1219,15 @@ async function handleUpload(e) {
         e.target.reset();
         
         // Reset VIP toggle
-        document.getElementById('toggleFree').classList.add('active');
-        document.getElementById('toggleVIP').classList.remove('active');
-        document.getElementById('videoVIP').value = 'false';
+        const toggleFree = document.getElementById('toggleFree');
+        const toggleVIP = document.getElementById('toggleVIP');
+        if (toggleFree && toggleVIP) {
+            toggleFree.classList.add('active');
+            toggleVIP.classList.remove('active');
+        }
+        if (vipHiddenInput) {
+            vipHiddenInput.value = 'false';
+        }
         
         // Update content table if visible
         if (appState.currentAdminSection === 'manage') {
@@ -1191,6 +1245,7 @@ async function handleUpload(e) {
 
 function showUploadStatus(message, type) {
     const uploadStatus = document.getElementById('uploadStatus');
+    if (!uploadStatus) return;
     
     uploadStatus.innerHTML = `
         <div class="status-${type}">
@@ -1220,7 +1275,10 @@ function generateKey() {
     const formattedKey = key.match(/.{1,4}/g).join('-');
     
     // Display key
-    document.getElementById('keyValue').textContent = formattedKey;
+    const keyValueEl = document.getElementById('keyValue');
+    if (keyValueEl) {
+        keyValueEl.textContent = formattedKey;
+    }
     
     // Add to keys array
     const newKey = {
@@ -1243,7 +1301,10 @@ function generateKey() {
 }
 
 function copyKey() {
-    const keyValue = document.getElementById('keyValue').textContent;
+    const keyValueEl = document.getElementById('keyValue');
+    if (!keyValueEl) return;
+    
+    const keyValue = keyValueEl.textContent;
     
     if (keyValue && !keyValue.includes('Klik')) {
         navigator.clipboard.writeText(keyValue)
@@ -1274,16 +1335,28 @@ function loadContentTable() {
     
     tableBody.innerHTML = '';
     
+    if (appState.videos.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-film" style="font-size: 2rem; color: #9d4edd; margin-bottom: 1rem; display: block;"></i>
+                    <p>Belum ada video. Upload video pertama Anda!</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     appState.videos.forEach(video => {
         const row = document.createElement('tr');
         
         row.innerHTML = `
-            <td>${video.id}</td>
-            <td>${video.name}</td>
-            <td>${video.duration}</td>
+            <td>${video.id || ''}</td>
+            <td>${video.name || 'Untitled'}</td>
+            <td>${video.duration || '0:00'}</td>
             <td><span class="${video.vip ? 'vip-badge' : 'free-badge'}">${video.vip ? 'VIP' : 'FREE'}</span></td>
-            <td>${video.views.toLocaleString()}</td>
-            <td>${video.likes.toLocaleString()}</td>
+            <td>${(video.views || 0).toLocaleString()}</td>
+            <td>${(video.likes || 0).toLocaleString()}</td>
             <td class="table-actions">
                 <button class="action-btn edit-btn" data-id="${video.id}"><i class="fas fa-edit"></i></button>
                 <button class="action-btn delete-btn" data-id="${video.id}"><i class="fas fa-trash"></i></button>
@@ -1294,9 +1367,13 @@ function loadContentTable() {
     });
     
     // Update stats
-    document.getElementById('totalVideos').textContent = appState.videos.length;
-    document.getElementById('totalVIP').textContent = appState.videos.filter(v => v.vip).length;
-    document.getElementById('totalFree').textContent = appState.videos.filter(v => !v.vip).length;
+    const totalVideosEl = document.getElementById('totalVideos');
+    const totalVIPEl = document.getElementById('totalVIP');
+    const totalFreeEl = document.getElementById('totalFree');
+    
+    if (totalVideosEl) totalVideosEl.textContent = appState.videos.length;
+    if (totalVIPEl) totalVIPEl.textContent = appState.videos.filter(v => v.vip).length;
+    if (totalFreeEl) totalFreeEl.textContent = appState.videos.filter(v => !v.vip).length;
     
     // Add event listeners for action buttons
     tableBody.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1315,8 +1392,13 @@ function loadContentTable() {
 }
 
 function filterAdminContent() {
-    const searchQuery = document.getElementById('searchContent').value.toLowerCase();
-    const filterType = document.getElementById('filterType').value;
+    const searchContent = document.getElementById('searchContent');
+    const filterType = document.getElementById('filterType');
+    
+    if (!searchContent || !filterType) return;
+    
+    const searchQuery = searchContent.value.toLowerCase();
+    const filterValue = filterType.value;
     
     const tableBody = document.getElementById('contentTableBody');
     if (!tableBody) return;
@@ -1324,8 +1406,9 @@ function filterAdminContent() {
     const rows = tableBody.querySelectorAll('tr');
     
     rows.forEach(row => {
-        const name = row.cells[1].textContent.toLowerCase();
-        const type = row.cells[3].textContent.trim();
+        const name = row.cells[1]?.textContent?.toLowerCase() || '';
+        const typeCell = row.cells[3];
+        const type = typeCell?.querySelector('span')?.textContent?.trim() || '';
         
         let matchesSearch = true;
         let matchesType = true;
@@ -1334,8 +1417,8 @@ function filterAdminContent() {
             matchesSearch = name.includes(searchQuery);
         }
         
-        if (filterType !== 'all') {
-            const typeText = filterType === 'vip' ? 'VIP' : 'FREE';
+        if (filterValue !== 'all') {
+            const typeText = filterValue === 'vip' ? 'VIP' : 'FREE';
             matchesType = type === typeText;
         }
         
@@ -1352,20 +1435,32 @@ function editVideo(videoId) {
     showAdminSection('upload');
     
     // Populate form
-    document.getElementById('videoName').value = video.name;
-    document.getElementById('videoLink').value = video.videoUrl;
-    document.getElementById('videoDuration').value = video.duration;
-    document.getElementById('thumbnailLink').value = video.thumbnail;
+    const videoNameInput = document.getElementById('videoName');
+    const videoLinkInput = document.getElementById('videoLink');
+    const videoDurationInput = document.getElementById('videoDuration');
+    const thumbnailLinkInput = document.getElementById('thumbnailLink');
+    
+    if (videoNameInput) videoNameInput.value = video.name || '';
+    if (videoLinkInput) videoLinkInput.value = video.videoUrl || '';
+    if (videoDurationInput) videoDurationInput.value = video.duration || '';
+    if (thumbnailLinkInput) thumbnailLinkInput.value = video.thumbnail || '';
     
     // Set VIP toggle
+    const toggleFree = document.getElementById('toggleFree');
+    const toggleVIP = document.getElementById('toggleVIP');
+    const vipHiddenInput = document.getElementById('videoVIP');
+    
     if (video.vip) {
-        document.getElementById('toggleVIP').click();
+        if (toggleVIP) toggleVIP.click();
     } else {
-        document.getElementById('toggleFree').click();
+        if (toggleFree) toggleFree.click();
     }
     
     // Scroll to form
-    document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+    const uploadSection = document.getElementById('upload');
+    if (uploadSection) {
+        uploadSection.scrollIntoView({ behavior: 'smooth' });
+    }
     
     // Show message
     showUploadStatus(`Mengedit video "${video.name}". Ubah dan submit untuk memperbarui.`, 'info');
@@ -1405,15 +1500,28 @@ function loadKeysTable() {
     
     tableBody.innerHTML = '';
     
+    if (appState.keys.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-key" style="font-size: 2rem; color: #9d4edd; margin-bottom: 1rem; display: block;"></i>
+                    <p>Belum ada kunci VIP. Generate kunci baru!</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     appState.keys.forEach(key => {
         const row = document.createElement('tr');
-        const createdDate = new Date(key.created).toLocaleDateString('id-ID');
-        const status = key.uses > 0 ? 'active' : 'expired';
+        const createdDate = key.created ? new Date(key.created).toLocaleDateString('id-ID') : 'N/A';
+        const uses = key.uses || 0;
+        const status = uses > 0 ? 'active' : 'expired';
         
         row.innerHTML = `
-            <td>${key.key}</td>
+            <td>${key.key || ''}</td>
             <td>${createdDate}</td>
-            <td>${key.uses}/30</td>
+            <td>${uses}/30</td>
             <td><span class="${status}-key">${status === 'active' ? 'AKTIF' : 'HABIS'}</span></td>
             <td class="table-actions">
                 <button class="action-btn delete-btn" data-key="${key.key}"><i class="fas fa-trash"></i></button>
@@ -1433,7 +1541,10 @@ function loadKeysTable() {
 }
 
 function filterAdminKeys() {
-    const searchQuery = document.getElementById('searchKey').value.toLowerCase();
+    const searchKeyInput = document.getElementById('searchKey');
+    if (!searchKeyInput) return;
+    
+    const searchQuery = searchKeyInput.value.toLowerCase();
     
     const tableBody = document.getElementById('keysTableBody');
     if (!tableBody) return;
@@ -1441,7 +1552,7 @@ function filterAdminKeys() {
     const rows = tableBody.querySelectorAll('tr');
     
     rows.forEach(row => {
-        const key = row.cells[0].textContent.toLowerCase();
+        const key = row.cells[0]?.textContent?.toLowerCase() || '';
         const matchesSearch = searchQuery ? key.includes(searchQuery) : true;
         row.style.display = matchesSearch ? '' : 'none';
     });
@@ -1472,16 +1583,21 @@ async function deleteKey(keyValue) {
 
 function loadStats() {
     // Update stat cards
-    document.getElementById('totalVideosStat').textContent = appState.videos.length;
+    const totalVideosStatEl = document.getElementById('totalVideosStat');
+    const totalViewsEl = document.getElementById('totalViews');
+    const totalLikesEl = document.getElementById('totalLikes');
+    const totalVIPStatEl = document.getElementById('totalVIPStat');
     
-    const totalViews = appState.videos.reduce((sum, video) => sum + video.views, 0);
-    document.getElementById('totalViews').textContent = totalViews.toLocaleString();
+    if (totalVideosStatEl) totalVideosStatEl.textContent = appState.videos.length;
     
-    const totalLikes = appState.videos.reduce((sum, video) => sum + video.likes, 0);
-    document.getElementById('totalLikes').textContent = totalLikes.toLocaleString();
+    const totalViews = appState.videos.reduce((sum, video) => sum + (video.views || 0), 0);
+    if (totalViewsEl) totalViewsEl.textContent = totalViews.toLocaleString();
+    
+    const totalLikes = appState.videos.reduce((sum, video) => sum + (video.likes || 0), 0);
+    if (totalLikesEl) totalLikesEl.textContent = totalLikes.toLocaleString();
     
     const totalVIP = appState.videos.filter(v => v.vip).length;
-    document.getElementById('totalVIPStat').textContent = totalVIP;
+    if (totalVIPStatEl) totalVIPStatEl.textContent = totalVIP;
     
     // Create charts
     createTrendingChart();
@@ -1494,11 +1610,62 @@ function createTrendingChart() {
     
     // Get top 5 trending videos
     const trendingVideos = [...appState.videos]
-        .sort((a, b) => b.views - a.views)
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
         .slice(0, 5);
     
-    const labels = trendingVideos.map(v => v.name.length > 15 ? v.name.substring(0, 15) + '...' : v.name);
-    const views = trendingVideos.map(v => v.views);
+    // Jika tidak ada video, tampilkan chart kosong
+    if (trendingVideos.length === 0) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['No Data'],
+                datasets: [{
+                    label: 'Views',
+                    data: [0],
+                    backgroundColor: ['rgba(157, 78, 221, 0.8)'],
+                    borderColor: ['rgba(157, 78, 221, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e0aaff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#c77dff'
+                        },
+                        grid: {
+                            color: 'rgba(157, 78, 221, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#c77dff'
+                        },
+                        grid: {
+                            color: 'rgba(157, 78, 221, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        return;
+    }
+    
+    const labels = trendingVideos.map(v => {
+        const name = v.name || 'Untitled';
+        return name.length > 15 ? name.substring(0, 15) + '...' : name;
+    });
+    const views = trendingVideos.map(v => v.views || 0);
     
     new Chart(ctx, {
         type: 'bar',
