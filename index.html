@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKANDALHUB - Platform Video Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔞</text></svg>">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-container">
+            <div class="loading-logo">
+                <i class="fas fa-video"></i>
+                <span>SKANDALHUB</span>
+            </div>
+            <div class="loading-text">
+                <span class="loading-dots">Loading</span>
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Menginisialisasi fitur (0/30)</div>
+            </div>
+            <div class="loading-features">
+                <div class="feature-list">
+                    <div class="feature-item">Sistem Video Database</div>
+                    <div class="feature-item">Trending Analytics</div>
+                    <div class="feature-item">VIP Access System</div>
+                    <div class="feature-item">Responsive Design</div>
+                    <div class="feature-item">Smooth Animations</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Welcome -->
+    <div class="welcome-popup" id="welcomePopup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h2><i class="fas fa-bell"></i> Welcome To Skandal Hub !</h2>
+                <button class="close-popup" id="closePopup">&times;</button>
+            </div>
+            <div class="popup-body">
+                <p>Untuk mendapatkan setiap update skandal jangan lupa untuk join saluran whatsapp ya</p>
+                <a href="https://wa.me/6281234567890?text=Halo%20saya%20ingin%20join%20saluran%20SKANDALHUB" target="_blank" class="whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i> Join Saluran WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="main-header">
+        <nav class="navbar">
+            <div class="logo-container">
+                <i class="fas fa-video"></i>
+                <h1 class="logo">SKANDALHUB</h1>
+                <span class="badge">PRO</span>
+            </div>
+            
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Cari video...">
+            </div>
+            
+            <div class="user-actions">
+                <button class="btn-vip" id="vipBtn">
+                    <i class="fas fa-crown"></i> VIP Access
+                </button>
+                <div class="user-key" id="userKeyStatus">
+                    <i class="fas fa-key"></i>
+                    <span>Key: Tidak ada</span>
+                </div>
+            </div>
+            
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Banner Section -->
+        <section class="banner-section">
+            <div class="welcome-banner">
+                <h2>Welcome To <span class="highlight">SKANDALHUB</span></h2>
+                <p>Disini kamu dapat melihat konten video eksklusif dengan kualitas terbaik. Koleksi video premium yang hanya tersedia untuk member VIP. Nikmati pengalaman menonton tanpa batas!</p>
+                <div class="stats">
+                    <div class="stat-item">
+                        <i class="fas fa-video"></i>
+                        <span>100+ Video</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-crown"></i>
+                        <span>VIP Exclusive</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-eye"></i>
+                        <span>300K+ Views</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rotating Banner -->
+            <div class="ad-banner" id="adBanner">
+                <img src="https://files.catbox.moe/gmd2fk.gif" alt="Banner 1" class="banner-img active">
+                <img src="https://files.catbox.moe/op6wtn.jpg" alt="Banner 2" class="banner-img">
+                <div class="banner-label">Iklan</div>
+            </div>
+        </section>
+
+        <!-- Trending Now Section -->
+        <section class="trending-section">
+            <div class="section-header">
+                <h2><i class="fas fa-fire"></i> Trending Now</h2>
+                <div class="api-logo">
+                    <i class="fas fa-bolt"></i>
+                    <span>API LIVE</span>
+                </div>
+            </div>
+            
+            <div class="trending-container" id="trendingContainer">
+                <!-- Trending videos will be loaded here -->
+            </div>
+        </section>
+
+        <!-- New Content Section -->
+        <section class="new-content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-star"></i> New Content Admin</h2>
+                <div class="uploader-info">
+                    <span>Uploaded By: <span class="verified">Admin <i class="fas fa-check-circle"></i></span></span>
+                </div>
+            </div>
+            
+            <div class="videos-container" id="videosContainer">
+                <!-- Videos will be loaded here -->
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <button class="page-btn prev-btn" id="prevBtn" disabled>
+                    <i class="fas fa-chevron-left"></i> Prev
+                </button>
+                <div class="page-indicator">
+                    <span class="current-page" id="currentPage">1</span> / <span class="total-pages" id="totalPages">1</span>
+                </div>
+                <button class="page-btn next-btn" id="nextBtn">
+                    Lanjut <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- VIP Unlock Modal -->
+    <div class="modal-overlay" id="vipModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-lock"></i> VIP Access Required</h2>
+                <button class="close-modal" id="closeVipModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="video-details" id="modalVideoDetails">
+                    <h3>Video Title</h3>
+                    <p>Durasi: <span id="modalDuration">0:00</span></p>
+                    <p>Status: <span class="vip-badge">VIP Exclusive</span></p>
+                </div>
+                
+                <div class="key-input-container">
+                    <p>Masukan Key Kamu untuk akses Video</p>
+                    <div class="input-group">
+                        <i class="fas fa-key"></i>
+                        <input type="password" id="vipKeyInput" placeholder="Masukkan key VIP Anda...">
+                        <button class="show-key" id="showKeyBtn">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="key-info">
+                        <p><i class="fas fa-info-circle"></i> Setiap key hanya dapat digunakan 30x unlock.</p>
+                        <p>Sisa penggunaan key: <span id="keyUsesLeft">0</span>/30</p>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn-confirm" id="confirmKeyBtn">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                    <button class="btn-cancel" id="cancelKeyBtn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+                
+                <div class="message-container" id="keyMessage">
+                    <!-- Message will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Modal -->
+    <div class="video-player-overlay" id="videoPlayerModal">
+        <div class="video-player-container">
+            <div class="player-header">
+                <h3 id="playerTitle">Video Title</h3>
+                <button class="close-player" id="closePlayer">&times;</button>
+            </div>
+            <div class="video-wrapper">
+                <video id="mainVideoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    Browser Anda tidak mendukung tag video.
+                </video>
+            </div>
+            <div class="video-info">
+                <div class="video-stats">
+                    <div class="stat">
+                        <i class="fas fa-eye"></i>
+                        <span id="viewsCount">0</span> views
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-clock"></i>
+                        <span id="videoDuration">0:00</span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-calendar"></i>
+                        <span>Uploaded: Today</span>
+                    </div>
+                </div>
+                <div class="video-actions">
+                    <button class="like-btn" id="likeBtn">
+                        <i class="fas fa-heart"></i>
+                        <span id="likeCount">0</span> Likes
+                    </button>
+                    <div class="uploader">
+                        <i class="fas fa-user"></i>
+                        <span>Uploaded By: <span class="verified">Admin <i class="fas fa-check-circle"></i></span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-video"></i>
+                <span>SKANDALHUB</span>
+                <span class="pro-badge">PRO VERSION</span>
+            </div>
+            <div class="footer-links">
+                <a href="#"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+                <a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a>
+                <a href="admin.html"><i class="fas fa-user-shield"></i> Admin Panel</a>
+            </div>
+            <div class="copyright">
+                <p><i class="fas fa-copyright"></i> Copyright ❤ 2025 SkandalHub</p>
+                <p class="disclaimer">Konten ini hanya untuk konsumsi pribadi. Dilarang menyebarluaskan tanpa izin.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- External Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

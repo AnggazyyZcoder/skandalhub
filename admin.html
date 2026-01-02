@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - SKANDALHUB</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔞</text></svg>">
+</head>
+<body>
+    <!-- Admin Loading Screen -->
+    <div class="admin-loading" id="adminLoading">
+        <div class="loading-content">
+            <i class="fas fa-user-shield"></i>
+            <h2>Loading Admin Panel...</h2>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-nav">
+            <div class="admin-logo">
+                <i class="fas fa-user-shield"></i>
+                <h1>SKANDALHUB <span class="admin-badge">ADMIN</span></h1>
+            </div>
+            <nav class="admin-menu">
+                <a href="index.html" class="menu-item">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#upload" class="menu-item active">
+                    <i class="fas fa-upload"></i> Upload Konten
+                </a>
+                <a href="#keys" class="menu-item">
+                    <i class="fas fa-key"></i> Generate Keys
+                </a>
+                <a href="#analytics" class="menu-item">
+                    <i class="fas fa-chart-line"></i> Analytics
+                </a>
+            </nav>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- Admin Main Content -->
+    <main class="admin-main">
+        <!-- Upload Section -->
+        <section class="admin-section" id="upload">
+            <div class="section-title">
+                <h2><i class="fas fa-upload"></i> Upload Konten Baru</h2>
+                <p>Tambahkan video baru ke database SKANDALHUB</p>
+            </div>
+            
+            <div class="upload-form-container">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="videoName">
+                            <i class="fas fa-heading"></i> Nama Video
+                        </label>
+                        <input type="text" id="videoName" placeholder="Masukkan nama video..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="videoLink">
+                            <i class="fas fa-link"></i> Link Video (MP4)
+                        </label>
+                        <input type="url" id="videoLink" placeholder="https://catbox.moe/contoh.mp4" required>
+                        <small class="form-help">Pastikan link video dalam format MP4 dan dapat diakses</small>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="videoDuration">
+                                <i class="fas fa-clock"></i> Durasi
+                            </label>
+                            <input type="text" id="videoDuration" placeholder="1:30 atau 30s" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="videoVIP">
+                                <i class="fas fa-crown"></i> Status VIP
+                            </label>
+                            <select id="videoVIP" required>
+                                <option value="false">Gratis</option>
+                                <option value="true">VIP Exclusive</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="thumbnailLink">
+                            <i class="fas fa-image"></i> Link Thumbnail (Opsional)
+                        </label>
+                        <input type="url" id="thumbnailLink" placeholder="https://catbox.moe/contoh.jpg">
+                        <small class="form-help">Jika dikosongkan, akan menggunakan thumbnail default</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-upload" id="submitUpload">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload New Content
+                        </button>
+                        <button type="reset" class="btn-reset">
+                            <i class="fas fa-redo"></i> Reset Form
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="upload-preview" id="uploadPreview">
+                    <h3><i class="fas fa-eye"></i> Preview Video</h3>
+                    <div class="preview-card">
+                        <div class="preview-thumbnail">
+                            <div class="thumbnail-placeholder" id="previewThumbnail">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div class="preview-badge" id="previewBadge">
+                                <span class="free-badge">FREE</span>
+                            </div>
+                        </div>
+                        <div class="preview-details">
+                            <h4 id="previewTitle">Nama Video</h4>
+                            <p class="preview-duration"><i class="fas fa-clock"></i> <span id="previewDuration">0:00</span></p>
+                            <p class="preview-status"><i class="fas fa-crown"></i> Status: <span id="previewStatus">Gratis</span></p>
+                            <div class="preview-uploader">
+                                <i class="fas fa-user"></i>
+                                <span>Uploaded By: <span class="verified">Admin <i class="fas fa-check-circle"></i></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Generation Section -->
+        <section class="admin-section" id="keys">
+            <div class="section-title">
+                <h2><i class="fas fa-key"></i> Generate VIP Keys</h2>
+                <p>Buat kunci akses VIP untuk pengguna</p>
+            </div>
+            
+            <div class="key-generation-container">
+                <div class="key-controls">
+                    <button class="btn-generate" id="generateKeyBtn">
+                        <i class="fas fa-plus-circle"></i> Generate New Key
+                    </button>
+                    <div class="key-count">
+                        <i class="fas fa-key"></i>
+                        <span>Total Keys: <strong id="totalKeys">0</strong></span>
+                    </div>
+                </div>
+                
+                <div class="key-display" id="keyDisplay">
+                    <div class="key-display-header">
+                        <h3><i class="fas fa-key"></i> Generated Key</h3>
+                        <button class="btn-copy" id="copyKeyBtn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="key-value" id="keyValue">
+                        Klik "Generate New Key" untuk membuat kunci
+                    </div>
+                    <div class="key-info">
+                        <p><i class="fas fa-info-circle"></i> Key ini dapat digunakan untuk 30x unlock video VIP.</p>
+                        <p><i class="fas fa-exclamation-triangle"></i> Simpan key dengan aman, tidak dapat dipulihkan.</p>
+                    </div>
+                </div>
+                
+                <div class="keys-list-container">
+                    <h3><i class="fas fa-list"></i> Daftar Keys Aktif</h3>
+                    <div class="keys-table-container">
+                        <table class="keys-table">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Created</th>
+                                    <th>Uses Left</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keysTableBody">
+                                <!-- Keys will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section class="admin-section" id="analytics">
+            <div class="section-title">
+                <h2><i class="fas fa-chart-line"></i> Analytics Dashboard</h2>
+                <p>Statistik dan analisis penggunaan SKANDALHUB</p>
+            </div>
+            
+            <div class="analytics-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalVideos">0</h3>
+                            <p>Total Video</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalViews">0</h3>
+                            <p>Total Views</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalLikes">0</h3>
+                            <p>Total Likes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="vipVideos">0</h3>
+                            <p>VIP Videos</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="top-videos-container">
+                    <h3><i class="fas fa-trophy"></i> Top 5 Trending Videos</h3>
+                    <div class="top-videos-list" id="topVideosList">
+                        <!-- Top videos will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Admin Footer -->
+    <footer class="admin-footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p><i class="fas fa-user-shield"></i> <strong>SKANDALHUB Admin Panel</strong> | Pro Version 2.0</p>
+                <p class="admin-warning"><i class="fas fa-exclamation-triangle"></i> Panel ini hanya untuk administrator yang berwenang.</p>
+            </div>
+            <div class="footer-copyright">
+                <p><i class="fas fa-copyright"></i> Copyright ❤ 2025 SkandalHub</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- External Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
