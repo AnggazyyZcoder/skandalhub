@@ -1,3 +1,4 @@
+<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,347 +7,501 @@
     <title>Admin Panel - SKANDALHUB</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
 </head>
-<body>
-    <!-- Admin Loading Screen -->
-    <div id="admin-loading" class="admin-loading">
-        <div class="loading-content">
+<body class="admin-body">
+    <!-- Loading Screen for Admin -->
+    <div id="adminLoading" class="loading-screen admin-loading">
+        <div class="loading-container">
             <div class="loading-logo">
-                <h1 class="logo-text">SKANDAL<span>HUB</span></h1>
-                <div class="logo-subtitle">Admin Panel</div>
+                <span class="logo-text">SKANDALHUB</span>
+                <div class="logo-fire">🔧</div>
             </div>
-            <div class="loading-spinner">
-                <div class="spinner"></div>
+            <div class="loading-text">
+                <span>Loading Admin Panel</span>
             </div>
-            <p>Loading Admin Dashboard...</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="progress-text">
+                    <span>Initializing secure connection...</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Admin Container -->
-    <div class="admin-container">
-        <!-- Admin Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="sidebar-header">
-                <div class="admin-logo">
-                    <h2 class="logo-text">SKANDAL<span>HUB</span></h2>
-                    <div class="logo-subtitle">Admin Panel</div>
-                </div>
-                <div class="admin-profile">
-                    <div class="admin-avatar">
-                        <i class="fas fa-user-shield"></i>
-                    </div>
-                    <div class="admin-info">
-                        <div class="admin-name">Admin <i class="fas fa-check-circle verified"></i></div>
-                        <div class="admin-role">Super Administrator</div>
+    <!-- Admin Main Container -->
+    <div class="admin-container hidden">
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div class="admin-header-left">
+                    <div class="admin-logo">
+                        <h1><i class="fas fa-user-shield"></i> SKANDALHUB Admin</h1>
+                        <div class="admin-badge">PRO EDITION</div>
                     </div>
                 </div>
-            </div>
-            
-            <nav class="admin-nav">
-                <ul>
-                    <li><a href="#" class="active" data-section="upload"><i class="fas fa-upload"></i> Upload Content</a></li>
-                    <li><a href="#" data-section="keys"><i class="fas fa-key"></i> Manage Keys</a></li>
-                    <li><a href="#" data-section="videos"><i class="fas fa-video"></i> Manage Videos</a></li>
-                    <li><a href="#" data-section="analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-                    <li><a href="index.html"><i class="fas fa-home"></i> Back to Site</a></li>
-                </ul>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="system-stats">
-                    <div class="stat">
-                        <i class="fas fa-video"></i>
-                        <span id="total-videos">0</span> Videos
+                
+                <div class="admin-header-right">
+                    <div class="admin-stats">
+                        <div class="admin-stat">
+                            <i class="fas fa-video"></i>
+                            <span id="adminVideoCount">0</span> Videos
+                        </div>
+                        <div class="admin-stat">
+                            <i class="fas fa-key"></i>
+                            <span id="adminKeyCount">0</span> Keys
+                        </div>
+                        <div class="admin-stat">
+                            <i class="fas fa-users"></i>
+                            <span id="adminUserCount">0</span> Views
+                        </div>
                     </div>
-                    <div class="stat">
-                        <i class="fas fa-key"></i>
-                        <span id="total-keys">0</span> Keys
-                    </div>
-                    <div class="stat">
-                        <i class="fas fa-eye"></i>
-                        <span id="total-views">0</span> Views
-                    </div>
+                    
+                    <button class="admin-logout" id="adminLogout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
                 </div>
             </div>
-        </aside>
+        </header>
 
         <!-- Admin Main Content -->
         <main class="admin-main">
-            <header class="admin-header">
-                <h1 id="admin-section-title">Upload Content</h1>
-                <div class="admin-actions">
-                    <button id="refresh-data" class="action-btn">
-                        <i class="fas fa-sync-alt"></i> Refresh Data
-                    </button>
-                    <div class="status-indicator">
-                        <i class="fas fa-circle status-connected"></i>
-                        <span>Connected to Database</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Upload Content Section -->
-            <section id="upload-section" class="admin-section active">
-                <div class="section-header">
-                    <h2><i class="fas fa-upload"></i> Upload New Content</h2>
-                    <p>Add new videos to the SKANDALHUB platform</p>
-                </div>
+            <!-- Sidebar -->
+            <aside class="admin-sidebar">
+                <nav class="admin-nav">
+                    <ul>
+                        <li><a href="#" class="active" data-section="upload"><i class="fas fa-upload"></i> Upload Content</a></li>
+                        <li><a href="#" data-section="manage"><i class="fas fa-list"></i> Manage Videos</a></li>
+                        <li><a href="#" data-section="keys"><i class="fas fa-key"></i> Generate Keys</a></li>
+                        <li><a href="#" data-section="analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                        <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> Settings</a></li>
+                    </ul>
+                </nav>
                 
-                <form id="upload-form" class="admin-form">
-                    <div class="form-group">
-                        <label for="video-name"><i class="fas fa-heading"></i> Video Name</label>
-                        <input type="text" id="video-name" placeholder="Enter video title" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="video-link"><i class="fas fa-link"></i> Video Link (MP4)</label>
-                        <input type="url" id="video-link" placeholder="https://example.com/video.mp4" required>
-                        <small>Must be a direct link to an MP4 file</small>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="video-duration"><i class="fas fa-clock"></i> Duration</label>
-                            <input type="text" id="video-duration" placeholder="MM:SS or SS" required>
-                            <small>Format: MM:SS or SS (seconds)</small>
+                <div class="admin-sidebar-footer">
+                    <div class="admin-info">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user-shield"></i>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="video-vip"><i class="fas fa-crown"></i> VIP Status</label>
-                            <div class="toggle-group">
-                                <input type="checkbox" id="video-vip" class="toggle-input">
-                                <label for="video-vip" class="toggle-label">
-                                    <span class="toggle-handle"></span>
-                                    <span class="toggle-text">VIP Content</span>
+                        <div class="admin-details">
+                            <h4>Administrator</h4>
+                            <p>Full Access</p>
+                        </div>
+                    </div>
+                    <a href="index.html" class="back-to-site">
+                        <i class="fas fa-arrow-left"></i> Back to Site
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="admin-content">
+                <!-- Upload Section -->
+                <section class="admin-section active" id="uploadSection">
+                    <div class="section-header">
+                        <h2><i class="fas fa-upload"></i> Upload New Content</h2>
+                        <p>Add new videos to SKANDALHUB database</p>
+                    </div>
+                    
+                    <div class="upload-form-container">
+                        <form id="uploadForm" class="upload-form">
+                            <div class="form-group">
+                                <label for="videoName">
+                                    <i class="fas fa-heading"></i> Video Name
                                 </label>
+                                <input type="text" id="videoName" required placeholder="Enter video title">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="videoLink">
+                                    <i class="fas fa-link"></i> Video Link (MP4)
+                                </label>
+                                <input type="url" id="videoLink" required placeholder="https://example.com/video.mp4">
+                                <div class="form-help">Direct link to MP4 file</div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="videoDuration">
+                                        <i class="fas fa-clock"></i> Duration
+                                    </label>
+                                    <input type="text" id="videoDuration" required placeholder="1:30 or 45s">
+                                    <div class="form-help">Format: MM:SS or SSs</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="videoVIP">
+                                        <i class="fas fa-crown"></i> VIP Status
+                                    </label>
+                                    <select id="videoVIP" required>
+                                        <option value="false">Free Content</option>
+                                        <option value="true">VIP Content</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="videoThumbnail">
+                                    <i class="fas fa-image"></i> Thumbnail Link (Optional)
+                                </label>
+                                <input type="url" id="videoThumbnail" placeholder="https://example.com/thumb.jpg">
+                                <div class="form-help">Leave empty to use default thumbnail</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="videoDescription">
+                                    <i class="fas fa-align-left"></i> Description
+                                </label>
+                                <textarea id="videoDescription" rows="3" placeholder="Enter video description"></textarea>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-upload" id="uploadBtn">
+                                    <i class="fas fa-cloud-upload-alt"></i> Upload Content
+                                </button>
+                                <button type="reset" class="btn-reset">
+                                    <i class="fas fa-redo"></i> Reset Form
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="upload-preview">
+                            <h3><i class="fas fa-eye"></i> Preview</h3>
+                            <div class="preview-card">
+                                <div class="preview-thumbnail">
+                                    <img id="previewThumb" src="https://via.placeholder.com/300x169/6a0dad/ffffff?text=Thumbnail+Preview" alt="Preview Thumbnail">
+                                    <div class="preview-badge" id="previewBadge">FREE</div>
+                                    <div class="preview-duration" id="previewDuration">0:00</div>
+                                </div>
+                                <div class="preview-info">
+                                    <h4 id="previewTitle">Video Title Will Appear Here</h4>
+                                    <p id="previewDescription">Description will appear here</p>
+                                    <div class="preview-meta">
+                                        <span><i class="fas fa-eye"></i> 0 views</span>
+                                        <span><i class="fas fa-heart"></i> 0 likes</span>
+                                    </div>
+                                    <div class="preview-uploader">
+                                        <i class="fas fa-user-shield"></i>
+                                        <span>Uploaded By: <strong>Admin</strong> <i class="fas fa-check-circle verified"></i></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="video-thumbnail"><i class="fas fa-image"></i> Thumbnail Link (Optional)</label>
-                        <input type="url" id="video-thumbnail" placeholder="https://example.com/thumbnail.jpg">
-                        <small>Leave empty to use default thumbnail</small>
+                    <div class="upload-status hidden" id="uploadStatus">
+                        <div class="status-message">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h4>Upload Successful!</h4>
+                                <p>Video has been added to the database.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Manage Videos Section -->
+                <section class="admin-section" id="manageSection">
+                    <div class="section-header">
+                        <h2><i class="fas fa-list"></i> Manage Videos</h2>
+                        <p>Edit or delete existing videos</p>
                     </div>
                     
-                    <div class="form-actions">
-                        <button type="submit" id="upload-video-btn" class="submit-btn">
-                            <i class="fas fa-upload"></i> Upload New Content
-                        </button>
-                        <button type="reset" class="reset-btn">
-                            <i class="fas fa-redo"></i> Reset Form
-                        </button>
-                    </div>
-                </form>
-                
-                <div id="upload-status" class="status-message"></div>
-            </section>
-
-            <!-- Manage Keys Section -->
-            <section id="keys-section" class="admin-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-key"></i> Generate & Manage Keys</h2>
-                    <p>Create and manage VIP access keys for users</p>
-                </div>
-                
-                <div class="keys-controls">
-                    <button id="generate-key-btn" class="generate-btn">
-                        <i class="fas fa-plus-circle"></i> Generate New Key
-                    </button>
-                    <div class="keys-info">
-                        <p><i class="fas fa-info-circle"></i> Each key allows 30 video unlocks</p>
-                    </div>
-                </div>
-                
-                <div class="generated-key-container" id="generated-key-container">
-                    <div class="key-display">
-                        <h3><i class="fas fa-key"></i> Generated Key</h3>
-                        <div class="key-value" id="generated-key-value">No key generated yet</div>
-                        <button id="copy-key-btn" class="copy-btn" disabled>
-                            <i class="fas fa-copy"></i> Copy Key
-                        </button>
-                        <div class="key-expiry">Expires after 30 unlocks</div>
-                    </div>
-                </div>
-                
-                <div class="keys-list-container">
-                    <h3><i class="fas fa-list"></i> Active Keys</h3>
-                    <div class="table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Key</th>
-                                    <th>Created</th>
-                                    <th>Unlocks Used</th>
-                                    <th>Remaining</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="keys-table-body">
-                                <!-- Keys will be loaded here dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="no-data" id="no-keys">
-                        <i class="fas fa-key"></i>
-                        <p>No keys generated yet</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Manage Videos Section -->
-            <section id="videos-section" class="admin-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-video"></i> Manage Videos</h2>
-                    <p>View, edit, or delete uploaded videos</p>
-                </div>
-                
-                <div class="videos-controls">
-                    <div class="search-control">
-                        <input type="text" id="admin-video-search" placeholder="Search videos...">
-                        <button id="admin-search-btn"><i class="fas fa-search"></i></button>
-                    </div>
-                    <div class="filter-control">
-                        <select id="video-filter">
+                    <div class="search-filter">
+                        <input type="text" id="manageSearch" placeholder="Search videos...">
+                        <select id="manageFilter">
                             <option value="all">All Videos</option>
-                            <option value="vip">VIP Only</option>
                             <option value="free">Free Only</option>
+                            <option value="vip">VIP Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="videos-list" id="manageVideosList">
+                        <!-- Videos will be loaded here -->
+                        <div class="loading-manage">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading videos...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Generate Keys Section -->
+                <section class="admin-section" id="keysSection">
+                    <div class="section-header">
+                        <h2><i class="fas fa-key"></i> Generate VIP Keys</h2>
+                        <p>Create keys for VIP content access</p>
+                    </div>
+                    
+                    <div class="keys-container">
+                        <div class="keys-form">
+                            <div class="form-group">
+                                <label for="keyQuantity">
+                                    <i class="fas fa-hashtag"></i> Number of Keys
+                                </label>
+                                <input type="number" id="keyQuantity" min="1" max="50" value="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="keyPrefix">
+                                    <i class="fas fa-tag"></i> Key Prefix (Optional)
+                                </label>
+                                <input type="text" id="keyPrefix" placeholder="SKH" maxlength="5">
+                            </div>
+                            
+                            <button class="btn-generate" id="generateKeysBtn">
+                                <i class="fas fa-key"></i> Generate Keys
+                            </button>
+                        </div>
+                        
+                        <div class="keys-result">
+                            <h3><i class="fas fa-clipboard-list"></i> Generated Keys</h3>
+                            <div class="keys-list" id="generatedKeys">
+                                <p class="no-keys">No keys generated yet. Click "Generate Keys" to create new keys.</p>
+                            </div>
+                            
+                            <div class="keys-actions">
+                                <button class="btn-copy-all" id="copyAllKeys">
+                                    <i class="fas fa-copy"></i> Copy All Keys
+                                </button>
+                                <button class="btn-clear-keys" id="clearKeys">
+                                    <i class="fas fa-trash"></i> Clear List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="existing-keys">
+                        <h3><i class="fas fa-database"></i> Existing Keys in Database</h3>
+                        <div class="keys-table-container">
+                            <table class="keys-table">
+                                <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Remaining Uses</th>
+                                        <th>Created</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="existingKeysTable">
+                                    <tr>
+                                        <td colspan="4" class="loading-keys">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading keys...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section class="admin-section" id="analyticsSection">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-bar"></i> Analytics Dashboard</h2>
+                        <p>View platform statistics and performance</p>
+                    </div>
+                    
+                    <div class="analytics-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon total-views">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="analyticsTotalViews">0</h3>
+                                <p>Total Views</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon total-likes">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="analyticsTotalLikes">0</h3>
+                                <p>Total Likes</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-card">
+                                <div class="stat-icon vip-content">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="analyticsVipVideos">0</h3>
+                                    <p>VIP Videos</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon active-keys">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="analyticsActiveKeys">0</h3>
+                                <p>Active Keys</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-charts">
+                        <div class="chart-container">
+                            <h3><i class="fas fa-fire"></i> Top Trending Videos</h3>
+                            <div class="chart-content" id="topVideosChart">
+                                <p class="no-data">No data available yet</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3><i class="fas fa-calendar"></i> Recent Activity</h3>
+                            <div class="chart-content" id="recentActivity">
+                                <p class="no-data">No recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section class="admin-section" id="settingsSection">
+                    <div class="section-header">
+                        <h2><i class="fas fa-cog"></i> Settings</h2>
+                        <p>Configure platform settings</p>
+                    </div>
+                    
+                    <div class="settings-container">
+                        <div class="settings-group">
+                            <h3><i class="fas fa-database"></i> Database Configuration</h3>
+                            <div class="setting-item">
+                                <label>JSONBin API Key</label>
+                                <div class="api-key-display">
+                                    <code>$2a$10$8ueR8M0Cf0Yf7nsvDMZSKupvmmji6O5V.W988gSb0avOJcn.TdC4q</code>
+                                    <button class="btn-copy" data-clipboard-text="$2a$10$8ueR8M0Cf0Yf7nsvDMZSKupvmmji6O5V.W988gSb0avOJcn.TdC4q">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label>Bin ID</label>
+                                <input type="text" id="binId" value="66d5d5cfe41b4d34e4f8c7a3" placeholder="Enter Bin ID">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label>API Endpoint</label>
+                                <input type="text" readonly value="https://api.jsonbin.io/v3/b/" class="readonly">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <h3><i class="fas fa-ad"></i> Advertisement Settings</h3>
+                            <div class="setting-item">
+                                <label>Banner 1 (GIF)</label>
+                                <input type="url" id="bannerGif" value="https://files.catbox.moe/gmd2fk.gif" placeholder="GIF Banner URL">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label>Banner 2 (Image)</label>
+                                <input type="url" id="bannerImage" value="https://files.catbox.moe/op6wtn.jpg" placeholder="Image Banner URL">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label>Banner Display Times</label>
+                                <div class="time-inputs">
+                                    <div class="time-input">
+                                        <span>GIF Duration:</span>
+                                        <input type="number" id="gifDuration" value="15" min="1"> seconds
+                                    </div>
+                                    <div class="time-input">
+                                        <span>Image Duration:</span>
+                                        <input type="number" id="imageDuration" value="5" min="1"> seconds
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <h3><i class="fas fa-user-shield"></i> Admin Preferences</h3>
+                            <div class="setting-item">
+                                <label>Admin Name</label>
+                                <input type="text" id="adminName" value="Admin" placeholder="Admin display name">
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label>Default Thumbnail</label>
+                                <input type="url" id="defaultThumbnail" value="https://via.placeholder.com/300x169/6a0dad/ffffff?text=SKANDALHUB" placeholder="Default thumbnail URL">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-actions">
+                            <button class="btn-save" id="saveSettings">
+                                <i class="fas fa-save"></i> Save All Settings
+                            </button>
+                            <button class="btn-reset-settings" id="resetSettings">
+                                <i class="fas fa-redo"></i> Reset to Defaults
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Admin Footer -->
+        <footer class="admin-footer">
+            <div class="admin-footer-content">
+                <div class="footer-info">
+                    <h4>SKANDALHUB Admin Panel</h4>
+                    <p>Professional Content Management System</p>
+                </div>
+                <div class="footer-copyright">
+                    <p>© Copyright ❤ 2025 SkandalHub - Admin Edition v2.0</p>
+                    <p class="footer-note">Secure connection established <i class="fas fa-lock"></i></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Edit Video -->
+    <div class="modal-overlay hidden" id="editModal">
+        <div class="modal-content edit-modal">
+            <button class="close-modal" id="closeEditModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3><i class="fas fa-edit"></i> Edit Video</h3>
+            <form id="editForm">
+                <input type="hidden" id="editVideoId">
+                <div class="form-group">
+                    <label>Video Name</label>
+                    <input type="text" id="editVideoName" required>
+                </div>
+                <div class="form-group">
+                    <label>Video Link</label>
+                    <input type="url" id="editVideoLink" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Duration</label>
+                        <input type="text" id="editVideoDuration" required>
+                    </div>
+                    <div class="form-group">
+                        <label>VIP Status</label>
+                        <select id="editVideoVIP">
+                            <option value="false">Free</option>
+                            <option value="true">VIP</option>
                         </select>
                     </div>
                 </div>
-                
-                <div class="videos-list">
-                    <div class="table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Thumbnail</th>
-                                    <th>Name</th>
-                                    <th>Duration</th>
-                                    <th>VIP</th>
-                                    <th>Views</th>
-                                    <th>Likes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="videos-table-body">
-                                <!-- Videos will be loaded here dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="no-data" id="no-videos">
-                        <i class="fas fa-video-slash"></i>
-                        <p>No videos uploaded yet</p>
-                    </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">Save Changes</button>
+                    <button type="button" class="btn-cancel" id="cancelEdit">Cancel</button>
                 </div>
-            </section>
-
-            <!-- Analytics Section -->
-            <section id="analytics-section" class="admin-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-chart-bar"></i> Platform Analytics</h2>
-                    <p>View statistics and insights about your content</p>
-                </div>
-                
-                <div class="analytics-grid">
-                    <div class="analytics-card">
-                        <div class="card-header">
-                            <i class="fas fa-eye"></i>
-                            <h3>Total Views</h3>
-                        </div>
-                        <div class="card-value" id="analytics-views">0</div>
-                        <div class="card-change">+0 this week</div>
-                    </div>
-                    
-                    <div class="analytics-card">
-                        <div class="card-header">
-                            <i class="fas fa-heart"></i>
-                            <h3>Total Likes</h3>
-                        </div>
-                        <div class="card-value" id="analytics-likes">0</div>
-                        <div class="card-change">+0 this week</div>
-                    </div>
-                    
-                    <div class="analytics-card">
-                        <div class="card-header">
-                            <i class="fas fa-crown"></i>
-                            <h3>VIP Videos</h3>
-                        </div>
-                        <div class="card-value" id="analytics-vip">0</div>
-                        <div class="card-percentage">0% of total</div>
-                    </div>
-                    
-                    <div class="analytics-card">
-                        <div class="card-header">
-                            <i class="fas fa-key"></i>
-                            <h3>Active Keys</h3>
-                        </div>
-                        <div class="card-value" id="analytics-keys">0</div>
-                        <div class="card-percentage">0 unlocks used</div>
-                    </div>
-                </div>
-                
-                <div class="analytics-chart">
-                    <h3><i class="fas fa-chart-line"></i> Views Over Time</h3>
-                    <div class="chart-container">
-                        <canvas id="views-chart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="top-videos">
-                    <h3><i class="fas fa-trophy"></i> Top 5 Videos</h3>
-                    <div class="table-container">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Video</th>
-                                    <th>Views</th>
-                                    <th>Likes</th>
-                                    <th>Engagement</th>
-                                </tr>
-                            </thead>
-                            <tbody id="top-videos-body">
-                                <!-- Top videos will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="success-modal" class="modal-overlay">
-        <div class="modal-content success-modal">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h3>Success!</h3>
-            <p id="success-message">Operation completed successfully</p>
-            <button id="close-success-modal" class="confirm-btn">OK</button>
+            </form>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="modal-overlay">
-        <div class="modal-content delete-modal">
-            <div class="warning-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3>Confirm Deletion</h3>
-            <p id="delete-message">Are you sure you want to delete this item? This action cannot be undone.</p>
-            <div class="delete-actions">
-                <button id="confirm-delete" class="danger-btn">Delete</button>
-                <button id="cancel-delete" class="cancel-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

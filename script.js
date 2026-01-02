@@ -1,200 +1,246 @@
+// script.js
 // JSONBin Configuration
 const JSONBIN_API_KEY = '$2a$10$8ueR8M0Cf0Yf7nsvDMZSKupvmmji6O5V.W988gSb0avOJcn.TdC4q';
-const JSONBIN_BIN_ID = '6957afe9ae596e708fc00027'; // You'll need to create your own bin and update this ID
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+const JSONBIN_BASE_URL = 'https://api.jsonbin.io/v3/b';
+const BIN_ID = '6957b7ac43b1c97be91443bb'; // Default bin ID - can be changed in admin settings
+const BIN_URL = `${JSONBIN_BASE_URL}/${BIN_ID}`;
 
-// Application State
-let videos = [];
-let keys = [];
-let currentUserKey = localStorage.getItem('skandalhub_vip_key') || null;
-let remainingUnlocks = parseInt(localStorage.getItem('skandalhub_remaining_unlocks')) || 0;
+// Global variables
 let currentPage = 1;
 let videosPerPage = 10;
-let currentFilter = 'trending';
+let allVideos = [];
+let filteredVideos = [];
+let userKey = localStorage.getItem('skandalhub_key');
+let keyRemainingUses = localStorage.getItem('skandalhub_key_uses') ? 
+                       parseInt(localStorage.getItem('skandalhub_key_uses')) : 0;
 let currentVideoId = null;
-let isKeyVisible = false;
+let adInterval;
 
-// DOM Elements
-const elements = {
-    // Loading Screen
-    loadingScreen: document.getElementById('loading-screen'),
-    currentProgress: document.getElementById('current-progress'),
-    progressFill: document.querySelector('.progress-fill'),
-    progressSteps: document.querySelectorAll('.step'),
-    
-    // Welcome Popup
-    welcomePopup: document.getElementById('welcome-popup'),
-    closePopupBtn: document.getElementById('close-popup-btn'),
-    
-    // Banner Ad
-    adImage: document.getElementById('ad-image'),
-    
-    // Video Grid
-    videoGrid: document.getElementById('video-grid'),
-    noResults: document.getElementById('no-results'),
-    searchInput: document.getElementById('search-input'),
-    searchBtn: document.getElementById('search-btn'),
-    
-    // Pagination
-    prevPageBtn: document.getElementById('prev-page'),
-    nextPageBtn: document.getElementById('next-page'),
-    currentPageSpan: document.getElementById('current-page'),
-    totalPagesSpan: document.getElementById('total-pages'),
-    pageIndicator: document.getElementById('page-indicator'),
-    
-    // Navigation Tabs
-    navTabs: document.querySelectorAll('.main-nav a'),
-    
-    // Video Modal
-    videoModal: document.getElementById('video-modal'),
-    closeModalBtn: document.getElementById('close-modal-btn'),
-    videoPlayer: document.getElementById('video-player'),
-    videoLocked: document.getElementById('video-locked'),
-    unlockBtn: document.getElementById('unlock-btn'),
-    videoModalTitle: document.getElementById('video-modal-title'),
-    videoModalDuration: document.getElementById('video-modal-duration'),
-    videoModalViews: document.getElementById('video-modal-views'),
-    videoModalLikes: document.getElementById('video-modal-likes'),
-    uploadDate: document.getElementById('upload-date'),
-    likeBtn: document.getElementById('like-btn'),
-    likeCount: document.getElementById('like-count'),
-    
-    // VIP Modal
-    vipModal: document.getElementById('vip-modal'),
-    closeVipModalBtn: document.getElementById('close-vip-modal-btn'),
-    vipKeyInput: document.getElementById('vip-key-input'),
-    showKeyBtn: document.getElementById('show-key-btn'),
-    keyError: document.getElementById('key-error'),
-    remainingUnlocksSpan: document.getElementById('remaining-unlocks'),
-    confirmKeyBtn: document.getElementById('confirm-key-btn'),
-    cancelKeyBtn: document.getElementById('cancel-key-btn'),
-    vipVideoTitle: document.getElementById('vip-video-title'),
-    
-    // Admin Elements
-    adminLoading: document.getElementById('admin-loading'),
-    adminSections: document.querySelectorAll('.admin-section'),
-    adminNavLinks: document.querySelectorAll('.admin-nav a'),
-    adminSectionTitle: document.getElementById('admin-section-title'),
-    
-    // Upload Form
-    uploadForm: document.getElementById('upload-form'),
-    uploadVideoBtn: document.getElementById('upload-video-btn'),
-    uploadStatus: document.getElementById('upload-status'),
-    
-    // Keys Management
-    generateKeyBtn: document.getElementById('generate-key-btn'),
-    generatedKeyValue: document.getElementById('generated-key-value'),
-    copyKeyBtn: document.getElementById('copy-key-btn'),
-    keysTableBody: document.getElementById('keys-table-body'),
-    noKeys: document.getElementById('no-keys'),
-    
-    // Videos Management
-    adminVideoSearch: document.getElementById('admin-video-search'),
-    adminSearchBtn: document.getElementById('admin-search-btn'),
-    videoFilter: document.getElementById('video-filter'),
-    videosTableBody: document.getElementById('videos-table-body'),
-    noVideos: document.getElementById('no-videos'),
-    
-    // Analytics
-    totalVideos: document.getElementById('total-videos'),
-    totalKeys: document.getElementById('total-keys'),
-    totalViews: document.getElementById('total-views'),
-    analyticsViews: document.getElementById('analytics-views'),
-    analyticsLikes: document.getElementById('analytics-likes'),
-    analyticsVip: document.getElementById('analytics-vip'),
-    analyticsKeys: document.getElementById('analytics-keys'),
-    topVideosBody: document.getElementById('top-videos-body'),
-    
-    // Success & Delete Modals
-    successModal: document.getElementById('success-modal'),
-    successMessage: document.getElementById('success-message'),
-    closeSuccessModal: document.getElementById('close-success-modal'),
-    deleteModal: document.getElementById('delete-modal'),
-    deleteMessage: document.getElementById('delete-message'),
-    confirmDelete: document.getElementById('confirm-delete'),
-    cancelDelete: document.getElementById('cancel-delete'),
-    refreshData: document.getElementById('refresh-data')
-};
-
-// Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if we're on admin page or main page
-    const isAdminPage = window.location.pathname.includes('admin.html');
-    
-    if (isAdminPage) {
+// Initialization
+document.addEventListener('DOMContentDidLoad', () => {
+    // Check which page we're on and initialize accordingly
+    if (document.body.classList.contains('admin-body')) {
         initAdminPage();
     } else {
         initMainPage();
     }
-    
-    // Initialize animations
-    initAnimations();
 });
 
-// ===== MAIN PAGE FUNCTIONS =====
+// Main Page Initialization
 function initMainPage() {
-    // Start loading screen animation
-    startLoadingAnimation();
+    // Start loading screen
+    startLoadingScreen();
     
-    // Load data from JSONBin
-    loadData().then(() => {
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Initialize banner ad rotation
-        initBannerAd();
-        
-        // Display videos
-        displayVideos();
-        
-        // Show welcome popup after a delay
+    // Initialize event listeners
+    initEventListeners();
+    
+    // Load data after loading screen
+    setTimeout(() => {
+        loadInitialData();
+    }, 100);
+}
+
+// Admin Page Initialization
+function initAdminPage() {
+    // Start admin loading screen
+    startAdminLoadingScreen();
+    
+    // Initialize admin event listeners
+    initAdminEventListeners();
+    
+    // Load admin data
+    setTimeout(() => {
+        loadAdminData();
+        setupAdminNavigation();
+        setupFormPreviews();
+    }, 100);
+}
+
+// ==============================
+// MAIN PAGE FUNCTIONS
+// ==============================
+
+// Loading Screen
+function startLoadingScreen() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingDots = document.getElementById('loadingDots');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressFill = document.querySelector('.progress-fill');
+    const featureList = document.getElementById('featureList');
+    
+    // Animate dots
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+        const dots = '.'.repeat(dotCount % 4);
+        loadingDots.textContent = `Loading${dots}`;
+        dotCount++;
+    }, 500);
+    
+    // Simulate feature initialization
+    const features = [
+        "Loading video database...",
+        "Initializing player...",
+        "Setting up user interface...",
+        "Loading trending content...",
+        "Preparing search functionality...",
+        "Setting up VIP access...",
+        "Loading advertisements...",
+        "Initializing smooth animations...",
+        "Setting up video categories...",
+        "Preparing user profile...",
+        "Loading analytics...",
+        "Setting up responsive design...",
+        "Initializing navigation...",
+        "Loading thumbnails...",
+        "Preparing video metadata...",
+        "Setting up like system...",
+        "Initializing key validation...",
+        "Loading admin tools...",
+        "Preparing statistics...",
+        "Setting up filters...",
+        "Initializing pagination...",
+        "Loading related videos...",
+        "Preparing share functionality...",
+        "Setting up download options...",
+        "Initializing notifications...",
+        "Loading user preferences...",
+        "Preparing video history...",
+        "Setting up watch later...",
+        "Initializing recommendations...",
+        "Finalizing setup..."
+    ];
+    
+    let currentFeature = 0;
+    const featureInterval = setInterval(() => {
+        if (currentFeature < features.length) {
+            // Update progress
+            const progress = Math.floor((currentFeature / features.length) * 100);
+            progressFill.style.width = `${progress}%`;
+            progressStatus.textContent = `Menginisialisasi fitur (${currentFeature}/${features.length})`;
+            
+            // Add feature to list
+            const li = document.createElement('li');
+            li.textContent = features[currentFeature];
+            featureList.appendChild(li);
+            
+            // Scroll to bottom
+            featureList.scrollTop = featureList.scrollHeight;
+            
+            currentFeature++;
+        } else {
+            // All features loaded
+            clearInterval(featureInterval);
+            clearInterval(dotInterval);
+            
+            // Complete progress bar
+            progressFill.style.width = '100%';
+            progressStatus.textContent = 'Ready! Starting SKANDALHUB...';
+            
+            // Hide loading screen after delay
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    
+                    // Show main content
+                    document.querySelector('.main-container').classList.remove('hidden');
+                    
+                    // Show welcome popup
+                    setTimeout(() => {
+                        document.getElementById('welcomePopup').classList.remove('hidden');
+                    }, 500);
+                }, 500);
+            }, 1000);
+        }
+    }, 100);
+}
+
+// Initialize Event Listeners for Main Page
+function initEventListeners() {
+    // Menu toggle
+    document.getElementById('menuToggle').addEventListener('click', () => {
+        document.getElementById('sideNav').classList.add('active');
+    });
+    
+    document.getElementById('closeNav').addEventListener('click', () => {
+        document.getElementById('sideNav').classList.remove('active');
+    });
+    
+    // Close popup
+    document.getElementById('closePopup').addEventListener('click', () => {
+        const popup = document.getElementById('welcomePopup');
+        popup.style.opacity = '0';
         setTimeout(() => {
-            elements.welcomePopup.classList.add('active');
-        }, 1000);
-    }).catch(error => {
-        console.error('Error loading data:', error);
-        // Still set up event listeners even if data fails to load
-        setupEventListeners();
-        showNotification('Error loading data. Please refresh the page.', 'error');
+            popup.classList.add('hidden');
+        }, 300);
+    });
+    
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', performSearch);
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Filter videos
+            const filter = this.getAttribute('data-filter');
+            filterVideos(filter);
+        });
+    });
+    
+    // Pagination
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateVideoDisplay();
+            updatePagination();
+        }
+    });
+    
+    document.getElementById('nextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateVideoDisplay();
+            updatePagination();
+        }
+    });
+    
+    // VIP Modal
+    document.getElementById('closeVipModal').addEventListener('click', () => {
+        document.getElementById('vipModal').classList.add('hidden');
+    });
+    
+    document.getElementById('cancelKeyBtn').addEventListener('click', () => {
+        document.getElementById('vipModal').classList.add('hidden');
+    });
+    
+    document.getElementById('confirmKeyBtn').addEventListener('click', validateVipKey);
+    document.getElementById('vipKeyInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') validateVipKey();
+    });
+    
+    // Video player
+    document.getElementById('closeVideoPlayer').addEventListener('click', () => {
+        document.getElementById('videoPlayer').classList.add('hidden');
+        const videoPlayer = document.getElementById('mainVideoPlayer');
+        videoPlayer.pause();
+        videoPlayer.currentTime = 0;
     });
 }
 
-function startLoadingAnimation() {
-    let progress = 0;
-    const totalSteps = 30;
-    const stepDuration = 150; // 150ms per step = 4.5 seconds total
-    
-    const progressInterval = setInterval(() => {
-        progress++;
-        elements.currentProgress.textContent = progress;
-        elements.progressFill.style.width = `${(progress / totalSteps) * 100}%`;
-        
-        // Update steps with animation
-        if (progress <= 10) {
-            elements.progressSteps[0].classList.add('loaded');
-        } else if (progress <= 20) {
-            elements.progressSteps[1].classList.add('loaded');
-        } else if (progress <= 30) {
-            elements.progressSteps[2].classList.add('loaded');
-        }
-        
-        if (progress === totalSteps) {
-            clearInterval(progressInterval);
-            
-            // Hide loading screen after a short delay
-            setTimeout(() => {
-                elements.loadingScreen.classList.add('hidden');
-                // Show main content
-                document.querySelector('.container').style.opacity = '1';
-            }, 500);
-        }
-    }, stepDuration);
-}
-
-async function loadData() {
+// Load Initial Data
+async function loadInitialData() {
     try {
-        const response = await fetch(JSONBIN_URL, {
-            method: 'GET',
+        // Load videos from JSONBin
+        const response = await fetch(`${BIN_URL}/latest`, {
             headers: {
                 'X-Master-Key': JSONBIN_API_KEY,
                 'X-Bin-Meta': false
@@ -202,1483 +248,1401 @@ async function loadData() {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Failed to load data');
         }
         
         const data = await response.json();
         
-        // Initialize with sample data if empty
-        if (!data || Object.keys(data).length === 0) {
-            videos = getSampleVideos();
-            keys = getSampleKeys();
-            await saveData();
+        // Check if videos exist in the data
+        if (data.videos && Array.isArray(data.videos)) {
+            allVideos = data.videos;
+            filteredVideos = [...allVideos];
+            
+            // Update video count
+            document.getElementById('totalVideos').textContent = allVideos.length;
+            
+            // Display videos
+            updateVideoDisplay();
+            updatePagination();
+            
+            // Load trending videos (top 6 by views)
+            loadTrendingVideos();
+            
+            // Setup ad rotation
+            setupAdRotation();
         } else {
-            videos = data.videos || getSampleVideos();
-            keys = data.keys || getSampleKeys();
+            // No videos yet, show placeholder
+            showNoVideosMessage();
         }
         
-        // Sort videos by views (trending)
-        sortVideosByTrending();
+        // Load user key info if exists
+        if (userKey) {
+            updateKeyStatus();
+        }
         
-        console.log('Data loaded successfully:', { videos, keys });
     } catch (error) {
         console.error('Error loading data:', error);
-        // Use sample data as fallback
-        videos = getSampleVideos();
-        keys = getSampleKeys();
+        showError('Failed to load videos. Please try again later.');
+        
+        // Use sample data for demonstration
+        loadSampleData();
     }
 }
 
-async function saveData() {
-    try {
-        const data = {
-            videos,
-            keys,
-            lastUpdated: new Date().toISOString()
-        };
-        
-        const response = await fetch(JSONBIN_URL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': JSONBIN_API_KEY
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        console.log('Data saved successfully');
-        return true;
-    } catch (error) {
-        console.error('Error saving data:', error);
-        showNotification('Error saving data. Please try again.', 'error');
-        return false;
-    }
-}
-
-function getSampleVideos() {
-    return [
-        {
-            id: 1,
-            name: 'ANGGAZYY SERIES EPISODE 1',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '1:30',
-            vip: false,
-            views: 3000,
-            likes: 1500,
-            uploadDate: '2025-01-15',
-            uploader: 'Admin'
-        },
-        {
-            id: 2,
-            name: 'EXCLUSIVE CONTENT: VIP PREVIEW',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '2:45',
-            vip: true,
-            views: 1500,
-            likes: 800,
-            uploadDate: '2025-01-16',
-            uploader: 'Admin'
-        },
-        {
-            id: 3,
-            name: 'TRENDING NOW: SPECIAL EPISODE',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '3:20',
-            vip: false,
-            views: 4500,
-            likes: 2200,
-            uploadDate: '2025-01-14',
-            uploader: 'Admin'
-        },
-        {
-            id: 4,
-            name: 'PREMIUM VIP CONTENT UNLOCKED',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1542751110-97427bbecf20?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '4:10',
-            vip: true,
-            views: 1200,
-            likes: 600,
-            uploadDate: '2025-01-17',
-            uploader: 'Admin'
-        },
-        {
-            id: 5,
-            name: 'LATEST RELEASE: NEW SERIES',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1532540031727-8e76bb5c5f1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '1:55',
-            vip: false,
-            views: 2800,
-            likes: 1400,
-            uploadDate: '2025-01-18',
-            uploader: 'Admin'
-        },
-        {
-            id: 6,
-            name: 'EXCLUSIVE VIP ACCESS ONLY',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1489599809516-9827b6d1cf13?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '2:30',
-            vip: true,
-            views: 900,
-            likes: 450,
-            uploadDate: '2025-01-19',
-            uploader: 'Admin'
-        },
-        {
-            id: 7,
-            name: 'POPULAR EPISODE: HIGHLIGHTS',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '3:45',
-            vip: false,
-            views: 5200,
-            likes: 2600,
-            uploadDate: '2025-01-13',
-            uploader: 'Admin'
-        },
-        {
-            id: 8,
-            name: 'VIP SPECIAL: BEHIND THE SCENES',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '5:20',
-            vip: true,
-            views: 1800,
-            likes: 950,
-            uploadDate: '2025-01-20',
-            uploader: 'Admin'
-        },
-        {
-            id: 9,
-            name: 'NEW UPLOAD: DAILY CONTENT',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '2:15',
-            vip: false,
-            views: 2100,
-            likes: 1100,
-            uploadDate: '2025-01-21',
-            uploader: 'Admin'
-        },
-        {
-            id: 10,
-            name: 'VIP EXCLUSIVE: LIMITED ACCESS',
-            link: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-            thumbnail: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            duration: '4:45',
-            vip: true,
-            views: 1300,
-            likes: 700,
-            uploadDate: '2025-01-22',
-            uploader: 'Admin'
-        }
-    ];
-}
-
-function getSampleKeys() {
-    return [
-        {
-            id: 'SKH-VIP-2025-ABC123',
-            created: '2025-01-01',
-            unlocksUsed: 5,
-            remaining: 25,
-            active: true
-        },
-        {
-            id: 'SKH-VIP-2025-XYZ789',
-            created: '2025-01-10',
-            unlocksUsed: 15,
-            remaining: 15,
-            active: true
-        },
-        {
-            id: 'SKH-VIP-2024-DEF456',
-            created: '2024-12-15',
-            unlocksUsed: 30,
-            remaining: 0,
-            active: false
-        }
-    ];
-}
-
-function setupEventListeners() {
-    // Welcome popup
-    if (elements.closePopupBtn) {
-        elements.closePopupBtn.addEventListener('click', () => {
-            elements.welcomePopup.classList.remove('active');
-        });
+// Load Trending Videos
+function loadTrendingVideos() {
+    const trendingContainer = document.getElementById('trendingVideos');
+    
+    if (!trendingContainer) return;
+    
+    // Sort videos by views (descending) and take top 6
+    const trendingVideos = [...allVideos]
+        .sort((a, b) => (b.countClick || 0) - (a.countClick || 0))
+        .slice(0, 6);
+    
+    if (trendingVideos.length === 0) {
+        trendingContainer.innerHTML = '<p class="no-videos">No trending videos yet.</p>';
+        return;
     }
     
-    // Search functionality
-    if (elements.searchBtn) {
-        elements.searchBtn.addEventListener('click', performSearch);
+    trendingContainer.innerHTML = trendingVideos.map(video => createVideoCard(video, true)).join('');
+    
+    // Add event listeners to new video cards
+    addVideoCardEventListeners();
+}
+
+// Update Video Display
+function updateVideoDisplay() {
+    const videosContainer = document.getElementById('newVideos');
+    if (!videosContainer) return;
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * videosPerPage;
+    const endIndex = startIndex + videosPerPage;
+    const pageVideos = filteredVideos.slice(startIndex, endIndex);
+    
+    if (pageVideos.length === 0) {
+        videosContainer.innerHTML = '<p class="no-videos">No videos found. Try a different filter or search term.</p>';
+        return;
     }
     
-    if (elements.searchInput) {
-        elements.searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                performSearch();
+    // Create video cards
+    videosContainer.innerHTML = pageVideos.map(video => createVideoCard(video)).join('');
+    
+    // Add event listeners to new video cards
+    addVideoCardEventListeners();
+}
+
+// Create Video Card HTML
+function createVideoCard(video, isTrending = false) {
+    const isVip = video.vip === true;
+    const views = video.countClick || 0;
+    const likes = video.like || 0;
+    const duration = video.duration || '0:00';
+    const thumbnail = video.thumbnail || `https://via.placeholder.com/300x169/6a0dad/ffffff?text=${encodeURIComponent(video.name || 'Video')}`;
+    
+    return `
+        <div class="video-card" data-id="${video.id}" data-vip="${isVip}">
+            <div class="video-thumbnail">
+                <img src="${thumbnail}" alt="${video.name || 'Video'}">
+                ${isVip ? '<div class="vip-lock"><i class="fas fa-lock"></i></div>' : ''}
+                <div class="video-overlay">
+                    <button class="play-btn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                ${isVip ? '<div class="vip-badge"><i class="fas fa-crown"></i> VIP</div>' : ''}
+                <div class="duration">${duration}</div>
+            </div>
+            <div class="video-info">
+                <h3>${video.name || 'Untitled Video'}</h3>
+                <div class="video-meta">
+                    <span><i class="fas fa-eye"></i> ${formatNumber(views)}</span>
+                    <span><i class="fas fa-heart"></i> ${formatNumber(likes)}</span>
+                    ${isTrending ? '<span><i class="fas fa-fire"></i> Trending</span>' : ''}
+                </div>
+                <div class="video-uploader">
+                    <i class="fas fa-user-shield"></i>
+                    Uploaded By: <span class="verified">Admin <i class="fas fa-check-circle"></i></span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Add Event Listeners to Video Cards
+function addVideoCardEventListeners() {
+    document.querySelectorAll('.video-card').forEach(card => {
+        const videoId = card.getAttribute('data-id');
+        const isVip = card.getAttribute('data-vip') === 'true';
+        
+        card.addEventListener('click', (e) => {
+            // Don't trigger if clicking on play button (handled separately)
+            if (e.target.closest('.play-btn')) return;
+            
+            if (isVip) {
+                // Show VIP unlock modal
+                showVipUnlockModal(videoId);
+            } else {
+                // Play free video
+                playVideo(videoId);
             }
         });
-    }
-    
-    // Pagination
-    if (elements.prevPageBtn) {
-        elements.prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                displayVideos();
-            }
-        });
-    }
-    
-    if (elements.nextPageBtn) {
-        elements.nextPageBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(getFilteredVideos().length / videosPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                displayVideos();
-            }
-        });
-    }
-    
-    // Navigation tabs
-    if (elements.navTabs) {
-        elements.navTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                e.preventDefault();
+        
+        // Play button
+        const playBtn = card.querySelector('.play-btn');
+        if (playBtn) {
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 
-                // Update active tab
-                elements.navTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update filter and display videos
-                currentFilter = tab.getAttribute('data-tab');
-                currentPage = 1;
-                displayVideos();
+                if (isVip) {
+                    // Show VIP unlock modal
+                    showVipUnlockModal(videoId);
+                } else {
+                    // Play free video
+                    playVideo(videoId);
+                }
             });
-        });
-    }
-    
-    // Video modal
-    if (elements.closeModalBtn) {
-        elements.closeModalBtn.addEventListener('click', () => {
-            closeVideoModal();
-        });
-    }
-    
-    // Unlock button
-    if (elements.unlockBtn) {
-        elements.unlockBtn.addEventListener('click', () => {
-            elements.vipModal.classList.add('active');
-            elements.vipVideoTitle.textContent = elements.videoModalTitle.textContent;
-            elements.remainingUnlocksSpan.textContent = remainingUnlocks;
-        });
-    }
-    
-    // Like button
-    if (elements.likeBtn) {
-        elements.likeBtn.addEventListener('click', likeVideo);
-    }
-    
-    // VIP modal
-    if (elements.closeVipModalBtn) {
-        elements.closeVipModalBtn.addEventListener('click', () => {
-            elements.vipModal.classList.remove('active');
-            elements.keyError.textContent = '';
-            elements.vipKeyInput.value = '';
-        });
-    }
-    
-    if (elements.showKeyBtn) {
-        elements.showKeyBtn.addEventListener('click', () => {
-            isKeyVisible = !isKeyVisible;
-            elements.vipKeyInput.type = isKeyVisible ? 'text' : 'password';
-            elements.showKeyBtn.innerHTML = isKeyVisible ? 
-                '<i class="fas fa-eye-slash"></i>' : 
-                '<i class="fas fa-eye"></i>';
-        });
-    }
-    
-    if (elements.confirmKeyBtn) {
-        elements.confirmKeyBtn.addEventListener('click', validateKey);
-    }
-    
-    if (elements.cancelKeyBtn) {
-        elements.cancelKeyBtn.addEventListener('click', () => {
-            elements.vipModal.classList.remove('active');
-            elements.keyError.textContent = '';
-            elements.vipKeyInput.value = '';
-        });
-    }
-    
-    // VIP key input enter key
-    if (elements.vipKeyInput) {
-        elements.vipKeyInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                validateKey();
-            }
-        });
-    }
-    
-    // Close modals when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal-overlay')) {
-            elements.videoModal.classList.remove('active');
-            elements.vipModal.classList.remove('active');
-            elements.keyError.textContent = '';
-            elements.vipKeyInput.value = '';
-        }
-    });
-    
-    // Escape key to close modals
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            elements.videoModal.classList.remove('active');
-            elements.vipModal.classList.remove('active');
-            elements.keyError.textContent = '';
-            elements.vipKeyInput.value = '';
         }
     });
 }
 
-function performSearch() {
-    const searchTerm = elements.searchInput.value.toLowerCase().trim();
+// Show VIP Unlock Modal
+function showVipUnlockModal(videoId) {
+    currentVideoId = videoId;
+    const video = allVideos.find(v => v.id == videoId);
     
-    if (searchTerm) {
-        // Filter videos by search term
-        const filtered = videos.filter(video => 
-            video.name.toLowerCase().includes(searchTerm) ||
-            video.uploader.toLowerCase().includes(searchTerm)
-        );
+    if (!video) return;
+    
+    // Update modal content
+    document.getElementById('modalVideoTitle').textContent = video.name || 'VIP Video';
+    document.getElementById('modalVideoDuration').textContent = video.duration || '0:00';
+    document.getElementById('modalVideoViews').textContent = formatNumber(video.countClick || 0);
+    document.getElementById('modalVideoThumb').src = video.thumbnail || `https://via.placeholder.com/100x60/6a0dad/ffffff?text=VIP`;
+    
+    // Update key status
+    document.getElementById('remainingCount').textContent = keyRemainingUses;
+    
+    // Clear input and message
+    document.getElementById('vipKeyInput').value = '';
+    const keyMessage = document.getElementById('keyMessage');
+    keyMessage.classList.add('hidden');
+    keyMessage.textContent = '';
+    
+    // Show modal
+    document.getElementById('vipModal').classList.remove('hidden');
+    document.getElementById('vipKeyInput').focus();
+}
+
+// Validate VIP Key
+async function validateVipKey() {
+    const keyInput = document.getElementById('vipKeyInput');
+    const key = keyInput.value.trim();
+    const keyMessage = document.getElementById('keyMessage');
+    
+    if (!key) {
+        showKeyMessage('Please enter a VIP key.', 'error');
+        return;
+    }
+    
+    // For demo purposes, accept any key starting with "SKH"
+    if (key.startsWith('SKH')) {
+        // Save key to localStorage
+        localStorage.setItem('skandalhub_key', key);
+        localStorage.setItem('skandalhub_key_uses', '30');
         
-        // Update display with search results
-        displayVideos(filtered);
+        userKey = key;
+        keyRemainingUses = 30;
         
-        // Show no results message if needed
-        elements.noResults.style.display = filtered.length === 0 ? 'block' : 'none';
+        showKeyMessage('Key validated successfully! You now have 30 unlocks remaining.', 'success');
+        
+        // Close modal and play video after delay
+        setTimeout(() => {
+            document.getElementById('vipModal').classList.add('hidden');
+            playVideo(currentVideoId);
+        }, 1500);
     } else {
-        // Reset to normal display
-        displayVideos();
-        elements.noResults.style.display = 'none';
+        showKeyMessage('Invalid VIP key. Please check and try again.', 'error');
+    }
+    
+    // In a real implementation, you would validate against the database
+    // try {
+    //     const response = await fetch(`${BIN_URL}/latest`, {
+    //         headers: {
+    //             'X-Master-Key': JSONBIN_API_KEY,
+    //             'X-Bin-Meta': false
+    //         }
+    //     });
+    //     
+    //     if (response.ok) {
+    //         const data = await response.json();
+    //         const keys = data.keys || [];
+    //         
+    //         const validKey = keys.find(k => k.key === key && k.remaining > 0);
+    //         
+    //         if (validKey) {
+    //             // Key is valid
+    //             userKey = key;
+    //             keyRemainingUses = validKey.remaining;
+    //             
+    //             // Update key uses in database
+    //             validKey.remaining--;
+    //             
+    //             // Save to localStorage
+    //             localStorage.setItem('skandalhub_key', key);
+    //             localStorage.setItem('skandalhub_key_uses', validKey.remaining);
+    //             
+    //             showKeyMessage('Key validated successfully!', 'success');
+    //             
+    //             // Close modal and play video
+    //             setTimeout(() => {
+    //                 document.getElementById('vipModal').classList.add('hidden');
+    //                 playVideo(currentVideoId);
+    //             }, 1500);
+    //         } else {
+    //             showKeyMessage('Invalid or expired VIP key.', 'error');
+    //         }
+    //     }
+    // } catch (error) {
+    //     console.error('Error validating key:', error);
+    //     showKeyMessage('Error validating key. Please try again.', 'error');
+    // }
+}
+
+// Show Key Message
+function showKeyMessage(message, type) {
+    const keyMessage = document.getElementById('keyMessage');
+    keyMessage.textContent = message;
+    keyMessage.className = 'modal-message';
+    keyMessage.classList.add(type);
+    keyMessage.classList.remove('hidden');
+}
+
+// Update Key Status
+function updateKeyStatus() {
+    document.getElementById('remainingCount').textContent = keyRemainingUses;
+}
+
+// Play Video
+function playVideo(videoId) {
+    const video = allVideos.find(v => v.id == videoId);
+    
+    if (!video) {
+        showError('Video not found.');
+        return;
+    }
+    
+    // Increment view count
+    video.countClick = (video.countClick || 0) + 1;
+    
+    // Update in database (in a real implementation)
+    // updateVideoInDatabase(video);
+    
+    // Update video player
+    document.getElementById('playerVideoTitle').textContent = video.name || 'Video';
+    document.getElementById('playerViews').textContent = formatNumber(video.countClick);
+    document.getElementById('playerDuration').textContent = video.duration || '0:00';
+    document.getElementById('playerDate').textContent = 'Just now';
+    document.getElementById('playerLikes').textContent = formatNumber(video.like || 0);
+    document.getElementById('playerDescription').textContent = video.description || 'No description available.';
+    
+    // Set video source
+    const videoPlayer = document.getElementById('mainVideoPlayer');
+    const videoSource = videoPlayer.querySelector('source');
+    videoSource.src = video.linkvideo || '';
+    videoPlayer.load();
+    
+    // Show video player
+    document.getElementById('videoPlayer').classList.remove('hidden');
+    
+    // Load related videos
+    loadRelatedVideos(videoId);
+    
+    // Add like button event listener
+    document.getElementById('likeVideoBtn').onclick = () => likeVideo(videoId);
+}
+
+// Like Video
+function likeVideo(videoId) {
+    const video = allVideos.find(v => v.id == videoId);
+    
+    if (!video) return;
+    
+    // Increment like count
+    video.like = (video.like || 0) + 1;
+    
+    // Update display
+    document.getElementById('playerLikes').textContent = formatNumber(video.like);
+    
+    // Update in database (in a real implementation)
+    // updateVideoInDatabase(video);
+    
+    // Update like button
+    const likeBtn = document.getElementById('likeVideoBtn');
+    likeBtn.innerHTML = `<i class="fas fa-heart"></i> <span>${formatNumber(video.like)}</span>`;
+    likeBtn.style.color = '#ff4757';
+    
+    // Show feedback
+    showNotification('Video liked!', 'success');
+}
+
+// Load Related Videos
+function loadRelatedVideos(currentVideoId) {
+    const relatedContainer = document.getElementById('relatedVideos');
+    
+    // Get videos excluding the current one
+    const relatedVideos = allVideos
+        .filter(v => v.id != currentVideoId)
+        .slice(0, 4); // Show up to 4 related videos
+    
+    if (relatedVideos.length === 0) {
+        relatedContainer.innerHTML = '<p class="no-related">No related videos found.</p>';
+        return;
+    }
+    
+    relatedContainer.innerHTML = relatedVideos.map(video => `
+        <div class="related-video-card" data-id="${video.id}">
+            <img src="${video.thumbnail || `https://via.placeholder.com/100x60/6a0dad/ffffff?text=${encodeURIComponent(video.name || 'Video')}`}" alt="${video.name}">
+            <div class="related-video-info">
+                <h5>${video.name || 'Untitled Video'}</h5>
+                <div class="related-video-meta">
+                    <span><i class="fas fa-eye"></i> ${formatNumber(video.countClick || 0)}</span>
+                    <span><i class="fas fa-clock"></i> ${video.duration || '0:00'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Add event listeners to related videos
+    document.querySelectorAll('.related-video-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const videoId = card.getAttribute('data-id');
+            const video = allVideos.find(v => v.id == videoId);
+            
+            if (video && video.vip) {
+                showVipUnlockModal(videoId);
+            } else {
+                playVideo(videoId);
+            }
+        });
+    });
+}
+
+// Perform Search
+function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    if (searchTerm === '') {
+        filteredVideos = [...allVideos];
+    } else {
+        filteredVideos = allVideos.filter(video => 
+            video.name && video.name.toLowerCase().includes(searchTerm)
+        );
     }
     
     currentPage = 1;
+    updateVideoDisplay();
+    updatePagination();
 }
 
-function getFilteredVideos() {
-    switch (currentFilter) {
-        case 'trending':
-            return [...videos].sort((a, b) => b.views - a.views);
-        case 'new':
-            return [...videos].sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-        case 'vip':
-            return videos.filter(video => video.vip);
-        case 'all':
-        default:
-            return videos;
+// Filter Videos
+function filterVideos(filter) {
+    if (filter === 'all') {
+        filteredVideos = [...allVideos];
+    } else if (filter === 'free') {
+        filteredVideos = allVideos.filter(video => !video.vip);
+    } else if (filter === 'vip') {
+        filteredVideos = allVideos.filter(video => video.vip === true);
     }
+    
+    currentPage = 1;
+    updateVideoDisplay();
+    updatePagination();
 }
 
-function displayVideos(filteredVideos = null) {
-    const videosToDisplay = filteredVideos || getFilteredVideos();
-    const startIndex = (currentPage - 1) * videosPerPage;
-    const endIndex = startIndex + videosPerPage;
-    const paginatedVideos = videosToDisplay.slice(startIndex, endIndex);
+// Update Pagination
+function updatePagination() {
+    const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const currentPageSpan = document.getElementById('currentPage');
+    const totalPagesSpan = document.getElementById('totalPages');
     
-    // Clear current grid
-    elements.videoGrid.innerHTML = '';
+    currentPageSpan.textContent = currentPage;
+    totalPagesSpan.textContent = totalPages;
+    
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+}
+
+// Setup Ad Rotation
+function setupAdRotation() {
+    const adContainer = document.getElementById('adContainer');
+    if (!adContainer) return;
+    
+    const gifUrl = 'https://files.catbox.moe/gmd2fk.gif';
+    const imageUrl = 'https://files.catbox.moe/op6wtn.jpg';
+    
+    let isGif = true;
+    
+    function updateAd() {
+        if (isGif) {
+            adContainer.innerHTML = `<img src="${gifUrl}" alt="Advertisement">`;
+            isGif = false;
+            setTimeout(updateAd, 15000); // 15 seconds for GIF
+        } else {
+            adContainer.innerHTML = `<img src="${imageUrl}" alt="Advertisement">`;
+            isGif = true;
+            setTimeout(updateAd, 5000); // 5 seconds for image
+        }
+    }
+    
+    // Start with GIF
+    updateAd();
+    
+    // Clear any existing interval
+    if (adInterval) clearInterval(adInterval);
+    
+    // Note: We're using recursive setTimeout instead of setInterval for different durations
+}
+
+// Load Sample Data (for demo when API fails)
+function loadSampleData() {
+    allVideos = [
+        {
+            id: 1,
+            name: 'ANGGAZYY SERIES - Episode 1',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            duration: '1:30',
+            vip: false,
+            countClick: 3250,
+            like: 1240,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=ANGGAZYY+SERIES'
+        },
+        {
+            id: 2,
+            name: 'Exclusive VIP Content - Special Edition',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+            duration: '2:45',
+            vip: true,
+            countClick: 2150,
+            like: 980,
+            thumbnail: 'https://via.placeholder.com/300x169/ffaa00/000000?text=VIP+EXCLUSIVE'
+        },
+        {
+            id: 3,
+            name: 'SKANDALHUB Premium Series',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+            duration: '3:20',
+            vip: false,
+            countClick: 1890,
+            like: 756,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=PREMIUM+SERIES'
+        },
+        {
+            id: 4,
+            name: 'Behind The Scenes - VIP Access',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+            duration: '4:15',
+            vip: true,
+            countClick: 1650,
+            like: 620,
+            thumbnail: 'https://via.placeholder.com/300x169/ffaa00/000000?text=BEHIND+SCENES'
+        },
+        {
+            id: 5,
+            name: 'Top Trending Video of the Week',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+            duration: '2:10',
+            vip: false,
+            countClick: 4320,
+            like: 1870,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=TRENDING+NOW'
+        },
+        {
+            id: 6,
+            name: 'Limited Edition VIP Series',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+            duration: '3:45',
+            vip: true,
+            countClick: 1980,
+            like: 890,
+            thumbnail: 'https://via.placeholder.com/300x169/ffaa00/000000?text=LIMITED+EDITION'
+        },
+        {
+            id: 7,
+            name: 'New Release - Episode 2',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+            duration: '1:55',
+            vip: false,
+            countClick: 1560,
+            like: 540,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=NEW+RELEASE'
+        },
+        {
+            id: 8,
+            name: 'Exclusive Interview - VIP Only',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+            duration: '5:20',
+            vip: true,
+            countClick: 1760,
+            like: 720,
+            thumbnail: 'https://via.placeholder.com/300x169/ffaa00/000000?text=EXCLUSIVE+INTERVIEW'
+        },
+        {
+            id: 9,
+            name: 'Special Documentary Series',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+            duration: '3:30',
+            vip: false,
+            countClick: 2430,
+            like: 980,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=DOCUMENTARY'
+        },
+        {
+            id: 10,
+            name: 'Premium VIP Collection',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+            duration: '4:40',
+            vip: true,
+            countClick: 1890,
+            like: 810,
+            thumbnail: 'https://via.placeholder.com/300x169/ffaa00/000000?text=PREMIUM+VIP'
+        }
+    ];
+    
+    filteredVideos = [...allVideos];
+    
+    // Update video count
+    document.getElementById('totalVideos').textContent = allVideos.length;
     
     // Display videos
-    paginatedVideos.forEach((video, index) => {
-        const videoCard = createVideoCard(video, index);
-        elements.videoGrid.appendChild(videoCard);
-    });
-    
-    // Update pagination controls
-    updatePagination(videosToDisplay.length);
-    
-    // Show/hide no results message
-    elements.noResults.style.display = paginatedVideos.length === 0 ? 'block' : 'none';
+    updateVideoDisplay();
+    updatePagination();
+    loadTrendingVideos();
+    setupAdRotation();
 }
 
-function createVideoCard(video, index) {
-    const card = document.createElement('div');
-    card.className = 'video-card';
-    card.style.animationDelay = `${index * 0.05}s`;
-    
-    // Format duration
-    let durationText = video.duration;
-    if (!video.duration.includes(':')) {
-        // Assume it's seconds only
-        const seconds = parseInt(video.duration);
-        if (seconds < 60) {
-            durationText = `${seconds}s`;
-        } else {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            durationText = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-        }
+// Show No Videos Message
+function showNoVideosMessage() {
+    const videosContainer = document.getElementById('newVideos');
+    if (videosContainer) {
+        videosContainer.innerHTML = `
+            <div class="no-videos-message">
+                <i class="fas fa-video-slash"></i>
+                <h3>No videos available yet</h3>
+                <p>Check back soon for new content!</p>
+            </div>
+        `;
     }
-    
-    // Check if user has access (for VIP videos)
-    const hasAccess = !video.vip || (currentUserKey && remainingUnlocks > 0);
-    
-    card.innerHTML = `
-        <div class="video-thumbnail">
-            <img src="${video.thumbnail || 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}" alt="${video.name}" loading="lazy">
-            ${video.vip ? '<div class="vip-badge"><i class="fas fa-crown"></i> VIP</div>' : ''}
-            ${video.vip && !hasAccess ? `
-                <div class="lock-overlay">
-                    <div class="lock-icon-small"><i class="fas fa-lock"></i></div>
-                    <small>VIP Content</small>
-                </div>
-            ` : ''}
-            <div class="duration">${durationText}</div>
-        </div>
-        <div class="video-info">
-            <h3 class="video-title">${video.name}</h3>
-            <div class="video-stats">
-                <div class="stat">
-                    <i class="fas fa-eye"></i> ${video.views.toLocaleString()}
-                </div>
-                <div class="stat">
-                    <i class="fas fa-heart"></i> ${video.likes.toLocaleString()}
-                </div>
-            </div>
-            <div class="uploader">
-                <span class="uploader-name">${video.uploader}</span>
-                <i class="fas fa-check-circle verified"></i>
-            </div>
-            <button class="watch-btn" data-id="${video.id}">
-                <i class="fas fa-play"></i> ${video.vip && !hasAccess ? 'Unlock to Watch' : 'Watch Now'}
-            </button>
-        </div>
+}
+
+// Show Error Message
+function showError(message) {
+    // Create error notification
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-notification';
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <span>${message}</span>
+        <button class="close-error"><i class="fas fa-times"></i></button>
     `;
     
-    // Add click event to watch button
-    const watchBtn = card.querySelector('.watch-btn');
-    watchBtn.addEventListener('click', () => openVideoModal(video.id));
+    document.body.appendChild(errorDiv);
     
-    return card;
-}
-
-function updatePagination(totalVideos) {
-    const totalPages = Math.ceil(totalVideos / videosPerPage);
+    // Add close button event
+    errorDiv.querySelector('.close-error').addEventListener('click', () => {
+        errorDiv.remove();
+    });
     
-    elements.currentPageSpan.textContent = currentPage;
-    elements.totalPagesSpan.textContent = totalPages;
-    
-    elements.prevPageBtn.disabled = currentPage === 1;
-    elements.nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-    
-    // Update page indicator text
-    const startVideo = ((currentPage - 1) * videosPerPage) + 1;
-    const endVideo = Math.min(currentPage * videosPerPage, totalVideos);
-    
-    if (totalVideos > 0) {
-        elements.pageIndicator.innerHTML = `Showing <span>${startVideo}-${endVideo}</span> of <span>${totalVideos}</span> videos`;
-    } else {
-        elements.pageIndicator.textContent = 'No videos found';
-    }
-}
-
-function openVideoModal(videoId) {
-    const video = videos.find(v => v.id === videoId);
-    if (!video) return;
-    
-    currentVideoId = videoId;
-    
-    // Update modal content
-    elements.videoModalTitle.textContent = video.name;
-    elements.videoModalDuration.textContent = video.duration;
-    elements.videoModalViews.textContent = video.views.toLocaleString();
-    elements.videoModalLikes.textContent = video.likes.toLocaleString();
-    elements.uploadDate.textContent = formatDate(video.uploadDate);
-    elements.likeCount.textContent = video.likes.toLocaleString();
-    
-    // Update like button state
-    const likedVideos = JSON.parse(localStorage.getItem('skandalhub_liked_videos') || '[]');
-    const isLiked = likedVideos.includes(videoId);
-    elements.likeBtn.innerHTML = isLiked ? 
-        '<i class="fas fa-heart"></i> Liked' : 
-        '<i class="far fa-heart"></i> Like';
-    
-    // Check if video is VIP and user has access
-    const hasAccess = !video.vip || (currentUserKey && remainingUnlocks > 0);
-    
-    if (video.vip && !hasAccess) {
-        // Show locked state
-        elements.videoLocked.style.display = 'flex';
-        elements.videoPlayer.style.display = 'none';
-    } else {
-        // Show video player
-        elements.videoLocked.style.display = 'none';
-        elements.videoPlayer.style.display = 'block';
-        elements.videoPlayer.src = video.link;
-        
-        // Increment view count
-        if (!hasViewedVideo(videoId)) {
-            video.views++;
-            saveData();
-            addToViewedVideos(videoId);
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
         }
+    }, 5000);
+}
+
+// Show Notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Format Number with Commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// ==============================
+// ADMIN PAGE FUNCTIONS
+// ==============================
+
+// Admin Loading Screen
+function startAdminLoadingScreen() {
+    const loadingScreen = document.getElementById('adminLoading');
+    const progressFill = document.querySelector('.admin-loading .progress-fill');
+    
+    // Simulate loading progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 5;
+        progressFill.style.width = `${progress}%`;
+        
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            
+            // Hide loading screen
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    
+                    // Show admin container
+                    document.querySelector('.admin-container').classList.remove('hidden');
+                }, 500);
+            }, 500);
+        }
+    }, 100);
+}
+
+// Initialize Admin Event Listeners
+function initAdminEventListeners() {
+    // Logout button
+    document.getElementById('adminLogout').addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+            window.location.href = 'index.html';
+        }
+    });
+    
+    // Upload form
+    document.getElementById('uploadForm').addEventListener('submit', uploadVideo);
+    
+    // Generate keys button
+    document.getElementById('generateKeysBtn').addEventListener('click', generateKeys);
+    
+    // Copy all keys button
+    document.getElementById('copyAllKeys').addEventListener('click', copyAllKeys);
+    
+    // Clear keys button
+    document.getElementById('clearKeys').addEventListener('click', clearGeneratedKeys);
+    
+    // Save settings button
+    document.getElementById('saveSettings').addEventListener('click', saveSettings);
+    
+    // Reset settings button
+    document.getElementById('resetSettings').addEventListener('click', resetSettings);
+    
+    // Edit modal
+    document.getElementById('closeEditModal').addEventListener('click', () => {
+        document.getElementById('editModal').classList.add('hidden');
+    });
+    
+    document.getElementById('cancelEdit').addEventListener('click', () => {
+        document.getElementById('editModal').classList.add('hidden');
+    });
+    
+    document.getElementById('editForm').addEventListener('submit', saveEditedVideo);
+    
+    // Search in manage section
+    document.getElementById('manageSearch').addEventListener('input', filterManageVideos);
+    document.getElementById('manageFilter').addEventListener('change', filterManageVideos);
+}
+
+// Setup Admin Navigation
+function setupAdminNavigation() {
+    const navLinks = document.querySelectorAll('.admin-nav a');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all links
+            navLinks.forEach(l => l.classList.remove('active'));
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Get section to show
+            const section = this.getAttribute('data-section');
+            
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(s => {
+                s.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${section}Section`).classList.add('active');
+        });
+    });
+}
+
+// Setup Form Previews
+function setupFormPreviews() {
+    // Update preview when form inputs change
+    const formInputs = ['videoName', 'videoDuration', 'videoVIP', 'videoThumbnail', 'videoDescription'];
+    
+    formInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', updatePreview);
+        }
+    });
+    
+    // Initial preview update
+    updatePreview();
+}
+
+// Update Preview
+function updatePreview() {
+    const name = document.getElementById('videoName').value || 'Video Title Will Appear Here';
+    const duration = document.getElementById('videoDuration').value || '0:00';
+    const isVip = document.getElementById('videoVIP').value === 'true';
+    const thumbnail = document.getElementById('videoThumbnail').value || 
+                     'https://via.placeholder.com/300x169/6a0dad/ffffff?text=Thumbnail+Preview';
+    const description = document.getElementById('videoDescription').value || 
+                       'Description will appear here';
+    
+    // Update preview elements
+    document.getElementById('previewTitle').textContent = name;
+    document.getElementById('previewDuration').textContent = duration;
+    document.getElementById('previewBadge').textContent = isVip ? 'VIP' : 'FREE';
+    document.getElementById('previewBadge').className = `preview-badge ${isVip ? 'vip' : ''}`;
+    document.getElementById('previewThumb').src = thumbnail;
+    document.getElementById('previewDescription').textContent = description;
+}
+
+// Load Admin Data
+async function loadAdminData() {
+    try {
+        const response = await fetch(`${BIN_URL}/latest`, {
+            headers: {
+                'X-Master-Key': JSONBIN_API_KEY,
+                'X-Bin-Meta': false
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load admin data');
+        }
+        
+        const data = await response.json();
+        
+        // Update stats
+        updateAdminStats(data);
+        
+        // Load videos for management
+        loadManageVideos(data.videos || []);
+        
+        // Load existing keys
+        loadExistingKeys(data.keys || []);
+        
+    } catch (error) {
+        console.error('Error loading admin data:', error);
+        showAdminError('Failed to load admin data. Using sample data for demonstration.');
+        
+        // Load sample admin data
+        loadSampleAdminData();
     }
-    
-    // Show modal
-    elements.videoModal.classList.add('active');
-    
-    // Pause any playing video
-    elements.videoPlayer.pause();
 }
 
-function closeVideoModal() {
-    elements.videoModal.classList.remove('active');
-    elements.videoPlayer.pause();
-    elements.videoPlayer.src = '';
-    currentVideoId = null;
-}
-
-function hasViewedVideo(videoId) {
-    const viewedVideos = JSON.parse(localStorage.getItem('skandalhub_viewed_videos') || '[]');
-    return viewedVideos.includes(videoId);
-}
-
-function addToViewedVideos(videoId) {
-    const viewedVideos = JSON.parse(localStorage.getItem('skandalhub_viewed_videos') || '[]');
-    if (!viewedVideos.includes(videoId)) {
-        viewedVideos.push(videoId);
-        localStorage.setItem('skandalhub_viewed_videos', JSON.stringify(viewedVideos));
-    }
-}
-
-function likeVideo() {
-    if (!currentVideoId) return;
+// Update Admin Stats
+function updateAdminStats(data) {
+    const videos = data.videos || [];
+    const keys = data.keys || [];
     
-    const video = videos.find(v => v.id === currentVideoId);
-    if (!video) return;
+    // Count active keys (with remaining uses > 0)
+    const activeKeys = keys.filter(key => key.remaining > 0).length;
     
-    const likedVideos = JSON.parse(localStorage.getItem('skandalhub_liked_videos') || '[]');
-    const isLiked = likedVideos.includes(currentVideoId);
-    
-    if (isLiked) {
-        // Unlike
-        video.likes = Math.max(0, video.likes - 1);
-        const index = likedVideos.indexOf(currentVideoId);
-        likedVideos.splice(index, 1);
-        elements.likeBtn.innerHTML = '<i class="far fa-heart"></i> Like';
-    } else {
-        // Like
-        video.likes++;
-        likedVideos.push(currentVideoId);
-        elements.likeBtn.innerHTML = '<i class="fas fa-heart"></i> Liked';
-    }
+    // Calculate total views and likes
+    const totalViews = videos.reduce((sum, video) => sum + (video.countClick || 0), 0);
+    const totalLikes = videos.reduce((sum, video) => sum + (video.like || 0), 0);
+    const vipVideos = videos.filter(video => video.vip === true).length;
     
     // Update display
-    elements.likeCount.textContent = video.likes.toLocaleString();
-    elements.videoModalLikes.textContent = video.likes.toLocaleString();
+    document.getElementById('adminVideoCount').textContent = videos.length;
+    document.getElementById('adminKeyCount').textContent = keys.length;
+    document.getElementById('adminUserCount').textContent = formatNumber(totalViews);
     
-    // Save to localStorage and database
-    localStorage.setItem('skandalhub_liked_videos', JSON.stringify(likedVideos));
-    saveData();
-    
-    // Update video card if it exists
-    const videoCard = document.querySelector(`.watch-btn[data-id="${currentVideoId}"]`)?.closest('.video-card');
-    if (videoCard) {
-        const likesElement = videoCard.querySelector('.stat:nth-child(2)');
-        if (likesElement) {
-            likesElement.innerHTML = `<i class="fas fa-heart"></i> ${video.likes.toLocaleString()}`;
-        }
-    }
+    // Update analytics stats
+    document.getElementById('analyticsTotalViews').textContent = formatNumber(totalViews);
+    document.getElementById('analyticsTotalLikes').textContent = formatNumber(totalLikes);
+    document.getElementById('analyticsVipVideos').textContent = vipVideos;
+    document.getElementById('analyticsActiveKeys').textContent = activeKeys;
 }
 
-function validateKey() {
-    const key = elements.vipKeyInput.value.trim();
+// Load Manage Videos
+function loadManageVideos(videos) {
+    const videosList = document.getElementById('manageVideosList');
     
-    if (!key) {
-        elements.keyError.textContent = 'Please enter a key';
+    if (!videos || videos.length === 0) {
+        videosList.innerHTML = '<p class="no-videos">No videos uploaded yet.</p>';
         return;
     }
     
-    // Check if key exists in database
-    const keyData = keys.find(k => k.id === key && k.active);
+    // Sort by ID (newest first)
+    videos.sort((a, b) => b.id - a.id);
     
-    if (!keyData) {
-        elements.keyError.textContent = 'Invalid or expired key';
-        return;
-    }
+    videosList.innerHTML = videos.map(video => `
+        <div class="manage-video-card" data-id="${video.id}">
+            <div class="manage-video-header">
+                <h4>${video.name || 'Untitled Video'}</h4>
+                <div class="video-actions-small">
+                    <button class="btn-edit" data-id="${video.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete" data-id="${video.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="manage-video-details">
+                <div>
+                    <span>ID:</span> <strong>${video.id}</strong>
+                </div>
+                <div>
+                    <span>Status:</span> <strong>${video.vip ? 'VIP' : 'FREE'}</strong>
+                </div>
+                <div>
+                    <span>Duration:</span> <strong>${video.duration || '0:00'}</strong>
+                </div>
+                <div>
+                    <span>Views:</span> <strong>${formatNumber(video.countClick || 0)}</strong>
+                </div>
+            </div>
+            <div class="manage-video-stats">
+                <span><i class="fas fa-eye"></i> ${formatNumber(video.countClick || 0)} views</span>
+                <span><i class="fas fa-heart"></i> ${formatNumber(video.like || 0)} likes</span>
+                <span><i class="fas fa-clock"></i> ${video.duration || '0:00'}</span>
+            </div>
+        </div>
+    `).join('');
     
-    if (keyData.remaining <= 0) {
-        elements.keyError.textContent = 'Key has no remaining unlocks';
-        return;
-    }
+    // Add event listeners to edit and delete buttons
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const videoId = btn.getAttribute('data-id');
+            editVideo(videoId);
+        });
+    });
     
-    // Key is valid - save to localStorage
-    currentUserKey = key;
-    remainingUnlocks = keyData.remaining;
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const videoId = btn.getAttribute('data-id');
+            deleteVideo(videoId);
+        });
+    });
+}
+
+// Filter Manage Videos
+function filterManageVideos() {
+    const searchTerm = document.getElementById('manageSearch').value.toLowerCase();
+    const filterValue = document.getElementById('manageFilter').value;
     
-    localStorage.setItem('skandalhub_vip_key', key);
-    localStorage.setItem('skandalhub_remaining_unlocks', remainingUnlocks.toString());
+    const videoCards = document.querySelectorAll('.manage-video-card');
     
-    // Update key usage
-    keyData.unlocksUsed++;
-    keyData.remaining--;
-    
-    // Deactivate key if no remaining unlocks
-    if (keyData.remaining <= 0) {
-        keyData.active = false;
-    }
-    
-    // Save to database
-    saveData().then(() => {
-        // Close VIP modal
-        elements.vipModal.classList.remove('active');
-        elements.keyError.textContent = '';
-        elements.vipKeyInput.value = '';
+    videoCards.forEach(card => {
+        const title = card.querySelector('h4').textContent.toLowerCase();
+        const status = card.querySelector('.manage-video-details div:nth-child(2) strong').textContent;
         
-        // Show success message
-        showNotification('Key validated successfully! Video unlocked.', 'success');
+        let matchesSearch = true;
+        let matchesFilter = true;
         
-        // Unlock and play the video
-        if (currentVideoId) {
-            const video = videos.find(v => v.id === currentVideoId);
-            if (video && video.vip) {
-                // Hide locked overlay and show video
-                elements.videoLocked.style.display = 'none';
-                elements.videoPlayer.style.display = 'block';
-                elements.videoPlayer.src = video.link;
-                
-                // Increment view count
-                if (!hasViewedVideo(currentVideoId)) {
-                    video.views++;
-                    saveData();
-                    addToViewedVideos(currentVideoId);
-                }
-            }
+        // Check search term
+        if (searchTerm && !title.includes(searchTerm)) {
+            matchesSearch = false;
+        }
+        
+        // Check filter
+        if (filterValue === 'free' && status !== 'FREE') {
+            matchesFilter = false;
+        } else if (filterValue === 'vip' && status !== 'VIP') {
+            matchesFilter = false;
+        }
+        
+        // Show/hide card
+        if (matchesSearch && matchesFilter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
         }
     });
 }
 
-function initBannerAd() {
-    let isGif = true;
-    let gifDuration = 15000; // 15 seconds
-    let imageDuration = 5000; // 5 seconds
+// Edit Video
+function editVideo(videoId) {
+    // Find video
+    const video = allVideos.find(v => v.id == videoId);
     
-    function switchAd() {
-        if (isGif) {
-            elements.adImage.src = 'https://files.catbox.moe/gmd2fk.gif';
-            setTimeout(switchAd, gifDuration);
-        } else {
-            elements.adImage.src = 'https://files.catbox.moe/op6wtn.jpg';
-            setTimeout(switchAd, imageDuration);
-        }
-        
-        isGif = !isGif;
+    if (!video) {
+        showAdminError('Video not found.');
+        return;
     }
     
-    // Start the ad rotation
-    switchAd();
+    // Populate edit form
+    document.getElementById('editVideoId').value = video.id;
+    document.getElementById('editVideoName').value = video.name || '';
+    document.getElementById('editVideoLink').value = video.linkvideo || '';
+    document.getElementById('editVideoDuration').value = video.duration || '';
+    document.getElementById('editVideoVIP').value = video.vip ? 'true' : 'false';
+    
+    // Show modal
+    document.getElementById('editModal').classList.remove('hidden');
 }
 
-function sortVideosByTrending() {
-    videos.sort((a, b) => {
-        // Sort by views (descending), then by likes (descending)
-        if (b.views !== a.views) {
-            return b.views - a.views;
+// Save Edited Video
+async function saveEditedVideo(e) {
+    e.preventDefault();
+    
+    const videoId = document.getElementById('editVideoId').value;
+    const name = document.getElementById('editVideoName').value.trim();
+    const linkvideo = document.getElementById('editVideoLink').value.trim();
+    const duration = document.getElementById('editVideoDuration').value.trim();
+    const vip = document.getElementById('editVideoVIP').value === 'true';
+    
+    if (!name || !linkvideo || !duration) {
+        showAdminError('Please fill in all required fields.');
+        return;
+    }
+    
+    try {
+        // Find and update video in local array
+        const videoIndex = allVideos.findIndex(v => v.id == videoId);
+        
+        if (videoIndex === -1) {
+            showAdminError('Video not found.');
+            return;
         }
-        return b.likes - a.likes;
+        
+        // Update video
+        allVideos[videoIndex] = {
+            ...allVideos[videoIndex],
+            name,
+            linkvideo,
+            duration,
+            vip
+        };
+        
+        // Save to database (in a real implementation)
+        // await saveVideosToDatabase();
+        
+        // Show success message
+        showAdminSuccess('Video updated successfully!');
+        
+        // Update display
+        loadManageVideos(allVideos);
+        
+        // Close modal
+        document.getElementById('editModal').classList.add('hidden');
+        
+        // Update stats
+        updateAdminStats({ videos: allVideos, keys: [] });
+        
+    } catch (error) {
+        console.error('Error updating video:', error);
+        showAdminError('Failed to update video. Please try again.');
+    }
+}
+
+// Delete Video
+async function deleteVideo(videoId) {
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        // Remove video from local array
+        const videoIndex = allVideos.findIndex(v => v.id == videoId);
+        
+        if (videoIndex === -1) {
+            showAdminError('Video not found.');
+            return;
+        }
+        
+        allVideos.splice(videoIndex, 1);
+        
+        // Save to database (in a real implementation)
+        // await saveVideosToDatabase();
+        
+        // Show success message
+        showAdminSuccess('Video deleted successfully!');
+        
+        // Update display
+        loadManageVideos(allVideos);
+        
+        // Update stats
+        updateAdminStats({ videos: allVideos, keys: [] });
+        
+    } catch (error) {
+        console.error('Error deleting video:', error);
+        showAdminError('Failed to delete video. Please try again.');
+    }
+}
+
+// Load Existing Keys
+function loadExistingKeys(keys) {
+    const tableBody = document.getElementById('existingKeysTable');
+    
+    if (!keys || keys.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="no-keys">No keys generated yet.</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort by creation date (newest first)
+    keys.sort((a, b) => new Date(b.created) - new Date(a.created));
+    
+    tableBody.innerHTML = keys.map(key => `
+        <tr>
+            <td><code>${key.key}</code></td>
+            <td>${key.remaining}</td>
+            <td>${formatDate(key.created)}</td>
+            <td>
+                <span class="key-status-badge ${key.remaining > 0 ? 'active' : 'expired'}">
+                    ${key.remaining > 0 ? 'Active' : 'Expired'}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Upload Video
+async function uploadVideo(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('videoName').value.trim();
+    const linkvideo = document.getElementById('videoLink').value.trim();
+    const duration = document.getElementById('videoDuration').value.trim();
+    const vip = document.getElementById('videoVIP').value === 'true';
+    const thumbnail = document.getElementById('videoThumbnail').value.trim();
+    const description = document.getElementById('videoDescription').value.trim();
+    
+    if (!name || !linkvideo || !duration) {
+        showAdminError('Please fill in all required fields (Name, Link, Duration).');
+        return;
+    }
+    
+    try {
+        // Generate new ID (highest existing ID + 1)
+        const maxId = allVideos.length > 0 ? Math.max(...allVideos.map(v => v.id)) : 0;
+        const newId = maxId + 1;
+        
+        // Create new video object
+        const newVideo = {
+            id: newId,
+            name,
+            linkvideo,
+            duration,
+            vip,
+            countClick: 0,
+            like: 0,
+            thumbnail: thumbnail || `https://via.placeholder.com/300x169/${vip ? 'ffaa00' : '6a0dad'}/ffffff?text=${encodeURIComponent(name)}`,
+            description: description || 'No description available.'
+        };
+        
+        // Add to local array
+        allVideos.unshift(newVideo); // Add to beginning for newest first
+        
+        // Save to database (in a real implementation)
+        // await saveVideosToDatabase();
+        
+        // Show success message
+        showAdminSuccess('Video uploaded successfully!');
+        
+        // Reset form
+        document.getElementById('uploadForm').reset();
+        updatePreview();
+        
+        // Update video list
+        loadManageVideos(allVideos);
+        
+        // Update stats
+        updateAdminStats({ videos: allVideos, keys: [] });
+        
+        // Show status message
+        const uploadStatus = document.getElementById('uploadStatus');
+        uploadStatus.classList.remove('hidden');
+        
+        // Hide status after 3 seconds
+        setTimeout(() => {
+            uploadStatus.classList.add('hidden');
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Error uploading video:', error);
+        showAdminError('Failed to upload video. Please try again.');
+    }
+}
+
+// Generate Keys
+function generateKeys() {
+    const quantity = parseInt(document.getElementById('keyQuantity').value) || 1;
+    const prefix = document.getElementById('keyPrefix').value.trim().toUpperCase() || 'SKH';
+    
+    if (quantity < 1 || quantity > 50) {
+        showAdminError('Please enter a quantity between 1 and 50.');
+        return;
+    }
+    
+    const keysList = document.getElementById('generatedKeys');
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = 0; i < quantity; i++) {
+        // Generate a random key
+        const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+        const key = `${prefix}-${randomPart}`;
+        
+        // Create key item
+        const keyItem = document.createElement('div');
+        keyItem.className = 'key-item';
+        keyItem.innerHTML = `
+            <span>${key}</span>
+            <button class="copy-key" data-key="${key}">
+                <i class="fas fa-copy"></i>
+            </button>
+        `;
+        
+        // Add copy functionality
+        const copyBtn = keyItem.querySelector('.copy-key');
+        copyBtn.addEventListener('click', function() {
+            copyToClipboard(this.getAttribute('data-key'));
+            showAdminSuccess('Key copied to clipboard!');
+        });
+        
+        fragment.appendChild(keyItem);
+    }
+    
+    // Clear "no keys" message if present
+    const noKeysMsg = keysList.querySelector('.no-keys');
+    if (noKeysMsg) {
+        keysList.removeChild(noKeysMsg);
+    }
+    
+    // Add new keys to the beginning
+    keysList.insertBefore(fragment, keysList.firstChild);
+    
+    // Show success message
+    showAdminSuccess(`${quantity} key(s) generated successfully!`);
+}
+
+// Copy All Keys
+function copyAllKeys() {
+    const keyItems = document.querySelectorAll('.key-item span');
+    
+    if (keyItems.length === 0) {
+        showAdminError('No keys to copy.');
+        return;
+    }
+    
+    const keys = Array.from(keyItems).map(span => span.textContent).join('\n');
+    
+    copyToClipboard(keys);
+    showAdminSuccess('All keys copied to clipboard!');
+}
+
+// Clear Generated Keys
+function clearGeneratedKeys() {
+    if (!confirm('Are you sure you want to clear all generated keys? This action cannot be undone.')) {
+        return;
+    }
+    
+    const keysList = document.getElementById('generatedKeys');
+    keysList.innerHTML = '<p class="no-keys">No keys generated yet. Click "Generate Keys" to create new keys.</p>';
+    
+    showAdminSuccess('Generated keys cleared.');
+}
+
+// Save Settings
+async function saveSettings() {
+    try {
+        // Get settings values
+        const binId = document.getElementById('binId').value.trim();
+        const bannerGif = document.getElementById('bannerGif').value.trim();
+        const bannerImage = document.getElementById('bannerImage').value.trim();
+        const gifDuration = parseInt(document.getElementById('gifDuration').value) || 15;
+        const imageDuration = parseInt(document.getElementById('imageDuration').value) || 5;
+        const adminName = document.getElementById('adminName').value.trim();
+        const defaultThumbnail = document.getElementById('defaultThumbnail').value.trim();
+        
+        // Validate
+        if (!binId) {
+            showAdminError('Bin ID is required.');
+            return;
+        }
+        
+        // Save to localStorage (in a real implementation, you might save to database)
+        const settings = {
+            binId,
+            bannerGif,
+            bannerImage,
+            gifDuration,
+            imageDuration,
+            adminName,
+            defaultThumbnail,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        localStorage.setItem('skandalhub_admin_settings', JSON.stringify(settings));
+        
+        // Show success message
+        showAdminSuccess('Settings saved successfully!');
+        
+        // Update BIN_ID global variable
+        if (typeof BIN_ID !== 'undefined') {
+            // Note: In a real implementation, you would update the global variable
+            // BIN_ID = binId;
+        }
+        
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showAdminError('Failed to save settings. Please try again.');
+    }
+}
+
+// Reset Settings
+function resetSettings() {
+    if (!confirm('Are you sure you want to reset all settings to default values?')) {
+        return;
+    }
+    
+    // Reset form values
+    document.getElementById('binId').value = '66d5d5cfe41b4d34e4f8c7a3';
+    document.getElementById('bannerGif').value = 'https://files.catbox.moe/gmd2fk.gif';
+    document.getElementById('bannerImage').value = 'https://files.catbox.moe/op6wtn.jpg';
+    document.getElementById('gifDuration').value = 15;
+    document.getElementById('imageDuration').value = 5;
+    document.getElementById('adminName').value = 'Admin';
+    document.getElementById('defaultThumbnail').value = 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=SKANDALHUB';
+    
+    // Clear localStorage
+    localStorage.removeItem('skandalhub_admin_settings');
+    
+    showAdminSuccess('Settings reset to default values.');
+}
+
+// Load Sample Admin Data
+function loadSampleAdminData() {
+    // Sample videos
+    allVideos = [
+        {
+            id: 1,
+            name: 'ANGGAZYY SERIES - Episode 1',
+            linkvideo: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            duration: '1:30',
+            vip: false,
+            countClick: 3250,
+            like: 1240,
+            thumbnail: 'https://via.placeholder.com/300x169/6a0dad/ffffff?text=ANGGAZYY+SERIES',
+            description: 'First episode of the popular ANGGAYY SERIES.'
+        },
+        // ... (same sample videos as in main page)
+    ];
+    
+    // Sample keys
+    const sampleKeys = [
+        { key: 'SKH-ABC123DE', remaining: 15, created: '2025-01-15T10:30:00Z' },
+        { key: 'SKH-XYZ789FG', remaining: 30, created: '2025-01-10T14:20:00Z' },
+        { key: 'SKH-DEF456GH', remaining: 0, created: '2025-01-05T09:15:00Z' },
+        { key: 'SKH-MNO123IJ', remaining: 5, created: '2025-01-01T16:45:00Z' }
+    ];
+    
+    // Update admin stats
+    updateAdminStats({ videos: allVideos, keys: sampleKeys });
+    
+    // Load videos for management
+    loadManageVideos(allVideos);
+    
+    // Load existing keys
+    loadExistingKeys(sampleKeys);
+}
+
+// Show Admin Error
+function showAdminError(message) {
+    // Create error notification
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'admin-error-notification';
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <span>${message}</span>
+        <button class="close-admin-error"><i class="fas fa-times"></i></button>
+    `;
+    
+    document.querySelector('.admin-content').appendChild(errorDiv);
+    
+    // Add close button event
+    errorDiv.querySelector('.close-admin-error').addEventListener('click', () => {
+        errorDiv.remove();
+    });
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 5000);
+}
+
+// Show Admin Success
+function showAdminSuccess(message) {
+    // Create success notification
+    const successDiv = document.createElement('div');
+    successDiv.className = 'admin-success-notification';
+    successDiv.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+    `;
+    
+    document.querySelector('.admin-content').appendChild(successDiv);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (successDiv.parentNode) {
+            successDiv.remove();
+        }
+    }, 3000);
+}
+
+// Utility Functions
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).catch(err => {
+        console.error('Failed to copy text: ', err);
     });
 }
 
 function formatDate(dateString) {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-        return 'Today';
-    } else if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Check which page we're on and initialize accordingly
+    if (document.body.classList.contains('admin-body')) {
+        initAdminPage();
     } else {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        initMainPage();
     }
-}
-
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="notification-close"><i class="fas fa-times"></i></button>
-    `;
-    
-    // Add to page
-    document.body.appendChild(notification);
-    
-    // Add styles if not already added
-    if (!document.querySelector('#notification-styles')) {
-        const style = document.createElement('style');
-        style.id = 'notification-styles';
-        style.textContent = `
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--card-bg);
-                border-left: 4px solid var(--primary-color);
-                border-radius: 8px;
-                padding: 1rem 1.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-                max-width: 400px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-                z-index: 9999;
-                transform: translateX(120%);
-                transition: transform 0.5s ease;
-                border: 1px solid var(--border-color);
-            }
-            
-            .notification.notification-success {
-                border-left-color: var(--success-color);
-            }
-            
-            .notification.notification-error {
-                border-left-color: var(--error-color);
-            }
-            
-            .notification.show {
-                transform: translateX(0);
-            }
-            
-            .notification-content {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                color: var(--text-color);
-                font-weight: 500;
-            }
-            
-            .notification-content i {
-                font-size: 1.2rem;
-            }
-            
-            .notification-success .notification-content i {
-                color: var(--success-color);
-            }
-            
-            .notification-error .notification-content i {
-                color: var(--error-color);
-            }
-            
-            .notification-close {
-                background: transparent;
-                border: none;
-                color: var(--text-light);
-                cursor: pointer;
-                font-size: 1rem;
-                padding: 0;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                transition: all 0.3s ease;
-            }
-            
-            .notification-close:hover {
-                background: rgba(255, 255, 255, 0.1);
-                color: var(--text-color);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Show notification with animation
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    // Auto-remove after 5 seconds
-    const autoRemove = setTimeout(() => {
-        closeNotification(notification);
-    }, 5000);
-    
-    // Close button
-    const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
-        clearTimeout(autoRemove);
-        closeNotification(notification);
-    });
-    
-    function closeNotification(notif) {
-        notif.classList.remove('show');
-        setTimeout(() => {
-            if (notif.parentNode) {
-                notif.parentNode.removeChild(notif);
-            }
-        }, 500);
-    }
-}
-
-function initAnimations() {
-    // Add fade-in animation to elements as they come into view
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, observerOptions);
-    
-    // Observe elements for animation
-    document.querySelectorAll('.video-card, .banner-text, .analytics-card').forEach(el => {
-        observer.observe(el);
-    });
-}
-
-// ===== ADMIN PAGE FUNCTIONS =====
-function initAdminPage() {
-    // Hide admin loading screen
-    setTimeout(() => {
-        if (elements.adminLoading) {
-            elements.adminLoading.classList.add('hidden');
-        }
-        document.querySelector('.admin-container').style.opacity = '1';
-    }, 1000);
-    
-    // Load admin data
-    loadData().then(() => {
-        setupAdminEventListeners();
-        displayAdminVideos();
-        displayAdminKeys();
-        updateAdminStats();
-        loadAdminAnalytics();
-    }).catch(error => {
-        console.error('Error loading admin data:', error);
-        setupAdminEventListeners();
-        showNotification('Error loading admin data. Please refresh the page.', 'error');
-    });
-}
-
-function setupAdminEventListeners() {
-    // Admin navigation
-    if (elements.adminNavLinks) {
-        elements.adminNavLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                if (link.getAttribute('href') === 'index.html') return;
-                
-                e.preventDefault();
-                
-                // Update active link
-                elements.adminNavLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                
-                // Show corresponding section
-                const section = link.getAttribute('data-section');
-                showAdminSection(section);
-            });
-        });
-    }
-    
-    // Upload form
-    if (elements.uploadForm) {
-        elements.uploadForm.addEventListener('submit', handleVideoUpload);
-    }
-    
-    // Generate key button
-    if (elements.generateKeyBtn) {
-        elements.generateKeyBtn.addEventListener('click', generateKey);
-    }
-    
-    // Copy key button
-    if (elements.copyKeyBtn) {
-        elements.copyKeyBtn.addEventListener('click', copyKey);
-    }
-    
-    // Video search
-    if (elements.adminSearchBtn) {
-        elements.adminSearchBtn.addEventListener('click', performAdminSearch);
-    }
-    
-    if (elements.adminVideoSearch) {
-        elements.adminVideoSearch.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                performAdminSearch();
-            }
-        });
-    }
-    
-    // Video filter
-    if (elements.videoFilter) {
-        elements.videoFilter.addEventListener('change', displayAdminVideos);
-    }
-    
-    // Refresh data button
-    if (elements.refreshData) {
-        elements.refreshData.addEventListener('click', refreshAdminData);
-    }
-    
-    // Success modal
-    if (elements.closeSuccessModal) {
-        elements.closeSuccessModal.addEventListener('click', () => {
-            elements.successModal.classList.remove('active');
-        });
-    }
-    
-    // Delete modal
-    if (elements.cancelDelete) {
-        elements.cancelDelete.addEventListener('click', () => {
-            elements.deleteModal.classList.remove('active');
-        });
-    }
-    
-    // Close modals when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal-overlay')) {
-            elements.successModal.classList.remove('active');
-            elements.deleteModal.classList.remove('active');
-        }
-    });
-    
-    // Escape key to close modals
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            elements.successModal.classList.remove('active');
-            elements.deleteModal.classList.remove('active');
-        }
-    });
-}
-
-function showAdminSection(section) {
-    // Hide all sections
-    elements.adminSections.forEach(sec => {
-        sec.classList.remove('active');
-    });
-    
-    // Show selected section
-    const targetSection = document.getElementById(`${section}-section`);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
-    
-    // Update section title
-    if (elements.adminSectionTitle) {
-        const titleMap = {
-            'upload': 'Upload Content',
-            'keys': 'Manage Keys',
-            'videos': 'Manage Videos',
-            'analytics': 'Platform Analytics'
-        };
-        elements.adminSectionTitle.textContent = titleMap[section] || 'Admin Panel';
-    }
-}
-
-async function handleVideoUpload(e) {
-    e.preventDefault();
-    
-    // Get form data
-    const name = document.getElementById('video-name').value;
-    const link = document.getElementById('video-link').value;
-    const duration = document.getElementById('video-duration').value;
-    const vip = document.getElementById('video-vip').checked;
-    const thumbnail = document.getElementById('video-thumbnail').value;
-    
-    // Validate form
-    if (!name || !link || !duration) {
-        showAdminStatus('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    // Validate duration format
-    const durationRegex = /^(\d+)(:(\d{1,2}))?$/;
-    if (!durationRegex.test(duration)) {
-        showAdminStatus('Duration must be in format MM:SS or SS', 'error');
-        return;
-    }
-    
-    // Create new video object
-    const newVideo = {
-        id: videos.length > 0 ? Math.max(...videos.map(v => v.id)) + 1 : 1,
-        name,
-        link,
-        thumbnail: thumbnail || 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-        duration,
-        vip,
-        views: 0,
-        likes: 0,
-        uploadDate: new Date().toISOString().split('T')[0],
-        uploader: 'Admin'
-    };
-    
-    // Add to videos array
-    videos.push(newVideo);
-    
-    // Save to database
-    const saved = await saveData();
-    
-    if (saved) {
-        // Reset form
-        elements.uploadForm.reset();
-        
-        // Show success message
-        showAdminStatus('Video uploaded successfully!', 'success');
-        
-        // Update admin stats
-        updateAdminStats();
-        
-        // Show success modal
-        elements.successMessage.textContent = 'Video uploaded successfully!';
-        elements.successModal.classList.add('active');
-        
-        // Refresh videos list if on videos section
-        if (document.getElementById('videos-section').classList.contains('active')) {
-            displayAdminVideos();
-        }
-    } else {
-        showAdminStatus('Error uploading video. Please try again.', 'error');
-    }
-}
-
-function showAdminStatus(message, type) {
-    if (!elements.uploadStatus) return;
-    
-    elements.uploadStatus.textContent = message;
-    elements.uploadStatus.className = `status-message ${type}`;
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        elements.uploadStatus.style.display = 'none';
-    }, 5000);
-}
-
-function generateKey() {
-    // Generate a random key
-    const keyId = `SKH-VIP-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    
-    // Create key object
-    const newKey = {
-        id: keyId,
-        created: new Date().toISOString().split('T')[0],
-        unlocksUsed: 0,
-        remaining: 30,
-        active: true
-    };
-    
-    // Add to keys array
-    keys.push(newKey);
-    
-    // Update display
-    elements.generatedKeyValue.textContent = keyId;
-    elements.copyKeyBtn.disabled = false;
-    
-    // Save to database
-    saveData().then(() => {
-        // Update keys list
-        displayAdminKeys();
-        
-        // Update admin stats
-        updateAdminStats();
-        
-        // Show success message
-        showNotification('Key generated successfully!', 'success');
-    });
-}
-
-function copyKey() {
-    const key = elements.generatedKeyValue.textContent;
-    
-    if (key && key !== 'No key generated yet') {
-        navigator.clipboard.writeText(key).then(() => {
-            // Show copied feedback
-            const originalText = elements.copyKeyBtn.innerHTML;
-            elements.copyKeyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            elements.copyKeyBtn.style.background = 'var(--success-color)';
-            
-            setTimeout(() => {
-                elements.copyKeyBtn.innerHTML = originalText;
-                elements.copyKeyBtn.style.background = '';
-            }, 2000);
-            
-            showNotification('Key copied to clipboard!', 'success');
-        }).catch(err => {
-            console.error('Failed to copy key: ', err);
-            showNotification('Failed to copy key', 'error');
-        });
-    }
-}
-
-function displayAdminKeys() {
-    if (!elements.keysTableBody) return;
-    
-    elements.keysTableBody.innerHTML = '';
-    
-    if (keys.length === 0) {
-        elements.noKeys.style.display = 'block';
-        return;
-    }
-    
-    elements.noKeys.style.display = 'none';
-    
-    keys.forEach(key => {
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td><code>${key.id}</code></td>
-            <td>${key.created}</td>
-            <td>${key.unlocksUsed}</td>
-            <td>${key.remaining}</td>
-            <td class="${key.active ? 'status-active' : 'status-expired'}">
-                ${key.active ? 'Active' : 'Expired'}
-            </td>
-            <td>
-                <div class="table-actions">
-                    <button class="table-btn delete" data-key="${key.id}">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        elements.keysTableBody.appendChild(row);
-    });
-    
-    // Add event listeners to delete buttons
-    document.querySelectorAll('.table-btn.delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const keyId = e.currentTarget.getAttribute('data-key');
-            confirmDeleteKey(keyId);
-        });
-    });
-}
-
-function confirmDeleteKey(keyId) {
-    const key = keys.find(k => k.id === keyId);
-    if (!key) return;
-    
-    elements.deleteMessage.textContent = `Are you sure you want to delete key "${keyId}"? This action cannot be undone.`;
-    elements.deleteModal.classList.add('active');
-    
-    // Set up delete confirmation
-    const confirmHandler = () => {
-        deleteKey(keyId);
-        elements.deleteModal.classList.remove('active');
-        elements.confirmDelete.removeEventListener('click', confirmHandler);
-    };
-    
-    elements.confirmDelete.addEventListener('click', confirmHandler);
-}
-
-function deleteKey(keyId) {
-    const index = keys.findIndex(k => k.id === keyId);
-    if (index !== -1) {
-        keys.splice(index, 1);
-        
-        // Save to database
-        saveData().then(() => {
-            // Update display
-            displayAdminKeys();
-            updateAdminStats();
-            
-            // Show success message
-            showNotification('Key deleted successfully!', 'success');
-        });
-    }
-}
-
-function performAdminSearch() {
-    const searchTerm = elements.adminVideoSearch.value.toLowerCase().trim();
-    displayAdminVideos(searchTerm);
-}
-
-function displayAdminVideos(searchTerm = '') {
-    if (!elements.videosTableBody) return;
-    
-    let filteredVideos = [...videos];
-    
-    // Apply search filter
-    if (searchTerm) {
-        filteredVideos = filteredVideos.filter(video => 
-            video.name.toLowerCase().includes(searchTerm) ||
-            video.id.toString().includes(searchTerm)
-        );
-    }
-    
-    // Apply VIP filter
-    const filterValue = elements.videoFilter.value;
-    if (filterValue === 'vip') {
-        filteredVideos = filteredVideos.filter(video => video.vip);
-    } else if (filterValue === 'free') {
-        filteredVideos = filteredVideos.filter(video => !video.vip);
-    }
-    
-    // Sort by ID (newest first)
-    filteredVideos.sort((a, b) => b.id - a.id);
-    
-    // Clear table
-    elements.videosTableBody.innerHTML = '';
-    
-    if (filteredVideos.length === 0) {
-        elements.noVideos.style.display = 'block';
-        return;
-    }
-    
-    elements.noVideos.style.display = 'none';
-    
-    // Populate table
-    filteredVideos.forEach(video => {
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td>${video.id}</td>
-            <td>
-                <img src="${video.thumbnail || 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'}" 
-                     alt="Thumbnail" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
-            </td>
-            <td>${video.name}</td>
-            <td>${video.duration}</td>
-            <td>${video.vip ? '<i class="fas fa-crown" style="color: #ff9800;"></i> VIP' : 'Free'}</td>
-            <td>${video.views.toLocaleString()}</td>
-            <td>${video.likes.toLocaleString()}</td>
-            <td>
-                <div class="table-actions">
-                    <button class="table-btn delete" data-video="${video.id}">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        elements.videosTableBody.appendChild(row);
-    });
-    
-    // Add event listeners to delete buttons
-    document.querySelectorAll('.table-btn.delete[data-video]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const videoId = parseInt(e.currentTarget.getAttribute('data-video'));
-            confirmDeleteVideo(videoId);
-        });
-    });
-}
-
-function confirmDeleteVideo(videoId) {
-    const video = videos.find(v => v.id === videoId);
-    if (!video) return;
-    
-    elements.deleteMessage.textContent = `Are you sure you want to delete video "${video.name}"? This action cannot be undone.`;
-    elements.deleteModal.classList.add('active');
-    
-    // Set up delete confirmation
-    const confirmHandler = () => {
-        deleteVideo(videoId);
-        elements.deleteModal.classList.remove('active');
-        elements.confirmDelete.removeEventListener('click', confirmHandler);
-    };
-    
-    elements.confirmDelete.addEventListener('click', confirmHandler);
-}
-
-function deleteVideo(videoId) {
-    const index = videos.findIndex(v => v.id === videoId);
-    if (index !== -1) {
-        videos.splice(index, 1);
-        
-        // Save to database
-        saveData().then(() => {
-            // Update display
-            displayAdminVideos();
-            updateAdminStats();
-            loadAdminAnalytics();
-            
-            // Show success message
-            showNotification('Video deleted successfully!', 'success');
-        });
-    }
-}
-
-function updateAdminStats() {
-    if (!elements.totalVideos) return;
-    
-    // Calculate totals
-    const totalVideosCount = videos.length;
-    const totalKeysCount = keys.length;
-    const totalViewsCount = videos.reduce((sum, video) => sum + video.views, 0);
-    const totalLikesCount = videos.reduce((sum, video) => sum + video.likes, 0);
-    const vipVideosCount = videos.filter(video => video.vip).length;
-    
-    // Update display
-    elements.totalVideos.textContent = totalVideosCount;
-    elements.totalKeys.textContent = totalKeysCount;
-    elements.totalViews.textContent = totalViewsCount.toLocaleString();
-    
-    elements.analyticsViews.textContent = totalViewsCount.toLocaleString();
-    elements.analyticsLikes.textContent = totalLikesCount.toLocaleString();
-    elements.analyticsVip.textContent = vipVideosCount;
-    elements.analyticsKeys.textContent = keys.filter(k => k.active).length;
-}
-
-function loadAdminAnalytics() {
-    // Update top videos table
-    updateTopVideosTable();
-    
-    // Initialize chart if Chart.js is available
-    if (typeof Chart !== 'undefined') {
-        initializeViewsChart();
-    }
-}
-
-function updateTopVideosTable() {
-    if (!elements.topVideosBody) return;
-    
-    // Get top 5 videos by views
-    const topVideos = [...videos]
-        .sort((a, b) => b.views - a.views)
-        .slice(0, 5);
-    
-    elements.topVideosBody.innerHTML = '';
-    
-    topVideos.forEach((video, index) => {
-        const engagement = video.views > 0 ? ((video.likes / video.views) * 100).toFixed(1) : 0;
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>#${index + 1}</td>
-            <td>${video.name}</td>
-            <td>${video.views.toLocaleString()}</td>
-            <td>${video.likes.toLocaleString()}</td>
-            <td>${engagement}%</td>
-        `;
-        
-        elements.topVideosBody.appendChild(row);
-    });
-}
-
-function initializeViewsChart() {
-    const ctx = document.getElementById('views-chart');
-    if (!ctx) return;
-    
-    // Get last 7 days of data (simulated for demo)
-    const labels = [];
-    const data = [];
-    
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
-        
-        // Simulate view data (in a real app, this would come from your database)
-        data.push(Math.floor(Math.random() * 1000) + 500);
-    }
-    
-    // Destroy existing chart if it exists
-    if (window.viewsChartInstance) {
-        window.viewsChartInstance.destroy();
-    }
-    
-    // Create new chart
-    window.viewsChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Daily Views',
-                data: data,
-                borderColor: 'rgb(138, 43, 226)',
-                backgroundColor: 'rgba(138, 43, 226, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function refreshAdminData() {
-    // Show loading state
-    const originalText = elements.refreshData.innerHTML;
-    elements.refreshData.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
-    elements.refreshData.disabled = true;
-    
-    // Reload data
-    loadData().then(() => {
-        // Update all admin displays
-        displayAdminVideos();
-        displayAdminKeys();
-        updateAdminStats();
-        loadAdminAnalytics();
-        
-        // Show success message
-        showNotification('Data refreshed successfully!', 'success');
-    }).catch(error => {
-        console.error('Error refreshing data:', error);
-        showNotification('Error refreshing data', 'error');
-    }).finally(() => {
-        // Restore button state
-        setTimeout(() => {
-            elements.refreshData.innerHTML = originalText;
-            elements.refreshData.disabled = false;
-        }, 1000);
-    });
-}
-
-// Make functions available globally for debugging
-window.app = {
-    videos,
-    keys,
-    currentUserKey,
-    remainingUnlocks,
-    loadData,
-    saveData,
-    showNotification
-};
+});
