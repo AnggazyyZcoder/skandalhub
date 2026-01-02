@@ -1,7 +1,7 @@
 // Konfigurasi
 const CONFIG = {
-    API_KEY: '$2a$10$8ueR8M0Cf0Yf7nsvDMZSKupvmmji6O5V.W988gSb0avOJcn.TdC4q',
-    BIN_ID: '6957be4ed0ea881f404f8a0a',
+    API_KEY: '$2a$10$EG.QfA7ThwjokzPkTJ4hKuO6pCKkBd6wjKDK2LzLvR/pFm0OE6nVm',
+    BIN_ID: '6957c64dd0ea881f404f9908',
     BIN_URL: 'https://api.jsonbin.io/v3/b/67fcbb61e41b4d34e4f1cfa7',
     DEFAULT_THUMBNAIL: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     BANNER_GIF: 'https://files.catbox.moe/gmd2fk.gif',
