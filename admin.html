@@ -3,219 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SKANDALHUB - Admin Panel</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Admin Panel - SKANDALHUB</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="admin-body">
     <!-- Admin Loading -->
     <div class="admin-loading" id="adminLoading">
-        <div class="admin-loader">
-            <div class="loader-spinner"></div>
-            <p>Loading Admin Panel...</p>
+        <div class="admin-loading-content">
+            <div class="admin-spinner">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h2>Loading Admin Panel...</h2>
         </div>
     </div>
 
     <!-- Admin Container -->
-    <div class="admin-container" id="adminContainer">
-        <!-- Admin Header -->
-        <header class="admin-header">
-            <div class="admin-header-left">
-                <h1 class="admin-logo">SKANDAL<span class="accent">HUB</span> <span class="admin-badge">Admin</span></h1>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="admin-logo">
+                <h1>SKANDAL<span class="hub-text">HUB</span> <span class="admin-badge">ADMIN</span></h1>
             </div>
-            <div class="admin-header-right">
-                <button class="admin-btn" id="goHome">
-                    <i class="fas fa-home"></i> Home
-                </button>
-                <button class="admin-btn" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+            
+            <nav class="admin-nav">
+                <a href="#upload" class="admin-nav-link active" id="uploadLink">
+                    <i class="fas fa-upload"></i> Upload Konten
+                </a>
+                <a href="#keys" class="admin-nav-link" id="keysLink">
+                    <i class="fas fa-key"></i> Generate Key
+                </a>
+                <a href="#videos" class="admin-nav-link" id="videosLink">
+                    <i class="fas fa-video"></i> Kelola Video
+                </a>
+                <a href="index.html" class="admin-nav-link back-link">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Home
+                </a>
+            </nav>
+            
+            <div class="admin-status">
+                <div class="status-item">
+                    <span>Total Video:</span>
+                    <strong id="totalVideos">0</strong>
+                </div>
+                <div class="status-item">
+                    <span>VIP Video:</span>
+                    <strong id="vipVideosCount">0</strong>
+                </div>
+                <div class="status-item">
+                    <span>Free Video:</span>
+                    <strong id="freeVideosCount">0</strong>
+                </div>
             </div>
-        </header>
-
+            
+            <div class="admin-footer">
+                <p>© Copyright ❤ 2025 SkandalHub</p>
+            </div>
+        </div>
+        
         <!-- Admin Main Content -->
-        <main class="admin-main">
-            <!-- Stats Overview -->
-            <section class="stats-section fade-in">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-video"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalVideos">0</h3>
-                        <p>Total Videos</p>
-                    </div>
+        <div class="admin-main">
+            <!-- Upload Section -->
+            <section class="admin-section active" id="uploadSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-upload"></i> Upload Konten Baru</h2>
+                    <p>Tambahkan video baru ke database SKANDALHUB</p>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="vipVideos">0</h3>
-                        <p>VIP Videos</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalViews">0</h3>
-                        <p>Total Views</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="activeKeys">0</h3>
-                        <p>Active Keys</p>
+                
+                <div class="upload-form-container">
+                    <form id="uploadForm">
+                        <div class="form-group">
+                            <label for="videoName"><i class="fas fa-heading"></i> Nama Video</label>
+                            <input type="text" id="videoName" placeholder="Masukkan nama video" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="videoLink"><i class="fas fa-link"></i> Link Video</label>
+                            <input type="text" id="videoLink" placeholder="https://example.com/video.mp4" required>
+                            <small class="form-hint">Link harus berupa file video MP4 yang dapat diakses langsung</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="thumbnailLink"><i class="fas fa-image"></i> Link Thumbnail</label>
+                            <input type="text" id="thumbnailLink" placeholder="https://example.com/thumbnail.jpg" required>
+                            <small class="form-hint">Link thumbnail untuk preview video</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="videoDuration"><i class="fas fa-clock"></i> Durasi</label>
+                                <input type="text" id="videoDuration" placeholder="Contoh: 1:30 atau 30s" required>
+                                <small class="form-hint">Format: Menit:Detik atau detik saja</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="videoVIP"><i class="fas fa-crown"></i> Status VIP</label>
+                                <div class="toggle-container">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="videoVIP">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="toggle-label" id="vipStatusLabel">Gratis</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-upload" id="uploadBtn">
+                                <i class="fas fa-cloud-upload-alt"></i> Upload New Content
+                            </button>
+                            <button type="reset" class="btn-reset">
+                                <i class="fas fa-redo"></i> Reset Form
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="upload-result" id="uploadResult">
+                        <!-- Upload result will be shown here -->
                     </div>
                 </div>
             </section>
-
-            <!-- Upload Section -->
-            <section class="upload-section fade-in">
-                <div class="section-title">
-                    <h2><i class="fas fa-cloud-upload-alt"></i> Upload New Content</h2>
+            
+            <!-- Keys Section -->
+            <section class="admin-section" id="keysSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-key"></i> Generate VIP Key</h2>
+                    <p>Buat kunci akses VIP untuk pengguna</p>
                 </div>
-                <form class="upload-form" id="uploadForm">
-                    <div class="form-group">
-                        <label for="videoName"><i class="fas fa-heading"></i> Nama Video:</label>
-                        <input type="text" id="videoName" required placeholder="Masukkan nama video...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="videoLink"><i class="fas fa-link"></i> Link Video:</label>
-                        <input type="url" id="videoLink" required placeholder="https://example.com/video.mp4">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="videoDuration"><i class="fas fa-clock"></i> Durasi:</label>
-                        <input type="text" id="videoDuration" required placeholder="MM:SS atau SSs">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="isVip"><i class="fas fa-crown"></i> VIP Content:</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="isVip" class="toggle-input">
-                            <label for="isVip" class="toggle-label"></label>
-                            <span class="toggle-text" id="vipStatusText">Free</span>
+                
+                <div class="keys-container">
+                    <div class="keys-info">
+                        <div class="info-card">
+                            <i class="fas fa-info-circle"></i>
+                            <h3>Informasi Key VIP</h3>
+                            <p>Setiap key dapat digunakan maksimal 30 kali untuk membuka video VIP. Key akan otomatis terhapus setelah digunakan 30 kali.</p>
+                        </div>
+                        
+                        <div class="generate-key-card">
+                            <h3><i class="fas fa-key"></i> Generate Key Baru</h3>
+                            <p>Klik tombol di bawah untuk membuat key VIP baru</p>
+                            <button class="btn-generate" id="generateKeyBtn">
+                                <i class="fas fa-magic"></i> Generate Key
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="form-actions">
-                        <button type="submit" class="upload-btn" id="uploadBtn">
-                            <i class="fas fa-upload"></i> Upload New Content
-                        </button>
-                        <button type="button" class="reset-btn" id="resetForm">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
+                    <div class="key-display-container">
+                        <div class="key-display-header">
+                            <h3><i class="fas fa-keyboard"></i> Key yang Baru Digenerate</h3>
+                            <button class="btn-copy" id="copyKeyBtn" disabled>
+                                <i class="far fa-copy"></i> Copy Key
+                            </button>
+                        </div>
+                        
+                        <div class="key-display" id="keyDisplay">
+                            <p class="key-placeholder">Key akan muncul di sini setelah digenerate</p>
+                        </div>
+                        
+                        <div class="key-result" id="keyGenerateResult"></div>
                     </div>
-                </form>
-            </section>
-
-            <!-- Key Generation Section -->
-            <section class="key-section fade-in">
-                <div class="section-title">
-                    <h2><i class="fas fa-key"></i> Generate VIP Keys</h2>
                 </div>
-                <div class="key-controls">
-                    <button class="generate-btn" id="generateKeyBtn">
-                        <i class="fas fa-plus-circle"></i> Generate New Key
-                    </button>
-                    <div class="key-count-input">
-                        <label for="keyCount">Jumlah Keys:</label>
-                        <input type="number" id="keyCount" min="1" max="10" value="1">
-                    </div>
+            </section>
+            
+            <!-- Videos Section -->
+            <section class="admin-section" id="videosSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-video"></i> Kelola Video</h2>
+                    <p>Lihat dan kelola semua video di database</p>
                 </div>
                 
-                <div class="generated-keys" id="generatedKeys">
-                    <h3><i class="fas fa-keyboard"></i> Generated Keys</h3>
-                    <div class="keys-list" id="keysList">
-                        <!-- Keys will be displayed here -->
+                <div class="videos-management">
+                    <div class="management-controls">
+                        <div class="search-control">
+                            <input type="text" id="adminSearch" placeholder="Cari video...">
+                            <button id="adminSearchBtn"><i class="fas fa-search"></i></button>
+                        </div>
+                        
+                        <div class="filter-controls">
+                            <select id="videoFilter">
+                                <option value="all">Semua Video</option>
+                                <option value="vip">VIP Only</option>
+                                <option value="free">Free Only</option>
+                            </select>
+                            <select id="sortVideos">
+                                <option value="newest">Terbaru</option>
+                                <option value="oldest">Terlama</option>
+                                <option value="popular">Populer</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="videos-list-container">
+                        <div class="videos-list" id="adminVideosList">
+                            <!-- Videos list will be loaded here -->
+                        </div>
+                        
+                        <div class="no-videos" id="noAdminVideos">
+                            <i class="fas fa-video-slash"></i>
+                            <p>Tidak ada video ditemukan</p>
+                        </div>
                     </div>
                 </div>
             </section>
-
-            <!-- Videos Management -->
-            <section class="manage-section fade-in">
-                <div class="section-title">
-                    <h2><i class="fas fa-list"></i> Manage Videos</h2>
-                </div>
-                <div class="search-controls">
-                    <input type="text" id="searchVideos" placeholder="Search videos...">
-                    <select id="filterVip">
-                        <option value="all">All Videos</option>
-                        <option value="vip">VIP Only</option>
-                        <option value="free">Free Only</option>
-                    </select>
-                </div>
-                <div class="videos-table-container">
-                    <table class="videos-table" id="videosTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nama</th>
-                                <th>Durasi</th>
-                                <th>VIP</th>
-                                <th>Views</th>
-                                <th>Likes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="videosTableBody">
-                            <!-- Videos will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-
-        <!-- Admin Footer -->
-        <footer class="admin-footer">
-            <div class="admin-footer-content">
-                <div class="footer-info">
-                    <p><i class="fas fa-database"></i> Connected to JSONBin</p>
-                    <p><i class="fas fa-sync-alt"></i> Last Updated: <span id="lastUpdated">--:--:--</span></p>
-                </div>
-                <div class="footer-copyright">
-                    <p><i class="far fa-copyright"></i> Copyright ❤ 2025 SkandalHub - Admin Panel</p>
-                </div>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Success Modal -->
-    <div class="modal admin-modal" id="successModal">
-        <div class="modal-content">
-            <div class="modal-header success">
-                <h3><i class="fas fa-check-circle"></i> Success!</h3>
-                <button class="close-modal" id="closeSuccessModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage">Operation completed successfully!</p>
-                <button class="btn-confirm" id="okSuccessBtn">OK</button>
-            </div>
         </div>
     </div>
 
-    <!-- Error Modal -->
-    <div class="modal admin-modal" id="errorModal">
-        <div class="modal-content">
-            <div class="modal-header error">
-                <h3><i class="fas fa-exclamation-circle"></i> Error!</h3>
-                <button class="close-modal" id="closeErrorModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p id="errorMessage">An error occurred!</p>
-                <button class="btn-cancel" id="okErrorBtn">OK</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Scripts -->
     <script src="script.js"></script>
 </body>
 </html>
