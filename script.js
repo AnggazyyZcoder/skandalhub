@@ -167,10 +167,11 @@ function simulateLoading() {
 async function loadData() {
     try {
         console.log('Loading data from JSONBin...');
+        
         const response = await fetch(`${CONFIG.BIN_URL}/latest`, {
             headers: {
                 'X-Master-Key': CONFIG.API_KEY,
-                'Content-Type': 'application/json'
+                'X-Bin-Meta': false
             }
         });
         
@@ -182,64 +183,41 @@ async function loadData() {
         console.log('Data loaded from JSONBin:', data);
         
         // Pastikan data memiliki struktur yang benar
-        if (!data.record) {
-            throw new Error('No record found in JSONBin');
+        if (!data) {
+            console.log('No data found, initializing empty structure');
+            appState.videos = [];
+            appState.keys = [];
+            return { videos: [], keys: [], lastUpdated: new Date().toISOString() };
         }
         
-        const record = data.record;
-        
         // Inisialisasi jika kosong
-        if (!record.videos || !Array.isArray(record.videos)) {
-            record.videos = [];
+        if (!data.videos || !Array.isArray(data.videos)) {
+            data.videos = [];
             console.log('Videos array initialized as empty');
         }
         
-        if (!record.keys || !Array.isArray(record.keys)) {
-            record.keys = [];
+        if (!data.keys || !Array.isArray(data.keys)) {
+            data.keys = [];
             console.log('Keys array initialized as empty');
         }
         
-        if (!record.lastUpdated) {
-            record.lastUpdated = new Date().toISOString();
+        if (!data.lastUpdated) {
+            data.lastUpdated = new Date().toISOString();
         }
         
-        appState.videos = record.videos;
-        appState.keys = record.keys;
+        appState.videos = data.videos;
+        appState.keys = data.keys;
         
         console.log(`Loaded ${appState.videos.length} videos and ${appState.keys.length} keys`);
         
         // Simpan untuk admin jika di halaman admin
         if (window.location.pathname.includes('admin.html')) {
-            window.adminData = record;
+            window.adminData = data;
         }
         
-        return record;
+        return data;
     } catch (error) {
         console.error('Error loading data from JSONBin:', error);
-        
-        // Coba load data default dari JSONBin sekali lagi dengan metode berbeda
-        try {
-            console.log('Trying alternative method to load data...');
-            const response = await fetch(CONFIG.BIN_URL, {
-                headers: {
-                    'X-Master-Key': CONFIG.API_KEY,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Data loaded with alternative method:', data);
-                
-                if (data.record) {
-                    appState.videos = data.record.videos || [];
-                    appState.keys = data.record.keys || [];
-                    return data.record;
-                }
-            }
-        } catch (secondError) {
-            console.error('Second attempt failed:', secondError);
-        }
         
         // Jika masih gagal, gunakan array kosong
         console.log('Using empty arrays as fallback');
@@ -253,8 +231,8 @@ async function loadData() {
 async function saveData() {
     try {
         const data = {
-            videos: appState.videos,
-            keys: appState.keys,
+            videos: appState.videos || [],
+            keys: appState.keys || [],
             lastUpdated: new Date().toISOString()
         };
         
@@ -272,11 +250,20 @@ async function saveData() {
         
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Failed to save data: ${response.status} - ${errorText}`);
+            console.error('Response error:', errorText);
+            throw new Error(`Failed to save data: ${response.status}`);
         }
         
         const result = await response.json();
         console.log('Data saved successfully:', result);
+        
+        // Show success notification
+        if (window.location.pathname.includes('admin.html')) {
+            // Don't show notification for admin saves (will show specific messages)
+        } else {
+            showNotification('Data berhasil disimpan!', 'success');
+        }
+        
         return true;
     } catch (error) {
         console.error('Error saving data to JSONBin:', error);
@@ -300,7 +287,7 @@ function renderTrendingVideos() {
     
     // Urutkan video berdasarkan views (trending)
     const trendingVideos = [...appState.videos]
-        .sort((a, b) => b.views - a.views)
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
         .slice(0, 10);
     
     container.innerHTML = '';
@@ -1174,6 +1161,9 @@ function showAdminSection(sectionId) {
 async function handleUpload(e) {
     e.preventDefault();
     
+    // Show loading status
+    showUploadStatus('Mengupload video...', 'info');
+    
     // Get form values
     const name = document.getElementById('videoName')?.value;
     const videoUrl = document.getElementById('videoLink')?.value;
@@ -1190,16 +1180,16 @@ async function handleUpload(e) {
     
     // Generate new ID
     const newId = appState.videos.length > 0 
-        ? Math.max(...appState.videos.map(v => v.id)) + 1 
+        ? Math.max(...appState.videos.map(v => v.id || 0)) + 1 
         : 1;
     
     // Create new video object
     const newVideo = {
         id: newId,
-        name: name,
-        videoUrl: videoUrl,
-        thumbnail: thumbnail,
-        duration: duration,
+        name: name.trim(),
+        videoUrl: videoUrl.trim(),
+        thumbnail: thumbnail.trim(),
+        duration: duration.trim(),
         vip: isVIP,
         views: 0,
         likes: 0,
@@ -1238,8 +1228,19 @@ async function handleUpload(e) {
         if (appState.currentAdminSection === 'stats') {
             loadStats();
         }
+        
+        // Also update main page if it's open
+        if (window.opener && !window.opener.closed) {
+            try {
+                window.opener.location.reload();
+            } catch (e) {
+                // Cross-origin restriction, ignore
+            }
+        }
     } else {
         showUploadStatus('Gagal menyimpan video. Coba lagi.', 'error');
+        // Remove video from array if save failed
+        appState.videos.shift();
     }
 }
 
@@ -1262,7 +1263,7 @@ function showUploadStatus(message, type) {
     }, 5000);
 }
 
-function generateKey() {
+async function generateKey() {
     // Generate random key
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let key = '';
@@ -1291,13 +1292,22 @@ function generateKey() {
     appState.keys.push(newKey);
     
     // Save to database
-    saveData();
+    const success = await saveData();
     
-    // Update keys table
-    loadKeysTable();
-    
-    // Show notification
-    showNotification('Kunci VIP baru berhasil dibuat!', 'success');
+    if (success) {
+        // Update keys table
+        loadKeysTable();
+        
+        // Show notification
+        showNotification('Kunci VIP baru berhasil dibuat!', 'success');
+        
+        // Log success
+        console.log('Key generated and saved:', formattedKey);
+    } else {
+        // Remove key from array if save failed
+        appState.keys.pop();
+        showNotification('Gagal menyimpan kunci ke database', 'error');
+    }
 }
 
 function copyKey() {
@@ -1760,4 +1770,27 @@ function createTypeChart() {
             }
         }
     });
+}
+
+// Test JSONBin connection on load
+async function testConnection() {
+    try {
+        console.log('Testing JSONBin connection...');
+        const response = await fetch(`${CONFIG.BIN_URL}/latest`, {
+            headers: {
+                'X-Master-Key': CONFIG.API_KEY
+            }
+        });
+        
+        if (response.ok) {
+            console.log('JSONBin connection successful');
+            return true;
+        } else {
+            console.error('JSONBin connection failed:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('JSONBin connection error:', error);
+        return false;
+    }
 }
