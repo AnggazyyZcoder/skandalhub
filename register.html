@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Client - Login</title>
+    <title>Drip Client - Register</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
             <div class="particles"></div>
         </div>
 
-        <!-- Login Container -->
+        <!-- Register Container -->
         <div class="login-container fade-in">
             <div class="login-card">
                 <div class="logo-wrapper">
@@ -50,36 +50,37 @@
                     <div class="logo-glow"></div>
                 </div>
                 
-                <h1 class="login-title">Login To Dashboard</h1>
+                <h1 class="login-title">Buat Akun Baru</h1>
                 
-                <form id="loginForm">
+                <form id="registerForm">
                     <div class="input-group">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="username" placeholder="Username" required>
+                        <input type="text" id="regUsername" placeholder="Username" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="regEmail" placeholder="Email" required>
                     </div>
                     
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="password" placeholder="Password" required>
+                        <input type="password" id="regPassword" placeholder="Password" required>
                     </div>
                     
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox" id="rememberMe">
-                            <span class="checkmark"></span>
-                            Remember Me
-                        </label>
-                        <a href="#" class="forgot-password">Lupa Password?</a>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="regConfirmPassword" placeholder="Konfirmasi Password" required>
                     </div>
                     
                     <button type="submit" class="login-btn">
-                        <span>Login</span>
-                        <i class="fas fa-arrow-right"></i>
+                        <span>Register</span>
+                        <i class="fas fa-user-plus"></i>
                     </button>
                 </form>
                 
                 <div class="register-link">
-                    <p>Tidak punya akun? <a href="register.html">Daftar</a></p>
+                    <p>Sudah punya akun? <a href="index.html">Login</a></p>
                 </div>
             </div>
         </div>
