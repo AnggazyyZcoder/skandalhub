@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drip Client - Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="home-page">
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-content">
@@ -16,143 +16,153 @@
                 <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
             </div>
             <div class="loading-text">
-                <span>D</span>
-                <span>R</span>
-                <span>I</span>
-                <span>P</span>
-                <span>&nbsp;</span>
-                <span>C</span>
-                <span>L</span>
-                <span>I</span>
-                <span>E</span>
-                <span>N</span>
-                <span>T</span>
+                <span>D</span><span>R</span><span>I</span><span>P</span><span>&nbsp;</span>
+                <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
             </div>
             <div class="loading-progress">
-                <div class="loading-bar"></div>
+                <div class="progress-bar"></div>
             </div>
         </div>
     </div>
 
-    <!-- Main Dashboard -->
-    <div class="dashboard-container" style="display: none;" id="dashboardContainer">
-        <div class="animated-bg">
+    <!-- Main Content -->
+    <div class="main-content hidden" id="mainContent">
+        <!-- Background Animation -->
+        <div class="background-animation">
             <div class="gradient-bg"></div>
             <div class="particles"></div>
         </div>
 
-        <!-- Navbar -->
-        <div class="navbar" id="navbar">
-            <div class="nav-header">
-                <div class="user-greeting">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="usernameDisplay"></span>
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="animated-logo">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo">
                 </div>
+                <div class="welcome-text">
+                    <i class="fas fa-hand-wave"></i>
+                    <span>Hello, <span id="usernameDisplay">User</span>!</span>
+                </div>
+            </div>
+            <div class="header-right">
                 <div class="hamburger-menu" id="hamburgerMenu">
-                    <i class="fas fa-ellipsis-v"></i>
+                    <i class="fas fa-ellipsis-h"></i>
                 </div>
             </div>
-            
-            <!-- Running Text -->
-            <div class="running-text-container" id="runningTextContainer" style="display: none;">
-                <div class="running-text">
-                    <div class="running-text-content" id="runningTextContent"></div>
+        </header>
+
+        <!-- Running Text -->
+        <div class="running-text-container" id="runningTextContainer" style="display: none;">
+            <div class="running-text">
+                <div class="running-text-content" id="runningTextContent">
+                    <!-- Running text akan diisi dari database -->
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar Navigation -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo" class="sidebar-logo">
-                <h3>Menu</h3>
+        <!-- Navbar Menu -->
+        <nav class="navbar" id="navbar">
+            <div class="navbar-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo">
+                <h3>Quick Actions</h3>
+                <i class="fas fa-times close-navbar" id="closeNavbar"></i>
             </div>
-            <ul class="sidebar-menu">
-                <li class="active"><a href="#"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="#products"><i class="fas fa-box"></i> Products</a></li>
-                <li><a href="#faq"><i class="fas fa-question-circle"></i> FAQ</a></li>
-                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <ul class="navbar-menu">
+                <li>
+                    <a href="#" id="resetKeyBtn">
+                        <i class="fas fa-key"></i>
+                        <span>Reset Key</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-headset"></i>
+                        <span>Support</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="index.html" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
             </ul>
-        </div>
+        </nav>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Products Section -->
-            <section id="products" class="products-section fade-in">
-                <h2 class="section-title">
-                    <i class="fas fa-crown"></i>
-                    Premium Products
-                </h2>
-                <div class="products-grid" id="productsGrid">
-                    <!-- Products will be loaded here -->
-                </div>
-            </section>
+        <!-- Products Section -->
+        <section class="products-section">
+            <h2 class="section-title fade-in">Produk Tersedia</h2>
+            <div class="products-grid" id="productsGrid">
+                <!-- Produk akan diisi dari database -->
+            </div>
+        </section>
 
-            <!-- FAQ Section -->
-            <section id="faq" class="faq-section fade-in">
-                <h2 class="section-title">
-                    <i class="fas fa-question-circle"></i>
-                    Frequently Asked Questions
-                </h2>
-                <div class="faq-container" id="faqContainer">
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Apa itu Drip Client?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Drip Client adalah cheat android dengan fitur lengkap dan anti ban.</p>
-                        </div>
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <h2 class="section-title fade-in">Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item fade-in">
+                    <div class="faq-question">
+                        <h3>Apa itu Drip Client?</h3>
+                        <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Apakah aman digunakan?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>100% aman dengan sistem anti ban dan update rutin.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-question">
-                            <h3>Bagaimana cara membeli?</h3>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Pilih produk, pilih durasi, lalu klik Buy Now untuk order via WhatsApp.</p>
-                        </div>
+                    <div class="faq-answer">
+                        <p>Drip Client adalah cheat android dengan fitur lengkap dan anti-ban.</p>
                     </div>
                 </div>
-            </section>
+                <div class="faq-item fade-in">
+                    <div class="faq-question">
+                        <h3>Bagaimana cara reset key?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Klik menu hamburger (3 titik) lalu pilih Reset Key dan ikuti instruksinya.</p>
+                    </div>
+                </div>
+                <div class="faq-item fade-in">
+                    <div class="faq-question">
+                        <h3>Apakah ada garansi?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ya, ada garansi 1 hari untuk setiap pembelian.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reset Key Modal -->
+        <div class="modal" id="resetKeyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo">
+                    <h3>Reset Key System</h3>
+                    <i class="fas fa-times close-modal" id="closeResetModal"></i>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <input type="text" id="resetKeyInput" placeholder="Masukkan Key Lama">
+                    </div>
+                    <button class="reset-button" id="processResetBtn">
+                        <span>Reset</span>
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <div class="reset-log" id="resetLog"></div>
+                </div>
+            </div>
         </div>
+
+        <!-- Overlay -->
+        <div class="overlay" id="overlay"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="script.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            setTimeout(function() {
-                const loadingScreen = document.getElementById('loadingScreen');
-                loadingScreen.classList.add('fade-out');
-                
-                setTimeout(function() {
-                    loadingScreen.style.display = 'none';
-                    document.getElementById('dashboardContainer').style.display = 'block';
-                    
-                    // Initialize dashboard
-                    if (window.dashboardFunctions) {
-                        window.dashboardFunctions.loadProducts();
-                        window.dashboardFunctions.loadRunningText();
-                    }
-                }, 1000);
-            }, 3000);
-        });
-    </script>
 </body>
 </html>
