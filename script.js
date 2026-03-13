@@ -1,727 +1,777 @@
-// Konfigurasi JSONBin
-const JSONBIN_API_KEY = '$2a$10$FrRFp7JmBmpnrWofdI2GyOHCeiMwzhvrVQ.Hh2H3FaBCiFlkxh4c6'; // Ganti dengan API key Anda
-const JSONBIN_BIN_ID = '69b3d8deb7ec241ddc656351'; // Ganti dengan bin ID Anda
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// Konfigurasi JSONBin.io
+const JSONBIN_API_KEY = '$2a$10$FrRFp7JmBmpnrWofdI2GyOHCeiMwzhvrVQ.Hh2H3FaBCiFlkxh4c6'; // Ganti dengan API Key Anda
+const JSONBIN_BIN_ID = '69b3d8deb7ec241ddc656351'; // Ganti dengan Bin ID Anda
+const BASE_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
 // Inisialisasi data default
-let appData = {
+const defaultData = {
     users: [],
     products: [],
-    promos: [],
+    promoCodes: [],
     settings: {
         runningText: {
-            enabled: false,
-            text: "KODE PROMO TERBARU : DISKON70%"
+            text: "KODE PROMO TERBARU : DISKON70%",
+            enabled: false
         }
-    },
-    faq: [
-        {
-            question: "Apa itu Drip Client?",
-            answer: "Drip Client adalah cheat android dengan fitur lengkap dan anti ban."
-        },
-        {
-            question: "Apakah aman digunakan?",
-            answer: "Ya, kami menggunakan sistem proteksi terbaru untuk menghindari deteksi."
-        },
-        {
-            question: "Bagaimana cara pembelian?",
-            answer: "Pilih produk, gunakan promo jika ada, lalu klik Buy Now untuk chat WhatsApp."
-        },
-        {
-            question: "Apada garansi?",
-            answer: "Ya, kami memberikan garansi 7 hari jika terjadi masalah."
-        }
-    ]
+    }
 };
 
-// Loading Screen Handler
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-            loadingScreen.classList.add('hide');
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                const mainContent = document.getElementById('mainContent');
-                if (mainContent) {
-                    mainContent.style.display = 'block';
-                    initPage();
-                }
-            }, 500);
-        }
-    }, 3000);
-});
-
-// Inisialisasi setiap halaman
-function initPage() {
-    const currentPage = window.location.pathname.split('/').pop();
-    
-    // Load data dari JSONBin
-    loadData().then(() => {
-        switch(currentPage) {
-            case 'index.html':
-                initLoginPage();
-                break;
-            case 'register.html':
-                initRegisterPage();
-                break;
-            case 'home.html':
-                initHomePage();
-                break;
-            case 'admin.html':
-                initAdminPage();
-                break;
-        }
-    });
-    
-    // Inisialisasi scroll animations
-    initScrollAnimations();
-    
-    // Inisialisasi particles
-    initParticles();
-}
-
-// Load data dari JSONBin
-async function loadData() {
+// Helper Functions
+async function fetchData() {
     try {
-        const response = await fetch(`${JSONBIN_URL}/latest`, {
+        const response = await fetch(BASE_URL, {
             headers: {
                 'X-Master-Key': JSONBIN_API_KEY
             }
         });
-        
-        if (response.ok) {
-            const data = await response.json();
-            appData = data.record;
-        } else {
-            // Jika bin tidak ada, buat baru
-            await saveData();
-        }
+        const data = await response.json();
+        return data.record;
     } catch (error) {
-        console.log('Menggunakan data default');
-        await saveData();
+        console.error('Error fetching data:', error);
+        return defaultData;
     }
 }
 
-// Simpan data ke JSONBin
-async function saveData() {
+async function updateData(newData) {
     try {
-        const response = await fetch(JSONBIN_URL, {
+        const response = await fetch(BASE_URL, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Master-Key': JSONBIN_API_KEY
             },
-            body: JSON.stringify(appData)
+            body: JSON.stringify(newData)
         });
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating data:', error);
+        return null;
+    }
+}
+
+// SweetAlert wrapper
+function showAlert(type, title, message) {
+    Swal.fire({
+        icon: type,
+        title: title,
+        text: message,
+        background: 'var(--card-bg)',
+        color: 'var(--text-primary)',
+        confirmButtonColor: 'var(--purple-secondary)',
+        timer: type === 'success' ? 3000 : undefined
+    });
+}
+
+// Loading screen helper
+function showLoading(containerId) {
+    const loadingScreen = document.querySelector('.loading-screen');
+    if (loadingScreen) {
+        loadingScreen.style.display = 'flex';
+        setTimeout(() => {
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                document.getElementById(containerId).style.display = 'block';
+            }, 1000);
+        }, 3000);
+    }
+}
+
+// ==================== LOGIN PAGE FUNCTIONS ====================
+async function handleLogin(username, password, rememberMe) {
+    if (!username || !password) {
+        showAlert('error', 'Error', 'Username dan password harus diisi!');
+        return false;
+    }
+
+    try {
+        const data = await fetchData();
+        const user = data.users.find(u => u.username === username && u.password === password);
         
-        if (!response.ok) {
-            console.error('Gagal menyimpan data');
+        if (user) {
+            // Show welcome animation
+            const loadingScreen = document.createElement('div');
+            loadingScreen.className = 'loading-screen';
+            loadingScreen.innerHTML = `
+                <div class="loading-content">
+                    <div class="loading-logo">
+                        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
+                    </div>
+                    <div class="loading-text">
+                        <span>W</span>
+                        <span>E</span>
+                        <span>L</span>
+                        <span>C</span>
+                        <span>O</span>
+                        <span>M</span>
+                        <span>E</span>
+                        <span>&nbsp;</span>
+                        <span>${username.toUpperCase()}</span>
+                    </div>
+                    <div class="loading-progress">
+                        <div class="loading-bar" style="animation: loadingBar 3s ease;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingScreen);
+
+            if (rememberMe) {
+                localStorage.setItem('rememberedUser', username);
+            }
+            
+            localStorage.setItem('currentUser', username);
+            
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 3000);
+            
+            return true;
+        } else {
+            showAlert('error', 'Login Gagal', 'Username atau password salah!');
+            return false;
         }
     } catch (error) {
-        console.error('Error saving data:', error);
+        console.error('Login error:', error);
+        showAlert('error', 'Error', 'Terjadi kesalahan saat login');
+        return false;
     }
 }
 
-// Inisialisasi particles
-function initParticles() {
-    const particles = document.querySelector('.particles');
-    if (particles) {
-        for (let i = 0; i < 50; i++) {
-            const particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.width = '2px';
-            particle.style.height = '2px';
-            particle.style.background = 'var(--primary)';
-            particle.style.borderRadius = '50%';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.top = Math.random() * 100 + '%';
-            particle.style.animation = `float ${5 + Math.random() * 10}s linear infinite`;
-            particle.style.animationDelay = Math.random() * 5 + 's';
-            particles.appendChild(particle);
+// ==================== REGISTER PAGE FUNCTIONS ====================
+async function handleRegister(username, password, confirmPassword) {
+    if (!username || !password || !confirmPassword) {
+        showAlert('error', 'Error', 'Semua field harus diisi!');
+        return false;
+    }
+
+    if (password !== confirmPassword) {
+        showAlert('error', 'Error', 'Password tidak cocok!');
+        return false;
+    }
+
+    if (password.length < 6) {
+        showAlert('error', 'Error', 'Password minimal 6 karakter!');
+        return false;
+    }
+
+    try {
+        const data = await fetchData();
+        
+        // Check if username already exists
+        if (data.users.some(u => u.username === username)) {
+            showAlert('error', 'Error', 'Username sudah digunakan!');
+            return false;
+        }
+
+        // Add new user
+        data.users.push({
+            username: username,
+            password: password,
+            createdAt: new Date().toISOString()
+        });
+
+        await updateData(data);
+        
+        showAlert('success', 'Berhasil!', 'Akun berhasil dibuat! Silakan login.');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
+        
+        return true;
+    } catch (error) {
+        console.error('Register error:', error);
+        showAlert('error', 'Error', 'Terjadi kesalahan saat registrasi');
+        return false;
+    }
+}
+
+// ==================== DASHBOARD FUNCTIONS ====================
+const dashboardFunctions = {
+    async loadProducts() {
+        try {
+            const data = await fetchData();
+            const productsGrid = document.getElementById('productsGrid');
+            if (!productsGrid) return;
+
+            productsGrid.innerHTML = '';
+
+            data.products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card fade-in';
+                
+                const features = product.features.split(',').map(f => f.trim());
+                const priceOptions = product.prices.map(p => 
+                    `<option value="${p.value}">${p.label} - Rp ${p.value.toLocaleString()}</option>`
+                ).join('');
+
+                productCard.innerHTML = `
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-desc">${product.description}</p>
+                    <ul class="product-features">
+                        ${features.map(f => `<li><i class="fas fa-check-circle"></i> ${f}</li>`).join('')}
+                    </ul>
+                    <div class="price-select">
+                        <select class="price-select-${product.id}">
+                            ${priceOptions}
+                        </select>
+                    </div>
+                    <div class="promo-input">
+                        <input type="text" placeholder="Code Promo" id="promo-${product.id}">
+                        <button onclick="dashboardFunctions.applyPromo('${product.id}')">Cek</button>
+                    </div>
+                    <button class="buy-now-btn" onclick="dashboardFunctions.buyProduct('${product.id}')">
+                        <span>Buy Now</span>
+                        <i class="fas fa-whatsapp"></i>
+                    </button>
+                `;
+                
+                productsGrid.appendChild(productCard);
+            });
+        } catch (error) {
+            console.error('Error loading products:', error);
+        }
+    },
+
+    async loadRunningText() {
+        try {
+            const data = await fetchData();
+            const runningTextContainer = document.getElementById('runningTextContainer');
+            const runningTextContent = document.getElementById('runningTextContent');
+            
+            if (data.settings?.runningText?.enabled && data.settings.runningText.text) {
+                runningTextContent.textContent = data.settings.runningText.text;
+                runningTextContainer.style.display = 'block';
+            } else {
+                runningTextContainer.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading running text:', error);
+        }
+    },
+
+    async applyPromo(productId) {
+        const promoInput = document.getElementById(`promo-${productId}`);
+        const promoCode = promoInput.value.trim().toUpperCase();
+        
+        if (!promoCode) {
+            showAlert('info', 'Info', 'Masukkan kode promo');
+            return;
+        }
+
+        try {
+            const data = await fetchData();
+            const promo = data.promoCodes.find(p => p.code === promoCode);
+            
+            if (!promo) {
+                showAlert('error', 'Error', 'Kode promo tidak valid!');
+                return;
+            }
+
+            if (promo.usedCount >= promo.maxUse) {
+                showAlert('error', 'Error', 'Kode promo sudah mencapai batas penggunaan!');
+                return;
+            }
+
+            // Store selected promo in localStorage
+            localStorage.setItem('selectedPromo', JSON.stringify({
+                code: promo.code,
+                discount: promo.discount,
+                productId: productId
+            }));
+
+            showAlert('success', 'Berhasil!', `Diskon ${promo.discount}% berhasil diterapkan!`);
+        } catch (error) {
+            console.error('Error applying promo:', error);
+            showAlert('error', 'Error', 'Terjadi kesalahan');
+        }
+    },
+
+    async buyProduct(productId) {
+        try {
+            const data = await fetchData();
+            const product = data.products.find(p => p.id === productId);
+            const priceSelect = document.querySelector(`.price-select-${productId}`);
+            const selectedPrice = priceSelect?.value;
+            const selectedLabel = priceSelect?.options[priceSelect.selectedIndex]?.text.split(' - ')[0];
+            
+            if (!selectedPrice) {
+                showAlert('error', 'Error', 'Pilih durasi terlebih dahulu!');
+                return;
+            }
+
+            let message = `Halo saya ingin membeli:\n\n`;
+            message += `Produk: ${product.name}\n`;
+            message += `Durasi: ${selectedLabel}\n`;
+            message += `Harga: Rp ${parseInt(selectedPrice).toLocaleString()}\n`;
+
+            // Check for promo
+            const selectedPromo = JSON.parse(localStorage.getItem('selectedPromo') || 'null');
+            if (selectedPromo && selectedPromo.productId === productId) {
+                const discountAmount = (parseInt(selectedPrice) * selectedPromo.discount) / 100;
+                const finalPrice = parseInt(selectedPrice) - discountAmount;
+                message += `Kode Promo: ${selectedPromo.code} (${selectedPromo.discount}%)\n`;
+                message += `Diskon: Rp ${discountAmount.toLocaleString()}\n`;
+                message += `Total: Rp ${finalPrice.toLocaleString()}`;
+                
+                // Update promo usage count
+                const promo = data.promoCodes.find(p => p.code === selectedPromo.code);
+                if (promo) {
+                    promo.usedCount = (promo.usedCount || 0) + 1;
+                    await updateData(data);
+                }
+                
+                // Clear promo after use
+                localStorage.removeItem('selectedPromo');
+            } else {
+                message += `Total: Rp ${parseInt(selectedPrice).toLocaleString()}`;
+            }
+
+            // Encode message for WhatsApp
+            const encodedMessage = encodeURIComponent(message);
+            const waUrl = `https://wa.me/6288804148639?text=${encodedMessage}`;
+            
+            window.open(waUrl, '_blank');
+        } catch (error) {
+            console.error('Error buying product:', error);
+            showAlert('error', 'Error', 'Terjadi kesalahan');
+        }
+    },
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('active');
+    },
+
+    initFaq() {
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                item.classList.toggle('active');
+            });
+        });
+    }
+};
+
+// ==================== ADMIN FUNCTIONS ====================
+const adminFunctions = {
+    async addProduct() {
+        const name = document.getElementById('productName').value;
+        const image = document.getElementById('productImage').value;
+        const description = document.getElementById('productDesc').value;
+        const features = document.getElementById('productFeatures').value;
+        
+        // Get price fields
+        const priceFields = document.querySelectorAll('.price-field');
+        const prices = [];
+        priceFields.forEach(field => {
+            const label = field.querySelector('.price-label').value;
+            const value = field.querySelector('.price-value').value;
+            if (label && value) {
+                prices.push({
+                    label: label,
+                    value: parseInt(value)
+                });
+            }
+        });
+
+        if (!name || !image || !description || !features || prices.length === 0) {
+            showAlert('error', 'Error', 'Semua field harus diisi!');
+            return;
+        }
+
+        try {
+            const data = await fetchData();
+            const newProduct = {
+                id: Date.now().toString(),
+                name: name,
+                image: image,
+                description: description,
+                features: features,
+                prices: prices,
+                createdAt: new Date().toISOString()
+            };
+
+            data.products.push(newProduct);
+            await updateData(data);
+
+            showAlert('success', 'Berhasil!', 'Produk berhasil ditambahkan');
+            
+            // Clear form
+            document.getElementById('productName').value = '';
+            document.getElementById('productImage').value = '';
+            document.getElementById('productDesc').value = '';
+            document.getElementById('productFeatures').value = '';
+            document.querySelectorAll('.price-field').forEach(f => f.remove());
+            
+            this.loadAdminProducts();
+        } catch (error) {
+            console.error('Error adding product:', error);
+            showAlert('error', 'Error', 'Gagal menambahkan produk');
+        }
+    },
+
+    async addPromo() {
+        const code = document.getElementById('promoCode').value.toUpperCase();
+        const discount = parseInt(document.getElementById('promoPercent').value);
+        const maxUse = parseInt(document.getElementById('promoMaxUse').value);
+
+        if (!code || !discount || !maxUse) {
+            showAlert('error', 'Error', 'Semua field harus diisi!');
+            return;
+        }
+
+        if (discount < 1 || discount > 100) {
+            showAlert('error', 'Error', 'Diskon harus antara 1-100%');
+            return;
+        }
+
+        try {
+            const data = await fetchData();
+            
+            // Check if code already exists
+            if (data.promoCodes.some(p => p.code === code)) {
+                showAlert('error', 'Error', 'Kode promo sudah ada!');
+                return;
+            }
+
+            const newPromo = {
+                code: code,
+                discount: discount,
+                maxUse: maxUse,
+                usedCount: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            data.promoCodes.push(newPromo);
+            await updateData(data);
+
+            showAlert('success', 'Berhasil!', 'Kode promo berhasil ditambahkan');
+            
+            // Clear form
+            document.getElementById('promoCode').value = '';
+            document.getElementById('promoPercent').value = '';
+            document.getElementById('promoMaxUse').value = '';
+            
+            this.loadAdminPromos();
+        } catch (error) {
+            console.error('Error adding promo:', error);
+            showAlert('error', 'Error', 'Gagal menambahkan kode promo');
+        }
+    },
+
+    async saveRunningText() {
+        const text = document.getElementById('runningText').value;
+        const enabled = document.getElementById('runningTextToggle').checked;
+
+        if (!text) {
+            showAlert('error', 'Error', 'Teks running tidak boleh kosong!');
+            return;
+        }
+
+        try {
+            const data = await fetchData();
+            data.settings = data.settings || {};
+            data.settings.runningText = {
+                text: text,
+                enabled: enabled
+            };
+
+            await updateData(data);
+            showAlert('success', 'Berhasil!', 'Running text berhasil disimpan');
+        } catch (error) {
+            console.error('Error saving running text:', error);
+            showAlert('error', 'Error', 'Gagal menyimpan running text');
+        }
+    },
+
+    async loadAdminProducts() {
+        try {
+            const data = await fetchData();
+            const productsList = document.getElementById('adminProductsList');
+            if (!productsList) return;
+
+            productsList.innerHTML = '';
+
+            data.products.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'admin-list-item';
+                productItem.innerHTML = `
+                    <div class="item-info">
+                        <img src="${product.image}" alt="${product.name}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
+                        <div>
+                            <h4>${product.name}</h4>
+                            <p>${product.prices.length} harga tersedia</p>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="adminFunctions.deleteProduct('${product.id}')" class="admin-btn delete-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                productsList.appendChild(productItem);
+            });
+        } catch (error) {
+            console.error('Error loading admin products:', error);
+        }
+    },
+
+    async loadAdminPromos() {
+        try {
+            const data = await fetchData();
+            const promosList = document.getElementById('adminPromoList');
+            if (!promosList) return;
+
+            promosList.innerHTML = '';
+
+            data.promoCodes.forEach(promo => {
+                const promoItem = document.createElement('div');
+                promoItem.className = 'admin-list-item';
+                promoItem.innerHTML = `
+                    <div class="item-info">
+                        <i class="fas fa-tag" style="color: var(--purple-secondary); font-size: 24px;"></i>
+                        <div>
+                            <h4>${promo.code}</h4>
+                            <p>Diskon ${promo.discount}% | Penggunaan: ${promo.usedCount || 0}/${promo.maxUse}</p>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="adminFunctions.deletePromo('${promo.code}')" class="admin-btn delete-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                promosList.appendChild(promoItem);
+            });
+        } catch (error) {
+            console.error('Error loading admin promos:', error);
+        }
+    },
+
+    async deleteProduct(productId) {
+        const result = await Swal.fire({
+            title: 'Hapus Produk?',
+            text: 'Produk akan dihapus permanen!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--error-color)',
+            cancelButtonColor: 'var(--purple-secondary)',
+            confirmButtonText: 'Ya, Hapus!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const data = await fetchData();
+                data.products = data.products.filter(p => p.id !== productId);
+                await updateData(data);
+                
+                showAlert('success', 'Berhasil!', 'Produk berhasil dihapus');
+                this.loadAdminProducts();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showAlert('error', 'Error', 'Gagal menghapus produk');
+            }
+        }
+    },
+
+    async deletePromo(promoCode) {
+        const result = await Swal.fire({
+            title: 'Hapus Promo?',
+            text: 'Kode promo akan dihapus permanen!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--error-color)',
+            cancelButtonColor: 'var(--purple-secondary)',
+            confirmButtonText: 'Ya, Hapus!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const data = await fetchData();
+                data.promoCodes = data.promoCodes.filter(p => p.code !== promoCode);
+                await updateData(data);
+                
+                showAlert('success', 'Berhasil!', 'Kode promo berhasil dihapus');
+                this.loadAdminPromos();
+            } catch (error) {
+                console.error('Error deleting promo:', error);
+                showAlert('error', 'Error', 'Gagal menghapus kode promo');
+            }
+        }
+    },
+
+    addPriceField() {
+        const container = document.getElementById('priceFields');
+        const newField = document.createElement('div');
+        newField.className = 'price-field';
+        newField.innerHTML = `
+            <input type="text" placeholder="Label (contoh: 1 DAYS)" class="price-label">
+            <input type="number" placeholder="Harga (Rp)" class="price-value">
+            <button class="remove-price" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(newField);
+    }
+};
+
+// ==================== EVENT LISTENERS ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // Load SweetAlert
+    const sweetAlertScript = document.createElement('script');
+    sweetAlertScript.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+    document.head.appendChild(sweetAlertScript);
+
+    // Check current page and initialize accordingly
+    const currentPage = window.location.pathname.split('/').pop();
+
+    // Login page
+    if (currentPage === 'index.html' || currentPage === '') {
+        document.getElementById('loginBtn')?.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe')?.checked || false;
+            
+            await handleLogin(username, password, rememberMe);
+        });
+
+        // Enter key press
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn')?.click();
+            }
+        });
+
+        // Check for remembered user
+        const rememberedUser = localStorage.getItem('rememberedUser');
+        if (rememberedUser) {
+            document.getElementById('username').value = rememberedUser;
+            document.getElementById('rememberMe').checked = true;
         }
     }
-}
 
-// Inisialisasi scroll animations
-function initScrollAnimations() {
-    const elements = document.querySelectorAll('.product-card, .faq-item, .admin-card');
-    
+    // Register page
+    if (currentPage === 'register.html') {
+        document.getElementById('registerBtn')?.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            await handleRegister(username, password, confirmPassword);
+        });
+    }
+
+    // Home page
+    if (currentPage === 'home.html') {
+        const username = localStorage.getItem('currentUser');
+        if (username) {
+            document.getElementById('usernameDisplay').textContent = username;
+        }
+
+        // Initialize dashboard functions
+        window.dashboardFunctions = dashboardFunctions;
+        
+        // Load data
+        dashboardFunctions.loadProducts();
+        dashboardFunctions.loadRunningText();
+        dashboardFunctions.initFaq();
+
+        // Hamburger menu
+        document.getElementById('hamburgerMenu')?.addEventListener('click', function() {
+            dashboardFunctions.toggleSidebar();
+        });
+
+        // Logout
+        document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Logout?',
+                text: 'Anda akan keluar dari dashboard',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--purple-secondary)',
+                cancelButtonColor: 'var(--error-color)',
+                confirmButtonText: 'Ya, Logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+    }
+
+    // Admin page
+    if (currentPage === 'admin.html') {
+        window.adminFunctions = adminFunctions;
+        
+        // Load admin data
+        adminFunctions.loadAdminProducts();
+        adminFunctions.loadAdminPromos();
+
+        // Add price field button
+        document.getElementById('addPriceField')?.addEventListener('click', function() {
+            adminFunctions.addPriceField();
+        });
+
+        // Add product button
+        document.getElementById('addProductBtn')?.addEventListener('click', function() {
+            adminFunctions.addProduct();
+        });
+
+        // Add promo button
+        document.getElementById('addPromoBtn')?.addEventListener('click', function() {
+            adminFunctions.addPromo();
+        });
+
+        // Save running text button
+        document.getElementById('saveRunningTextBtn')?.addEventListener('click', function() {
+            adminFunctions.saveRunningText();
+        });
+
+        // Load current running text
+        fetchData().then(data => {
+            if (data.settings?.runningText) {
+                document.getElementById('runningText').value = data.settings.runningText.text || '';
+                document.getElementById('runningTextToggle').checked = data.settings.runningText.enabled || false;
+            }
+        });
+
+        // Logout admin
+        document.getElementById('logoutAdminBtn')?.addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+    }
+
+    // Close sidebar when clicking outside
+    document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('sidebar');
+        const hamburger = document.getElementById('hamburgerMenu');
+        
+        if (sidebar?.classList.contains('active') && 
+            !sidebar.contains(e.target) && 
+            !hamburger?.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // Intersection Observer for scroll animations
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-scroll', 'visible');
+                entry.target.classList.add('fade-in');
             }
         });
     }, { threshold: 0.1 });
-    
-    elements.forEach(el => observer.observe(el));
-}
 
-// Login Page
-function initLoginPage() {
-    const loginForm = document.getElementById('loginForm');
-    if (!loginForm) return;
-    
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const rememberMe = document.getElementById('rememberMe').checked;
-        
-        // Cari user
-        const user = appData.users.find(u => u.username === username && u.password === password);
-        
-        if (user) {
-            // Loading animation
-            Swal.fire({
-                title: 'Welcome!',
-                text: `Selamat datang ${username}!`,
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false,
-                background: 'var(--glass-dark)',
-                color: 'var(--light)'
-            });
-            
-            // Simpan session
-            if (rememberMe) {
-                localStorage.setItem('currentUser', JSON.stringify(user));
-            } else {
-                sessionStorage.setItem('currentUser', JSON.stringify(user));
-            }
-            
-            // Redirect ke home
-            setTimeout(() => {
-                window.location.href = 'home.html';
-            }, 2000);
-        } else {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Username atau password salah!',
-                icon: 'error',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)',
-                confirmButtonColor: 'var(--primary)'
-            });
-        }
+    document.querySelectorAll('.product-card, .faq-item, .admin-card').forEach(el => {
+        observer.observe(el);
     });
-}
-
-// Register Page
-function initRegisterPage() {
-    const registerForm = document.getElementById('registerForm');
-    if (!registerForm) return;
-    
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const username = document.getElementById('regUsername').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        const confirmPassword = document.getElementById('regConfirmPassword').value;
-        
-        // Validasi
-        if (password !== confirmPassword) {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Password tidak cocok!',
-                icon: 'error',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)'
-            });
-            return;
-        }
-        
-        // Cek username sudah ada
-        if (appData.users.some(u => u.username === username)) {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Username sudah digunakan!',
-                icon: 'error',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)'
-            });
-            return;
-        }
-        
-        // Tambah user baru
-        const newUser = {
-            id: Date.now(),
-            username,
-            email,
-            password,
-            registeredAt: new Date().toISOString()
-        };
-        
-        appData.users.push(newUser);
-        await saveData();
-        
-        Swal.fire({
-            title: 'Sukses!',
-            text: 'Akun berhasil dibuat! Silakan login.',
-            icon: 'success',
-            background: 'var(--glass-dark)',
-            color: 'var(--light)',
-            confirmButtonColor: 'var(--primary)'
-        }).then(() => {
-            window.location.href = 'index.html';
-        });
-    });
-}
-
-// Home Page
-function initHomePage() {
-    // Ambil user data
-    const user = JSON.parse(localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser'));
-    if (!user) {
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    // Tampilkan username
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    if (usernameDisplay) {
-        usernameDisplay.textContent = user.username;
-    }
-    
-    // Hamburger menu
-    const hamburger = document.getElementById('hamburgerMenu');
-    const sidebar = document.getElementById('sidebar');
-    const closeSidebar = document.getElementById('closeSidebar');
-    
-    if (hamburger && sidebar) {
-        hamburger.addEventListener('click', () => {
-            sidebar.classList.add('active');
-        });
-    }
-    
-    if (closeSidebar && sidebar) {
-        closeSidebar.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-        });
-    }
-    
-    // Logout
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
-        });
-    }
-    
-    // Tampilkan running text
-    const runningTextContainer = document.getElementById('runningTextContainer');
-    const runningTextContent = document.getElementById('runningTextContent');
-    
-    if (appData.settings.runningText.enabled && runningTextContainer && runningTextContent) {
-        runningTextContainer.style.display = 'block';
-        runningTextContent.textContent = appData.settings.runningText.text;
-    }
-    
-    // Tampilkan produk
-    displayProducts();
-    
-    // Tampilkan FAQ
-    displayFAQ();
-}
-
-// Display Products
-function displayProducts() {
-    const productsGrid = document.getElementById('productsGrid');
-    if (!productsGrid) return;
-    
-    productsGrid.innerHTML = '';
-    
-    appData.products.forEach(product => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card fade-in-scroll';
-        
-        // Generate features HTML
-        const features = product.features.split(',').map(f => f.trim());
-        const featuresHTML = features.map(f => `
-            <li>
-                <i class="fas fa-check-circle"></i>
-                ${f}
-            </li>
-        `).join('');
-        
-        // Generate price options
-        const priceOptions = product.prices.map((price, index) => {
-            const [name, value] = price.split('|');
-            return `<option value="${value}" ${index === 0 ? 'selected' : ''}>${name} - Rp ${formatRupiah(value)}</option>`;
-        }).join('');
-        
-        productCard.innerHTML = `
-            <img src="${product.image}" alt="${product.name}" class="product-image">
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-desc">${product.description}</p>
-            <ul class="product-features">
-                ${featuresHTML}
-            </ul>
-            <select class="product-select" id="price-${product.id}">
-                ${priceOptions}
-            </select>
-            <input type="text" class="promo-input" id="promo-${product.id}" placeholder="Masukkan Code Promo (Opsional)">
-            <div class="price-display" id="priceDisplay-${product.id}">
-                <span class="original-price" id="originalPrice-${product.id}">Rp ${formatRupiah(product.prices[0].split('|')[1])}</span>
-                <span class="final-price" id="finalPrice-${product.id}">Rp ${formatRupiah(product.prices[0].split('|')[1])}</span>
-            </div>
-            <button class="buy-btn" onclick="buyProduct('${product.id}')">
-                <i class="fab fa-whatsapp"></i>
-                Buy Now
-            </button>
-        `;
-        
-        productsGrid.appendChild(productCard);
-        
-        // Add event listeners
-        const priceSelect = document.getElementById(`price-${product.id}`);
-        const promoInput = document.getElementById(`promo-${product.id}`);
-        
-        priceSelect.addEventListener('change', () => updatePrice(product.id));
-        promoInput.addEventListener('input', () => updatePrice(product.id));
-    });
-}
-
-// Update price with promo
-function updatePrice(productId) {
-    const product = appData.products.find(p => p.id == productId);
-    if (!product) return;
-    
-    const priceSelect = document.getElementById(`price-${productId}`);
-    const promoInput = document.getElementById(`promo-${productId}`);
-    const originalPriceSpan = document.getElementById(`originalPrice-${productId}`);
-    const finalPriceSpan = document.getElementById(`finalPrice-${productId}`);
-    
-    const selectedPrice = parseInt(priceSelect.value);
-    const promoCode = promoInput.value.trim();
-    
-    originalPriceSpan.textContent = `Rp ${formatRupiah(selectedPrice)}`;
-    
-    if (promoCode) {
-        const promo = appData.promos.find(p => p.code === promoCode);
-        if (promo && promo.usedCount < promo.maxUse) {
-            const discount = (selectedPrice * promo.percent) / 100;
-            const finalPrice = selectedPrice - discount;
-            finalPriceSpan.textContent = `Rp ${formatRupiah(finalPrice)}`;
-            finalPriceSpan.style.color = 'var(--success)';
-        } else {
-            finalPriceSpan.textContent = `Rp ${formatRupiah(selectedPrice)}`;
-            finalPriceSpan.style.color = 'var(--secondary)';
-            if (promoCode) {
-                Swal.fire({
-                    title: 'Promo Tidak Valid!',
-                    text: promo ? 'Promo sudah mencapai batas penggunaan!' : 'Kode promo tidak ditemukan!',
-                    icon: 'warning',
-                    background: 'var(--glass-dark)',
-                    color: 'var(--light)',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-        }
-    } else {
-        finalPriceSpan.textContent = `Rp ${formatRupiah(selectedPrice)}`;
-        finalPriceSpan.style.color = 'var(--secondary)';
-    }
-}
-
-// Buy product
-window.buyProduct = async function(productId) {
-    const product = appData.products.find(p => p.id == productId);
-    if (!product) return;
-    
-    const priceSelect = document.getElementById(`price-${productId}`);
-    const promoInput = document.getElementById(`promo-${productId}`);
-    const selectedOption = priceSelect.options[priceSelect.selectedIndex].text;
-    const promoCode = promoInput.value.trim();
-    
-    let message = `Halo, saya mau membeli ${product.name} - ${selectedOption}`;
-    
-    if (promoCode) {
-        const promo = appData.promos.find(p => p.code === promoCode);
-        if (promo && promo.usedCount < promo.maxUse) {
-            message += `\nMenggunakan kode promo: ${promoCode}`;
-            
-            // Update promo usage
-            promo.usedCount++;
-            await saveData();
-        }
-    } else {
-        message += '\nTanpa promo';
-    }
-    
-    const whatsappUrl = `https://wa.me/6288804148639?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-}
-
-// Display FAQ
-function displayFAQ() {
-    const faqGrid = document.getElementById('faqGrid');
-    if (!faqGrid) return;
-    
-    faqGrid.innerHTML = '';
-    
-    appData.faq.forEach((item, index) => {
-        const faqItem = document.createElement('div');
-        faqItem.className = 'faq-item fade-in-scroll';
-        faqItem.innerHTML = `
-            <div class="faq-question">
-                <i class="fas fa-plus-circle"></i>
-                <span>${item.question}</span>
-            </div>
-            <div class="faq-answer">
-                ${item.answer}
-            </div>
-        `;
-        
-        faqItem.addEventListener('click', () => {
-            faqItem.classList.toggle('active');
-        });
-        
-        faqGrid.appendChild(faqItem);
-    });
-}
-
-// Admin Page
-function initAdminPage() {
-    // Tampilkan produk
-    displayAdminProducts();
-    
-    // Tampilkan promo
-    displayAdminPromos();
-    
-    // Running text form
-    const runningTextForm = document.getElementById('runningTextForm');
-    if (runningTextForm) {
-        document.getElementById('runningText').value = appData.settings.runningText.text;
-        document.getElementById('runningTextToggle').checked = appData.settings.runningText.enabled;
-        
-        runningTextForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            appData.settings.runningText.text = document.getElementById('runningText').value;
-            appData.settings.runningText.enabled = document.getElementById('runningTextToggle').checked;
-            
-            await saveData();
-            
-            Swal.fire({
-                title: 'Sukses!',
-                text: 'Running text berhasil diperbarui!',
-                icon: 'success',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)',
-                confirmButtonColor: 'var(--primary)'
-            });
-        });
-    }
-    
-    // Add product form
-    const addProductForm = document.getElementById('addProductForm');
-    if (addProductForm) {
-        addProductForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const priceInputs = document.querySelectorAll('.price-option');
-            const prices = Array.from(priceInputs).map(input => input.value).filter(v => v.trim());
-            
-            const newProduct = {
-                id: Date.now(),
-                name: document.getElementById('productName').value,
-                image: document.getElementById('productImage').value,
-                description: document.getElementById('productDesc').value,
-                features: document.getElementById('productFeatures').value,
-                prices: prices
-            };
-            
-            appData.products.push(newProduct);
-            await saveData();
-            
-            Swal.fire({
-                title: 'Sukses!',
-                text: 'Produk berhasil ditambahkan!',
-                icon: 'success',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)',
-                confirmButtonColor: 'var(--primary)'
-            });
-            
-            addProductForm.reset();
-            displayAdminProducts();
-        });
-    }
-    
-    // Add promo form
-    const addPromoForm = document.getElementById('addPromoForm');
-    if (addPromoForm) {
-        addPromoForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const newPromo = {
-                id: Date.now(),
-                code: document.getElementById('promoCode').value.toUpperCase(),
-                percent: parseInt(document.getElementById('promoPercent').value),
-                maxUse: parseInt(document.getElementById('promoMaxUse').value),
-                usedCount: 0
-            };
-            
-            appData.promos.push(newPromo);
-            await saveData();
-            
-            Swal.fire({
-                title: 'Sukses!',
-                text: 'Kode promo berhasil ditambahkan!',
-                icon: 'success',
-                background: 'var(--glass-dark)',
-                color: 'var(--light)',
-                confirmButtonColor: 'var(--primary)'
-            });
-            
-            addPromoForm.reset();
-            displayAdminPromos();
-        });
-    }
-}
-
-// Display admin products
-function displayAdminProducts() {
-    const productsList = document.getElementById('productsList');
-    if (!productsList) return;
-    
-    productsList.innerHTML = '';
-    
-    appData.products.forEach(product => {
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        item.innerHTML = `
-            <h4>${product.name}</h4>
-            <p>Harga: ${product.prices.length} opsi</p>
-            <p>Fitur: ${product.features}</p>
-            <div class="delete-btn" onclick="deleteProduct(${product.id})">
-                <i class="fas fa-trash"></i>
-            </div>
-        `;
-        
-        productsList.appendChild(item);
-    });
-}
-
-// Display admin promos
-function displayAdminPromos() {
-    const promosList = document.getElementById('promosList');
-    if (!promosList) return;
-    
-    promosList.innerHTML = '';
-    
-    appData.promos.forEach(promo => {
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        item.innerHTML = `
-            <h4>${promo.code}</h4>
-            <p>Diskon: ${promo.percent}%</p>
-            <p>Digunakan: ${promo.usedCount}/${promo.maxUse}</p>
-            <div class="delete-btn" onclick="deletePromo(${promo.id})">
-                <i class="fas fa-trash"></i>
-            </div>
-        `;
-        
-        promosList.appendChild(item);
-    });
-}
-
-// Delete product
-window.deleteProduct = async function(productId) {
-    const result = await Swal.fire({
-        title: 'Hapus Produk?',
-        text: 'Produk akan dihapus permanen!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: 'var(--danger)',
-        cancelButtonColor: 'var(--primary)',
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal',
-        background: 'var(--glass-dark)',
-        color: 'var(--light)'
-    });
-    
-    if (result.isConfirmed) {
-        appData.products = appData.products.filter(p => p.id !== productId);
-        await saveData();
-        displayAdminProducts();
-        
-        Swal.fire({
-            title: 'Terhapus!',
-            text: 'Produk berhasil dihapus.',
-            icon: 'success',
-            background: 'var(--glass-dark)',
-            color: 'var(--light)',
-            timer: 1500,
-            showConfirmButton: false
-        });
-    }
-};
-
-// Delete promo
-window.deletePromo = async function(promoId) {
-    const result = await Swal.fire({
-        title: 'Hapus Promo?',
-        text: 'Kode promo akan dihapus permanen!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: 'var(--danger)',
-        cancelButtonColor: 'var(--primary)',
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal',
-        background: 'var(--glass-dark)',
-        color: 'var(--light)'
-    });
-    
-    if (result.isConfirmed) {
-        appData.promos = appData.promos.filter(p => p.id !== promoId);
-        await saveData();
-        displayAdminPromos();
-        
-        Swal.fire({
-            title: 'Terhapus!',
-            text: 'Kode promo berhasil dihapus.',
-            icon: 'success',
-            background: 'var(--glass-dark)',
-            color: 'var(--light)',
-            timer: 1500,
-            showConfirmButton: false
-        });
-    }
-};
-
-// Add price option
-window.addPriceOption = function() {
-    const priceInputs = document.getElementById('priceInputs');
-    const newInput = document.createElement('input');
-    newInput.type = 'text';
-    newInput.className = 'price-option';
-    newInput.placeholder = '1 Bulan|200000';
-    newInput.style.marginTop = '10px';
-    priceInputs.appendChild(newInput);
-};
-
-// Format Rupiah
-function formatRupiah(amount) {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-// Close sidebar when clicking outside
-document.addEventListener('click', (e) => {
-    const sidebar = document.getElementById('sidebar');
-    const hamburger = document.getElementById('hamburgerMenu');
-    
-    if (sidebar && sidebar.classList.contains('active') && 
-        !sidebar.contains(e.target) && 
-        !hamburger.contains(e.target)) {
-        sidebar.classList.remove('active');
-    }
 });
