@@ -1,51 +1,27 @@
-// JSONBin Configuration
-const JSONBIN_API_KEY = '$2a$10$ldwDDS5thsD8qBEdjcNzc..R6XpeQggFqRrl4a6NNv3pQVEfhYbBq'; // Ganti dengan API key Anda
-const JSONBIN_BIN_ID = '69b66b19b7ec241ddc6d56c5'; // Ganti dengan Bin ID Anda
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// script.js
+// JSONBin.io Configuration
+const JSONBIN_API_KEY = '$2a$10$ldwDDS5thsD8qBEdjcNzc..R6XpeQggFqRrl4a6NNv3pQVEfhYbBq'; // Demo key - ganti dengan key Anda
+const JSONBIN_BIN_ID = '69b66b19b7ec241ddc6d56c5'; // Demo bin - ganti dengan bin Anda
 
-// Initialize database
-async function initDatabase() {
+// Database helper functions
+async function fetchDatabase() {
     try {
-        const response = await fetch(JSONBIN_URL, {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
             headers: {
                 'X-Master-Key': JSONBIN_API_KEY
             }
         });
-        
-        if (!response.ok) {
-            // Create initial data if bin doesn't exist
-            const initialData = {
-                users: [],
-                products: [],
-                promos: [],
-                transactions: [],
-                settings: {
-                    runningText: {
-                        content: 'KODE PROMO TERBARU : DISKON70%',
-                        enabled: false
-                    },
-                    resetSystem: {
-                        enabled: true
-                    }
-                }
-            };
-            
-            await updateDatabase(initialData);
-            return initialData;
-        }
-        
         const data = await response.json();
         return data.record;
     } catch (error) {
-        console.error('Database init error:', error);
+        console.error('Error fetching database:', error);
         return null;
     }
 }
 
-// Update database
 async function updateDatabase(data) {
     try {
-        const response = await fetch(JSONBIN_URL, {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -53,27 +29,35 @@ async function updateDatabase(data) {
             },
             body: JSON.stringify(data)
         });
-        
         return await response.json();
     } catch (error) {
-        console.error('Database update error:', error);
+        console.error('Error updating database:', error);
         return null;
     }
 }
 
-// Global variables
-let currentUser = null;
-let selectedProduct = null;
-let selectedPrice = null;
-let currentQuantity = 1;
-let appliedPromo = null;
-let currentTransactionId = null;
+// Initialize database structure
+async function initializeDatabase() {
+    let db = await fetchDatabase();
+    if (!db) {
+        db = {
+            users: [
+                { username: 'admin', password: 'admin123', credit: 999999, role: 'admin' }
+            ],
+            products: [],
+            promoCodes: [],
+            runningText: { text: 'KODE PROMO TERBARU : DISKON70%', enabled: false },
+            resetKeyEnabled: true,
+            transactions: []
+        };
+        await updateDatabase(db);
+    }
+    return db;
+}
 
-// Toggle password visibility
-function togglePassword(inputId) {
+// Toggle Password Visibility
+function togglePassword(inputId, icon) {
     const input = document.getElementById(inputId);
-    const icon = event.currentTarget;
-    
     if (input.type === 'password') {
         input.type = 'text';
         icon.classList.remove('fa-eye');
@@ -85,599 +69,492 @@ function togglePassword(inputId) {
     }
 }
 
-// Login function
-async function login(event) {
-    event.preventDefault();
+// Popup functions
+function showPopup(popupId) {
+    document.getElementById(popupId).style.display = 'flex';
+}
+
+function closePopup(popupId) {
+    document.getElementById(popupId).style.display = 'none';
+}
+
+// Register functionality
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeDatabase();
     
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
-    
-    if (!username || !password) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Username dan password harus diisi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    // Show loading
-    Swal.fire({
-        title: 'Loading...',
-        html: 'Memvalidasi data...',
-        timer: 2000,
-        timerProgressBar: true,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    // Get database
-    const db = await initDatabase();
-    if (!db) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Gagal terhubung ke database!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    // Find user
-    const user = db.users.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-        // Welcome animation
-        Swal.fire({
-            title: `Welcome ${username}!`,
-            text: 'Mengalihkan ke dashboard...',
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false,
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        }).then(() => {
-            // Save current user
-            currentUser = user;
-            localStorage.setItem('currentUser', JSON.stringify(user));
+    if (document.getElementById('registerForm')) {
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            if (rememberMe) {
-                localStorage.setItem('rememberedUser', username);
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPass) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Password tidak cocok!',
+                    background: '#140f1e',
+                    color: '#fff'
+                });
+                return;
             }
             
-            // Redirect to home
-            window.location.href = 'home.html';
-        });
-    } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Login Gagal',
-            text: 'Username atau password salah!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
+            const db = await fetchDatabase();
+            const userExists = db.users.find(u => u.username === username);
+            
+            if (userExists) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Username sudah digunakan!',
+                    background: '#140f1e',
+                    color: '#fff'
+                });
+                return;
+            }
+            
+            db.users.push({
+                username: username,
+                password: password,
+                credit: 0,
+                role: 'user'
+            });
+            
+            await updateDatabase(db);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Akun berhasil dibuat! Silahkan login.',
+                background: '#140f1e',
+                color: '#fff'
+            }).then(() => {
+                window.location.href = 'index.html';
+            });
         });
     }
-}
+});
 
-// Register function
-async function register(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('regUsername').value;
-    const password = document.getElementById('regPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    if (!username || !password || !confirmPassword) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Semua field harus diisi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    if (password !== confirmPassword) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Password tidak cocok!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    // Show loading
-    Swal.fire({
-        title: 'Loading...',
-        html: 'Membuat akun...',
-        timer: 2000,
-        timerProgressBar: true,
-        didOpen: () => {
-            Swal.showLoading();
+// Login functionality
+if (document.getElementById('loginForm')) {
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        const rememberMe = document.getElementById('rememberMe')?.checked || false;
+        
+        const db = await fetchDatabase();
+        const user = db.users.find(u => u.username === username && u.password === password);
+        
+        if (user) {
+            // Show loading animation
+            const btn = document.getElementById('loginBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            btn.disabled = true;
+            
+            // Simulate loading
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: `Welcome ${username}!`,
+                    text: 'Redirecting to dashboard...',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#140f1e',
+                    color: '#fff'
+                }).then(() => {
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        username: username,
+                        credit: user.credit,
+                        role: user.role || 'user'
+                    }));
+                    
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedUser', username);
+                    }
+                    
+                    if (user.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'home.html';
+                    }
+                });
+            }, 2000);
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Gagal',
+                text: 'Username atau password salah!',
+                background: '#140f1e',
+                color: '#fff'
+            });
         }
     });
-    
-    // Get database
-    const db = await initDatabase();
-    if (!db) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Gagal terhubung ke database!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    // Check if username exists
-    if (db.users.some(u => u.username === username)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Username sudah digunakan!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    // Create new user
-    const newUser = {
-        username: username,
-        password: password,
-        credit: 0,
-        createdAt: new Date().toISOString()
-    };
-    
-    db.users.push(newUser);
-    await updateDatabase(db);
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Akun berhasil dibuat! Silakan login.',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    }).then(() => {
-        window.location.href = 'index.html';
-    });
 }
 
-// Initialize dashboard
-async function initializeDashboard() {
-    currentUser = JSON.parse(localStorage.getItem('currentUser'));
+// Dashboard initialization
+async function initDashboard() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
         window.location.href = 'index.html';
         return;
     }
     
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    document.getElementById('userCredit').textContent = currentUser.credit;
+    // Load user data
+    const db = await fetchDatabase();
+    const user = db.users.find(u => u.username === currentUser.username);
+    
+    document.getElementById('welcomeUser').textContent = user.username;
+    document.getElementById('userCredit').textContent = user.credit || 0;
+    
+    // Load running text
+    if (db.runningText && db.runningText.enabled) {
+        document.getElementById('runningTextContainer').style.display = 'block';
+        document.getElementById('runningTextContent').textContent = db.runningText.text;
+    }
     
     // Load products
-    await loadProducts();
+    loadProducts(db.products);
     
-    // Check running text
-    await checkRunningText();
-    
-    // Hamburger menu
-    document.getElementById('hamburgerMenu').addEventListener('click', function() {
-        document.getElementById('navbar').classList.add('open');
+    // Menu toggle
+    document.getElementById('menuToggle').addEventListener('click', function() {
+        document.getElementById('navMenu').classList.add('open');
     });
     
-    document.getElementById('closeNavbar').addEventListener('click', function() {
-        document.getElementById('navbar').classList.remove('open');
+    document.getElementById('closeNav').addEventListener('click', function() {
+        document.getElementById('navMenu').classList.remove('open');
     });
     
-    // FAQ items
-    document.querySelectorAll('.faq-question').forEach(item => {
-        item.addEventListener('click', function() {
-            this.parentElement.classList.toggle('active');
-        });
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('navMenu');
+        const toggle = document.getElementById('menuToggle');
+        if (!menu.contains(e.target) && !toggle.contains(e.target) && menu.classList.contains('open')) {
+            menu.classList.remove('open');
+        }
     });
 }
 
 // Load products
-async function loadProducts() {
-    const db = await initDatabase();
-    if (!db) return;
+function loadProducts(products) {
+    const grid = document.getElementById('productsGrid');
+    if (!grid) return;
     
-    const productsGrid = document.getElementById('productsGrid');
-    productsGrid.innerHTML = '';
-    
-    db.products.forEach((product, index) => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.style.setProperty('--i', index + 1);
-        productCard.onclick = () => showProductDetail(product);
+    grid.innerHTML = '';
+    products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card fade-in';
+        card.onclick = () => showProductDetail(product);
         
-        productCard.innerHTML = `
-            <div class="product-image">
-                <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=DRIP+CLIENT'">
-            </div>
-            <h3>${product.name}</h3>
+        const features = product.features.split(',').map(f => f.trim());
+        const featureTags = features.map(f => `<span class="feature-tag">${f}</span>`).join('');
+        
+        card.innerHTML = `
+            <img src="${product.image}" alt="${product.name}" class="product-image" onerror="this.src='https://via.placeholder.com/300x200/6b21ff/ffffff?text=Drip+Client'">
+            <h3 class="product-title">${product.name}</h3>
             <p class="product-desc">${product.description}</p>
-            <ul class="product-features">
-                ${product.features.map(f => `<li><i class="fas fa-check-circle"></i> ${f}</li>`).join('')}
-            </ul>
+            <div class="product-features">${featureTags}</div>
+            <div class="product-price">Mulai dari $${Math.min(...product.prices.map(p => parseFloat(p.value)))}</div>
         `;
         
-        productsGrid.appendChild(productCard);
+        grid.appendChild(card);
     });
 }
 
 // Show product detail
+let currentProduct = null;
+let selectedPrice = null;
+let quantity = 1;
+let appliedPromo = null;
+
 function showProductDetail(product) {
-    selectedProduct = product;
-    selectedPrice = product.prices[0];
-    currentQuantity = 1;
+    currentProduct = product;
+    selectedPrice = null;
+    quantity = 1;
     appliedPromo = null;
     
-    document.getElementById('quantity').textContent = '1';
-    document.getElementById('totalPrice').textContent = `$${product.prices[0].value}`;
+    const content = document.getElementById('productDetailContent');
+    const priceOptions = product.prices.map((price, index) => `
+        <div class="price-option" onclick="selectPrice(${index}, ${price.value})">
+            <input type="radio" name="price" id="price${index}" value="${price.value}">
+            <label for="price${index}">${price.label} - $${price.value}</label>
+        </div>
+    `).join('');
     
-    const productDetail = document.getElementById('productDetail');
-    productDetail.innerHTML = `
+    content.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" class="product-image">
         <h3>${product.name}</h3>
         <p>${product.description}</p>
-        <ul>
-            ${product.features.map(f => `<li><i class="fas fa-check-circle"></i> ${f}</li>`).join('')}
-        </ul>
+        <div class="price-selection">
+            <h4>Pilih Durasi:</h4>
+            ${priceOptions}
+        </div>
+        <div class="quantity-selector">
+            <label>Quantity:</label>
+            <button onclick="updateQuantity(-1)"><i class="fas fa-minus"></i></button>
+            <span id="quantity">1</span>
+            <button onclick="updateQuantity(1)"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="promo-section">
+            <h4>Kode Promo:</h4>
+            <div class="promo-input-group">
+                <input type="text" id="promoCode" placeholder="Masukkan kode promo">
+                <button onclick="applyPromo()">Apply</button>
+            </div>
+            <div id="promoMessage" class="promo-message"></div>
+        </div>
+        <div class="total-price">
+            Total: $<span id="totalPrice">0</span>
+        </div>
+        <div class="whatsapp-input">
+            <h4>Nomor Whatsapp:</h4>
+            <input type="text" id="waNumber" placeholder="628xxxxxxxxxx">
+        </div>
+        <button class="buy-btn" onclick="processPurchase()">Buy Now</button>
     `;
     
-    const priceOptions = document.getElementById('priceOptions');
-    priceOptions.innerHTML = '';
-    
-    product.prices.forEach((price, index) => {
-        const option = document.createElement('div');
-        option.className = `price-option ${index === 0 ? 'selected' : ''}`;
-        option.onclick = () => selectPrice(price, option);
-        option.innerHTML = `
-            <div class="label">${price.label}</div>
-            <div class="value">$${price.value}</div>
-        `;
-        priceOptions.appendChild(option);
-    });
-    
-    document.getElementById('productDetailPopup').style.display = 'flex';
+    showPopup('productDetailPopup');
 }
 
-// Select price
-function selectPrice(price, element) {
-    selectedPrice = price;
-    
-    document.querySelectorAll('.price-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    element.classList.add('selected');
-    
-    updateTotalPrice();
+function selectPrice(index, value) {
+    selectedPrice = value;
+    updateTotal();
 }
 
-// Update quantity
 function updateQuantity(change) {
-    const newQuantity = currentQuantity + change;
-    if (newQuantity >= 1 && newQuantity <= 99) {
-        currentQuantity = newQuantity;
-        document.getElementById('quantity').textContent = currentQuantity;
-        updateTotalPrice();
-    }
+    quantity = Math.max(1, quantity + change);
+    document.getElementById('quantity').textContent = quantity;
+    updateTotal();
 }
 
-// Update total price
-function updateTotalPrice() {
-    let total = selectedPrice.value * currentQuantity;
+async function applyPromo() {
+    const code = document.getElementById('promoCode').value.toUpperCase();
+    const messageDiv = document.getElementById('promoMessage');
+    
+    if (!code) {
+        messageDiv.innerHTML = '<span class="error">Masukkan kode promo</span>';
+        return;
+    }
+    
+    const db = await fetchDatabase();
+    const promo = db.promoCodes.find(p => p.code === code);
+    
+    if (!promo) {
+        messageDiv.innerHTML = '<span class="error">Kode promo tidak valid!</span>';
+        appliedPromo = null;
+    } else if (promo.used >= promo.max) {
+        messageDiv.innerHTML = '<span class="error">Kode promo sudah mencapai batas pemakaian!</span>';
+        appliedPromo = null;
+    } else {
+        messageDiv.innerHTML = `<span class="success">Promo berhasil! Diskon ${promo.percent}%</span>`;
+        appliedPromo = promo;
+    }
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    if (!selectedPrice) return;
+    
+    let total = selectedPrice * quantity;
     
     if (appliedPromo) {
         total = total * (1 - appliedPromo.percent / 100);
     }
     
-    document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('totalPrice').textContent = total.toFixed(2);
 }
 
-// Apply promo
-async function applyPromo() {
-    const promoCode = document.getElementById('promoCode').value;
-    
-    if (!promoCode) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Masukkan kode promo!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    const db = await initDatabase();
-    if (!db) return;
-    
-    const promo = db.promos.find(p => p.code === promoCode);
-    
-    if (!promo) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Kode promo tidak valid!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    if (promo.used >= promo.maxUses) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Kode promo sudah mencapai batas pemakaian!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    appliedPromo = promo;
-    updateTotalPrice();
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: `Kode promo berhasil diaplikasikan! Diskon ${promo.percent}%`,
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    });
-}
-
-// Process purchase
 async function processPurchase() {
-    const whatsapp = document.getElementById('whatsappNumber').value;
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const waNumber = document.getElementById('waNumber').value;
     
-    if (!whatsapp) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Masukkan nomor Whatsapp!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (!selectedPrice) {
+        Swal.fire('Pilih durasi terlebih dahulu!', '', 'warning');
         return;
     }
     
-    const total = selectedPrice.value * currentQuantity * (appliedPromo ? (1 - appliedPromo.percent / 100) : 1);
-    
-    if (currentUser.credit < total) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Saldo tidak mencukupi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (!waNumber) {
+        Swal.fire('Masukkan nomor Whatsapp!', '', 'warning');
         return;
     }
     
-    // Show loading
-    Swal.fire({
-        title: 'Processing...',
-        html: 'Memproses pembelian...',
-        timer: 2000,
-        timerProgressBar: true,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
+    const total = parseFloat(document.getElementById('totalPrice').textContent);
     
-    const db = await initDatabase();
-    if (!db) return;
+    const db = await fetchDatabase();
+    const user = db.users.find(u => u.username === currentUser.username);
+    
+    if (user.credit < total) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Saldo Tidak Cukup',
+            text: `Saldo Anda: $${user.credit}, Dibutuhkan: $${total}`,
+            background: '#140f1e',
+            color: '#fff'
+        });
+        return;
+    }
     
     // Create transaction
     const transaction = {
         id: 'TRX' + Date.now() + Math.random().toString(36).substr(2, 9),
-        userId: currentUser.username,
-        product: selectedProduct.name,
+        username: currentUser.username,
+        product: currentProduct.name,
         price: selectedPrice,
-        quantity: currentQuantity,
+        quantity: quantity,
         total: total,
+        waNumber: waNumber,
         promo: appliedPromo ? appliedPromo.code : null,
-        whatsapp: whatsapp,
         status: 'waiting',
-        createdAt: new Date().toISOString(),
+        date: new Date().toISOString(),
         keys: []
     };
     
     db.transactions.push(transaction);
     
-    // Update user credit
-    const userIndex = db.users.findIndex(u => u.username === currentUser.username);
-    if (userIndex !== -1) {
-        db.users[userIndex].credit -= total;
-        currentUser.credit = db.users[userIndex].credit;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        document.getElementById('userCredit').textContent = currentUser.credit;
-    }
+    // Reduce user credit
+    user.credit -= total;
     
-    // Update promo usage
+    // Update promo usage if applied
     if (appliedPromo) {
-        const promoIndex = db.promos.findIndex(p => p.code === appliedPromo.code);
+        const promoIndex = db.promoCodes.findIndex(p => p.code === appliedPromo.code);
         if (promoIndex !== -1) {
-            db.promos[promoIndex].used++;
+            db.promoCodes[promoIndex].used = (db.promoCodes[promoIndex].used || 0) + 1;
         }
     }
     
     await updateDatabase(db);
-    
-    closePopup('productDetailPopup');
+    localStorage.setItem('currentUser', JSON.stringify(user));
     
     Swal.fire({
         icon: 'success',
-        title: 'Sukses!',
-        text: 'Pembelian berhasil! Menunggu proses admin.',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
+        title: 'Pembelian Berhasil!',
+        text: 'Transaksi sedang diproses. ID Transaksi: ' + transaction.id,
+        background: '#140f1e',
+        color: '#fff'
+    }).then(() => {
+        closePopup('productDetailPopup');
+        document.getElementById('userCredit').textContent = user.credit;
     });
+}
+
+// Reset Key functionality
+async function processResetKey() {
+    const keyInput = document.getElementById('resetKeyInput').value;
+    const responseDiv = document.getElementById('resetResponse');
+    const btn = document.getElementById('resetKeyBtn');
+    
+    if (!keyInput) {
+        responseDiv.innerHTML = '<span class="error">Masukkan key!</span>';
+        return;
+    }
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching Server.....';
+    btn.disabled = true;
+    
+    setTimeout(async () => {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Respone Database.....';
+        
+        setTimeout(async () => {
+            const db = await fetchDatabase();
+            
+            if (!db.resetKeyEnabled) {
+                responseDiv.innerHTML = `
+                    <div class="error-response">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Maaf fitur ini sedang di nonaktifkan oleh admin atau sedang tidak beroperasi normal, Silahkan coba lagi nanti.
+                    </div>
+                `;
+            } else {
+                // Generate random 12 digit key
+                const newKey = Math.floor(100000000000 + Math.random() * 900000000000);
+                
+                responseDiv.innerHTML = `
+                    <div class="success-response">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>✅ Reset Successful</h4>
+                        <pre>
+Status: 200
+Response: {
+    "success": true,
+    "message": "Token reset successfully",
+    "resetsused": 1,
+    "resetsmax": 2,
+    "nextresettime": "${new Date(Date.now() + 86400000).toISOString().split('T')[0]} 08:06:15"
+}
+
+🔑 New Key: ${newKey}
+                        </pre>
+                    </div>
+                `;
+            }
+            
+            btn.innerHTML = '<span>Reset</span><i class="fas fa-sync-alt"></i>';
+            btn.disabled = false;
+        }, 2000);
+    }, 2000);
+}
+
+// Show logs popup
+async function showLogsPopup() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const db = await fetchDatabase();
+    const userLogs = db.transactions.filter(t => t.username === currentUser.username);
+    
+    const container = document.getElementById('logsContainer');
+    
+    if (userLogs.length === 0) {
+        container.innerHTML = '<p class="no-logs">Belum ada transaksi</p>';
+    } else {
+        container.innerHTML = userLogs.map(log => `
+            <div class="log-item">
+                <div class="log-header">
+                    <span class="log-id">${log.id}</span>
+                    <span class="log-status status-${log.status}">${log.status}</span>
+                </div>
+                <div class="log-body">
+                    <p><strong>Produk:</strong> ${log.product}</p>
+                    <p><strong>Total:</strong> $${log.total}</p>
+                    <p><strong>Tanggal:</strong> ${new Date(log.date).toLocaleString('id-ID')}</p>
+                    ${log.keys && log.keys.length > 0 ? `
+                        <div class="log-keys">
+                            <strong>Keys:</strong><br>
+                            ${log.keys.map(k => k).join('<br>')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    showPopup('logsPopup');
 }
 
 // Show reset key popup
 function showResetKeyPopup() {
-    document.getElementById('resetKeyPopup').style.display = 'flex';
+    showPopup('resetKeyPopup');
 }
 
-// Process reset key
-async function processResetKey() {
-    const input = document.getElementById('resetInput').value;
-    
-    if (!input) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Masukkan key lama!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
-        return;
-    }
-    
-    const resultDiv = document.getElementById('resetResult');
-    resultDiv.innerHTML = 'Fetching Server.....';
-    
-    const db = await initDatabase();
-    if (!db) return;
-    
-    // Check if reset system is enabled
-    if (!db.settings.resetSystem.enabled) {
-        resultDiv.innerHTML = `
-            <div style="color: var(--danger)">
-                Maaf fitur ini sedang di nonaktifkan oleh admin atau sedang tidak beroperasi normal, Silahkan coba lagi nanti.
-            </div>
-        `;
-        return;
-    }
-    
-    resultDiv.innerHTML = 'Respone Database....';
-    
-    setTimeout(() => {
-        // Check if user has used reset today
-        const today = new Date().toDateString();
-        const lastReset = localStorage.getItem(`reset_${currentUser.username}_${today}`);
-        
-        if (lastReset) {
-            resultDiv.innerHTML = `
-                <div style="color: var(--danger)">
-                    ⚠️ Reset Key Gagal<br><br>
-                    Status: 429<br>
-                    Response: {"success":false,"message":"You have reached the maximum number of resets for today","resetsused":1,"resetsmax":1,"nextresettime":"${new Date(Date.now() + 86400000).toISOString()}"}
-                </div>
-            `;
-            return;
-        }
-        
-        // Generate random key
-        const newKey = Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
-        
-        resultDiv.innerHTML = `
-            <div style="color: var(--success)">
-                ✅ Reset Successful<br><br>
-                Status: 200<br>
-                Response: {"success":true,"message":"Token reset successfully","resetsused":1,"resetsmax":1,"nextresettime":"${new Date(Date.now() + 86400000).toISOString()}"}<br><br>
-                New Key: <span style="color: var(--primary); font-size: 18px;">${newKey}</span>
-            </div>
-        `;
-        
-        localStorage.setItem(`reset_${currentUser.username}_${today}`, 'true');
-    }, 1500);
-}
-
-// Show transaction logs
-async function showTransactionLogs() {
-    const db = await initDatabase();
-    if (!db) return;
-    
-    const userTransactions = db.transactions.filter(t => t.userId === currentUser.username);
-    
-    const logsContainer = document.getElementById('logsContainer');
-    logsContainer.innerHTML = '';
-    
-    if (userTransactions.length === 0) {
-        logsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Belum ada transaksi</p>';
-    } else {
-        userTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        
-        userTransactions.forEach(transaction => {
-            const logItem = document.createElement('div');
-            logItem.className = 'transaction-item';
-            
-            let statusClass = '';
-            let statusText = '';
-            
-            switch(transaction.status) {
-                case 'approved':
-                    statusClass = 'status-approved';
-                    statusText = 'Approved';
-                    break;
-                case 'rejected':
-                    statusClass = 'status-rejected';
-                    statusText = 'Rejected';
-                    break;
-                default:
-                    statusClass = 'status-waiting';
-                    statusText = 'Waiting';
-            }
-            
-            logItem.innerHTML = `
-                <div class="transaction-header">
-                    <span class="transaction-id">${transaction.id}</span>
-                    <span class="transaction-status ${statusClass}">${statusText}</span>
-                </div>
-                <div class="transaction-details">
-                    <p><strong>Product:</strong> ${transaction.product}</p>
-                    <p><strong>Plan:</strong> ${transaction.price.label}</p>
-                    <p><strong>Quantity:</strong> ${transaction.quantity}</p>
-                    <p><strong>Total:</strong> $${transaction.total.toFixed(2)}</p>
-                    <p><strong>Tanggal:</strong> ${new Date(transaction.createdAt).toLocaleString()}</p>
-                    ${transaction.keys && transaction.keys.length > 0 ? 
-                        `<div class="keys-display">
-                            <strong>Keys:</strong><br>
-                            ${transaction.keys.map(key => `- ${key}`).join('<br>')}
-                        </div>` : ''
-                    }
-                </div>
-            `;
-            
-            logsContainer.appendChild(logItem);
-        });
-    }
-    
-    document.getElementById('transactionLogsPopup').style.display = 'flex';
-}
-
-// Show FAQ
-function showFAQ() {
-    document.getElementById('faqPopup').style.display = 'flex';
+// Show FAQ popup
+function showFAQPopup() {
+    showPopup('faqPopup');
 }
 
 // Logout
 function logout() {
     Swal.fire({
-        title: 'Logout',
+        title: 'Logout?',
         text: 'Apakah Anda yakin ingin logout?',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: 'var(--primary)',
-        cancelButtonColor: 'var(--danger)',
-        confirmButtonText: 'Ya, logout',
-        cancelButtonText: 'Batal',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
+        confirmButtonColor: '#6b21ff',
+        cancelButtonColor: '#ff3b5c',
+        confirmButtonText: 'Ya, Logout',
+        background: '#140f1e',
+        color: '#fff'
     }).then((result) => {
         if (result.isConfirmed) {
             localStorage.removeItem('currentUser');
@@ -686,506 +563,297 @@ function logout() {
     });
 }
 
-// Check running text
-async function checkRunningText() {
-    const db = await initDatabase();
-    if (!db) return;
-    
-    const container = document.getElementById('runningTextContainer');
-    const content = document.getElementById('runningTextContent');
-    
-    if (db.settings.runningText.enabled && db.settings.runningText.content) {
-        content.textContent = db.settings.runningText.content;
-        container.style.display = 'block';
-    } else {
-        container.style.display = 'none';
-    }
-}
-
-// Initialize admin dashboard
-async function initializeAdminDashboard() {
-    await loadAdminProducts();
-    await loadAdminPromos();
-    await loadAdminSettings();
-    await loadAdminTransactions();
+// Admin Panel Functions
+async function initAdminDashboard() {
+    // Load initial data
+    await loadAdminData();
     
     // Menu toggle
     document.getElementById('adminMenuToggle').addEventListener('click', function() {
-        const sidebar = document.getElementById('adminSidebar');
-        sidebar.style.width = sidebar.style.width === '70px' ? '250px' : '70px';
+        document.getElementById('adminMenu').classList.add('open');
     });
+    
+    document.getElementById('closeAdminMenu').addEventListener('click', function() {
+        document.getElementById('adminMenu').classList.remove('open');
+    });
+    
+    // Load running text toggle state
+    const db = await fetchDatabase();
+    document.getElementById('runningToggle').checked = db.runningText?.enabled || false;
+    document.getElementById('runningText').value = db.runningText?.text || '';
+    document.getElementById('resetKeyToggle').checked = db.resetKeyEnabled || false;
 }
 
-// Show admin section
 function showAdminSection(section) {
-    document.querySelectorAll('.admin-sidebar li').forEach(li => {
-        li.classList.remove('active');
+    // Update menu active state
+    document.querySelectorAll('.admin-menu-item').forEach(item => {
+        item.classList.remove('active');
     });
     event.currentTarget.classList.add('active');
     
+    // Show section
     document.querySelectorAll('.admin-section').forEach(s => {
         s.classList.remove('active');
     });
-    document.getElementById(`${section}-section`).classList.add('active');
+    document.getElementById(section + '-section').classList.add('active');
 }
 
-// Load admin products
-async function loadAdminProducts() {
-    const db = await initDatabase();
-    if (!db) return;
+async function loadAdminData() {
+    const db = await fetchDatabase();
     
-    const productsList = document.getElementById('adminProductsList');
-    productsList.innerHTML = '';
-    
-    db.products.forEach(product => {
-        const productItem = document.createElement('div');
-        productItem.className = 'product-item';
-        productItem.innerHTML = `
-            <h4>${product.name}</h4>
-            <p>${product.description}</p>
-            <div class="product-actions">
-                <button onclick="editProduct('${product.id}')" class="admin-btn" style="background: var(--warning);">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button onclick="deleteProduct('${product.id}')" class="admin-btn" style="background: var(--danger);">
-                    <i class="fas fa-trash"></i> Hapus
-                </button>
+    // Load products
+    const productsList = document.getElementById('productsList');
+    if (productsList) {
+        productsList.innerHTML = db.products.map(product => `
+            <div class="admin-item">
+                <div class="item-info">
+                    <img src="${product.image}" alt="${product.name}" width="50">
+                    <div>
+                        <h4>${product.name}</h4>
+                        <p>${product.description}</p>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <button onclick="editProduct('${product.id}')" class="edit-btn"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteProduct('${product.id}')" class="delete-btn"><i class="fas fa-trash"></i></button>
+                </div>
             </div>
-        `;
-        productsList.appendChild(productItem);
-    });
+        `).join('');
+    }
+    
+    // Load promos
+    const promosList = document.getElementById('promosList');
+    if (promosList) {
+        promosList.innerHTML = db.promoCodes.map(promo => `
+            <div class="admin-item">
+                <div>
+                    <h4>${promo.code}</h4>
+                    <p>Diskon: ${promo.percent}% | Used: ${promo.used || 0}/${promo.max}</p>
+                </div>
+                <div class="item-actions">
+                    <button onclick="deletePromo('${promo.code}')" class="delete-btn"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Load logs
+    const logsList = document.getElementById('adminLogsList');
+    if (logsList) {
+        logsList.innerHTML = db.transactions.map(log => `
+            <div class="log-item">
+                <div class="log-header">
+                    <span class="log-id">${log.id}</span>
+                    <span class="log-status status-${log.status}">${log.status}</span>
+                </div>
+                <div class="log-body">
+                    <p><strong>User:</strong> ${log.username}</p>
+                    <p><strong>Produk:</strong> ${log.product}</p>
+                    <p><strong>Total:</strong> $${log.total}</p>
+                    <p><strong>WA:</strong> ${log.waNumber}</p>
+                    <p><strong>Tanggal:</strong> ${new Date(log.date).toLocaleString('id-ID')}</p>
+                    ${log.keys && log.keys.length > 0 ? `
+                        <div class="log-keys">
+                            <strong>Keys:</strong><br>
+                            ${log.keys.map(k => k).join('<br>')}
+                        </div>
+                    ` : ''}
+                </div>
+                ${log.status === 'waiting' ? `
+                    <div class="log-actions">
+                        <button class="approve-btn" onclick="approveTransaction('${log.id}')"><i class="fas fa-check"></i> Approve</button>
+                        <button class="reject-btn" onclick="rejectTransaction('${log.id}')"><i class="fas fa-times"></i> Reject</button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
 }
 
-// Add new product
-async function addNewProduct() {
+async function addProduct() {
     const name = document.getElementById('productName').value;
     const image = document.getElementById('productImage').value;
     const desc = document.getElementById('productDesc').value;
-    const features = document.getElementById('productFeatures').value.split(',').map(f => f.trim());
+    const features = document.getElementById('productFeatures').value;
     
+    // Get price rows
+    const priceRows = document.querySelectorAll('.price-row');
     const prices = [];
-    for (let i = 1; i <= 5; i++) {
-        const label = document.getElementById(`priceLabel${i}`).value;
-        const value = document.getElementById(`priceValue${i}`).value;
+    priceRows.forEach(row => {
+        const label = row.querySelector('.price-label').value;
+        const value = row.querySelector('.price-value').value;
         if (label && value) {
-            prices.push({
-                label: label,
-                value: parseFloat(value)
-            });
+            prices.push({ label, value: parseFloat(value) });
         }
-    }
+    });
     
-    if (!name || !image || !desc || features.length === 0 || prices.length === 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Semua field harus diisi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (!name || !image || !desc || !features || prices.length === 0) {
+        Swal.fire('Lengkapi semua field!', '', 'warning');
         return;
     }
     
-    const db = await initDatabase();
-    if (!db) return;
-    
+    const db = await fetchDatabase();
     const newProduct = {
         id: 'PROD' + Date.now(),
-        name: name,
-        image: image,
+        name,
+        image,
         description: desc,
-        features: features,
-        prices: prices,
-        createdAt: new Date().toISOString()
+        features,
+        prices
     };
     
     db.products.push(newProduct);
     await updateDatabase(db);
     
-    await loadAdminProducts();
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Produk berhasil ditambahkan!',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    });
-    
-    // Clear form
-    document.getElementById('productName').value = '';
-    document.getElementById('productImage').value = '';
-    document.getElementById('productDesc').value = '';
-    document.getElementById('productFeatures').value = '';
+    Swal.fire('Berhasil!', 'Produk ditambahkan', 'success');
+    await loadAdminData();
 }
 
-// Load admin promos
-async function loadAdminPromos() {
-    const db = await initDatabase();
-    if (!db) return;
-    
-    const promosList = document.getElementById('adminPromosList');
-    promosList.innerHTML = '';
-    
-    db.promos.forEach(promo => {
-        const promoItem = document.createElement('div');
-        promoItem.className = 'promo-item';
-        promoItem.innerHTML = `
-            <h4>${promo.code}</h4>
-            <p>Diskon: ${promo.percent}%</p>
-            <p>Digunakan: ${promo.used || 0}/${promo.maxUses}</p>
-            <button onclick="deletePromo('${promo.code}')" class="admin-btn" style="background: var(--danger);">
-                <i class="fas fa-trash"></i> Hapus
-            </button>
-        `;
-        promosList.appendChild(promoItem);
-    });
+function addPriceRow() {
+    const container = document.getElementById('priceInputs');
+    const row = document.createElement('div');
+    row.className = 'price-row';
+    row.innerHTML = `
+        <input type="text" placeholder="Label (1 DAYS)" class="price-label">
+        <input type="number" placeholder="Harga ($)" class="price-value">
+        <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+    `;
+    container.appendChild(row);
 }
 
-// Add new promo
-async function addNewPromo() {
+async function addPromoCode() {
     const code = document.getElementById('promoCode').value.toUpperCase();
     const percent = parseInt(document.getElementById('promoPercent').value);
-    const maxUses = parseInt(document.getElementById('promoMax').value);
+    const max = parseInt(document.getElementById('promoMax').value);
     
-    if (!code || !percent || !maxUses) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Semua field harus diisi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (!code || !percent || !max) {
+        Swal.fire('Lengkapi semua field!', '', 'warning');
         return;
     }
     
-    const db = await initDatabase();
-    if (!db) return;
+    const db = await fetchDatabase();
     
-    if (db.promos.some(p => p.code === code)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Kode promo sudah ada!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (db.promoCodes.find(p => p.code === code)) {
+        Swal.fire('Kode promo sudah ada!', '', 'error');
         return;
     }
     
-    const newPromo = {
-        code: code,
-        percent: percent,
-        maxUses: maxUses,
+    db.promoCodes.push({
+        code,
+        percent,
+        max,
         used: 0
-    };
-    
-    db.promos.push(newPromo);
-    await updateDatabase(db);
-    
-    await loadAdminPromos();
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Kode promo berhasil ditambahkan!',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
     });
     
-    // Clear form
-    document.getElementById('promoCode').value = '';
-    document.getElementById('promoPercent').value = '';
-    document.getElementById('promoMax').value = '';
+    await updateDatabase(db);
+    
+    Swal.fire('Berhasil!', 'Kode promo ditambahkan', 'success');
+    await loadAdminData();
 }
 
-// Load admin settings
-async function loadAdminSettings() {
-    const db = await initDatabase();
-    if (!db) return;
+async function toggleRunningText() {
+    const enabled = document.getElementById('runningToggle').checked;
+    const text = document.getElementById('runningText').value;
     
-    document.getElementById('runningTextContent').value = db.settings.runningText.content || '';
-    document.getElementById('runningTextToggle').checked = db.settings.runningText.enabled;
-    document.getElementById('runningTextStatus').textContent = db.settings.runningText.enabled ? 'On' : 'Off';
-    
-    document.getElementById('resetSystemToggle').checked = db.settings.resetSystem.enabled;
-    document.getElementById('resetSystemStatus').textContent = db.settings.resetSystem.enabled ? 'On' : 'Off';
+    const db = await fetchDatabase();
+    db.runningText = { text, enabled };
+    await updateDatabase(db);
 }
 
-// Save running text
 async function saveRunningText() {
-    const content = document.getElementById('runningTextContent').value;
-    const enabled = document.getElementById('runningTextToggle').checked;
-    
-    const db = await initDatabase();
-    if (!db) return;
-    
-    db.settings.runningText = {
-        content: content,
-        enabled: enabled
-    };
-    
-    await updateDatabase(db);
-    
-    document.getElementById('runningTextStatus').textContent = enabled ? 'On' : 'Off';
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Pengaturan running text berhasil disimpan!',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    });
+    await toggleRunningText();
+    Swal.fire('Berhasil!', 'Running text disimpan', 'success');
 }
 
-// Save reset system
-async function saveResetSystem() {
-    const enabled = document.getElementById('resetSystemToggle').checked;
+async function toggleResetKey() {
+    const enabled = document.getElementById('resetKeyToggle').checked;
     
-    const db = await initDatabase();
-    if (!db) return;
-    
-    db.settings.resetSystem.enabled = enabled;
-    
+    const db = await fetchDatabase();
+    db.resetKeyEnabled = enabled;
     await updateDatabase(db);
-    
-    document.getElementById('resetSystemStatus').textContent = enabled ? 'On' : 'Off';
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: 'Pengaturan reset system berhasil disimpan!',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    });
 }
 
-// Transfer saldo
-async function transferSaldo() {
-    const username = document.getElementById('saldoUsername').value;
-    const amount = parseFloat(document.getElementById('saldoAmount').value);
+async function addCredit() {
+    const username = document.getElementById('creditUsername').value;
+    const amount = parseFloat(document.getElementById('creditAmount').value);
     
     if (!username || !amount) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Semua field harus diisi!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+        Swal.fire('Lengkapi semua field!', '', 'warning');
         return;
     }
     
-    const db = await initDatabase();
-    if (!db) return;
+    const db = await fetchDatabase();
+    const user = db.users.find(u => u.username === username);
     
-    const userIndex = db.users.findIndex(u => u.username === username);
-    
-    if (userIndex === -1) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Username tidak ditemukan!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+    if (!user) {
+        Swal.fire('User tidak ditemukan!', '', 'error');
         return;
     }
     
-    db.users[userIndex].credit += amount;
+    user.credit = (user.credit || 0) + amount;
     await updateDatabase(db);
     
-    Swal.fire({
-        icon: 'success',
-        title: 'Sukses!',
-        text: `Saldo berhasil ditambahkan ke ${username}!`,
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
-    });
+    Swal.fire('Berhasil!', `Saldo ${username} sekarang $${user.credit}`, 'success');
     
-    // Clear form
-    document.getElementById('saldoUsername').value = '';
-    document.getElementById('saldoAmount').value = '';
+    // Clear inputs
+    document.getElementById('creditUsername').value = '';
+    document.getElementById('creditAmount').value = '';
 }
 
-// Load admin transactions
-async function loadAdminTransactions() {
-    const db = await initDatabase();
-    if (!db) return;
-    
-    const transactionsList = document.getElementById('adminTransactionsList');
-    transactionsList.innerHTML = '';
-    
-    db.transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    db.transactions.forEach(transaction => {
-        const transactionItem = document.createElement('div');
-        transactionItem.className = 'transaction-item';
-        
-        let statusClass = '';
-        let statusText = '';
-        
-        switch(transaction.status) {
-            case 'approved':
-                statusClass = 'status-approved';
-                statusText = 'Approved';
-                break;
-            case 'rejected':
-                statusClass = 'status-rejected';
-                statusText = 'Rejected';
-                break;
-            default:
-                statusClass = 'status-waiting';
-                statusText = 'Waiting';
-        }
-        
-        let actions = '';
-        if (transaction.status === 'waiting') {
-            actions = `
-                <div class="transaction-actions">
-                    <button onclick="showApprovePopup('${transaction.id}')" class="approve-btn">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                    <button onclick="rejectTransaction('${transaction.id}')" class="reject-btn">
-                        <i class="fas fa-times"></i> Reject
-                    </button>
-                </div>
-            `;
-        }
-        
-        transactionItem.innerHTML = `
-            <div class="transaction-header">
-                <span class="transaction-id">${transaction.id}</span>
-                <span class="transaction-status ${statusClass}">${statusText}</span>
-            </div>
-            <div class="transaction-details">
-                <p><strong>User:</strong> ${transaction.userId}</p>
-                <p><strong>Product:</strong> ${transaction.product}</p>
-                <p><strong>Plan:</strong> ${transaction.price.label}</p>
-                <p><strong>Quantity:</strong> ${transaction.quantity}</p>
-                <p><strong>Total:</strong> $${transaction.total.toFixed(2)}</p>
-                <p><strong>Whatsapp:</strong> ${transaction.whatsapp}</p>
-                <p><strong>Tanggal:</strong> ${new Date(transaction.createdAt).toLocaleString()}</p>
-                ${transaction.promo ? `<p><strong>Promo:</strong> ${transaction.promo}</p>` : ''}
-                ${transaction.keys && transaction.keys.length > 0 ? 
-                    `<div class="keys-display">
-                        <strong>Keys:</strong><br>
-                        ${transaction.keys.map(key => `- ${key}`).join('<br>')}
-                    </div>` : ''
-                }
-            </div>
-            ${actions}
-        `;
-        
-        transactionsList.appendChild(transactionItem);
-    });
+let currentTransactionId = null;
+
+function approveTransaction(id) {
+    currentTransactionId = id;
+    showPopup('approvePopup');
 }
 
-// Show approve popup
-function showApprovePopup(transactionId) {
-    currentTransactionId = transactionId;
-    document.getElementById('approveTransactionPopup').style.display = 'flex';
-}
-
-// Confirm approve
-async function confirmApprove() {
-    const keys = document.getElementById('approveKeys').value.split(',').map(k => k.trim()).filter(k => k);
+async function submitApprove() {
+    const keys = document.getElementById('approveKeys').value.split(',').map(k => k.trim());
     
     if (keys.length === 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Masukkan minimal 1 key!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+        Swal.fire('Masukkan minimal 1 key!', '', 'warning');
         return;
     }
     
-    const db = await initDatabase();
-    if (!db) return;
+    const db = await fetchDatabase();
+    const transaction = db.transactions.find(t => t.id === currentTransactionId);
     
-    const transactionIndex = db.transactions.findIndex(t => t.id === currentTransactionId);
-    
-    if (transactionIndex !== -1) {
-        db.transactions[transactionIndex].status = 'approved';
-        db.transactions[transactionIndex].keys = keys;
+    if (transaction) {
+        transaction.status = 'approved';
+        transaction.keys = keys;
         await updateDatabase(db);
         
-        closePopup('approveTransactionPopup');
-        await loadAdminTransactions();
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Sukses!',
-            text: 'Transaksi berhasil diapprove!',
-            background: 'var(--card-bg)',
-            color: 'var(--text)'
-        });
+        Swal.fire('Berhasil!', 'Transaksi di-approve', 'success');
+        closePopup('approvePopup');
+        document.getElementById('approveKeys').value = '';
+        await loadAdminData();
     }
 }
 
-// Reject transaction
-async function rejectTransaction(transactionId) {
-    const result = await Swal.fire({
-        title: 'Reject Transaksi',
-        text: 'Apakah Anda yakin ingin menolak transaksi ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: 'var(--danger)',
-        cancelButtonColor: 'var(--primary)',
-        confirmButtonText: 'Ya, reject',
-        cancelButtonText: 'Batal',
-        background: 'var(--card-bg)',
-        color: 'var(--text)'
+async function rejectTransaction(id) {
+    const db = await fetchDatabase();
+    const transaction = db.transactions.find(t => t.id === id);
+    
+    if (transaction) {
+        transaction.status = 'rejected';
+        await updateDatabase(db);
+        
+        Swal.fire('Transaksi di-reject', '', 'info');
+        await loadAdminData();
+    }
+}
+
+// Animation on scroll
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+            }
+        });
     });
     
-    if (result.isConfirmed) {
-        const db = await initDatabase();
-        if (!db) return;
-        
-        const transactionIndex = db.transactions.findIndex(t => t.id === transactionId);
-        
-        if (transactionIndex !== -1) {
-            db.transactions[transactionIndex].status = 'rejected';
-            await updateDatabase(db);
-            
-            await loadAdminTransactions();
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Sukses!',
-                text: 'Transaksi berhasil direject!',
-                background: 'var(--card-bg)',
-                color: 'var(--text)'
-            });
-        }
-    }
-}
-
-// Close popup
-function closePopup(popupId) {
-    document.getElementById(popupId).style.display = 'none';
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Login form
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', login);
-    }
-    
-    // Register form
-    const registerForm = document.getElementById('registerForm');
-    if (registerForm) {
-        registerForm.addEventListener('submit', register);
-    }
-    
-    // Check remembered user
-    const rememberedUser = localStorage.getItem('rememberedUser');
-    if (rememberedUser && document.getElementById('username')) {
-        document.getElementById('username').value = rememberedUser;
-        document.getElementById('rememberMe').checked = true;
-    }
+    document.querySelectorAll('.product-card, .admin-section, .log-item').forEach(el => {
+        observer.observe(el);
+    });
 });
