@@ -1,140 +1,162 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drip Client - Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="home-page">
+    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-content">
             <div class="loading-logo">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
             </div>
             <div class="loading-text">
-                <span>D</span>
-                <span>R</span>
-                <span>I</span>
-                <span>P</span>
-                <span>&nbsp;</span>
-                <span>C</span>
-                <span>L</span>
-                <span>I</span>
-                <span>E</span>
-                <span>N</span>
-                <span>T</span>
+                <span class="loading-letter">D</span>
+                <span class="loading-letter">R</span>
+                <span class="loading-letter">I</span>
+                <span class="loading-letter">P</span>
+                <span class="loading-letter">&nbsp;</span>
+                <span class="loading-letter">C</span>
+                <span class="loading-letter">L</span>
+                <span class="loading-letter">I</span>
+                <span class="loading-letter">E</span>
+                <span class="loading-letter">N</span>
+                <span class="loading-letter">T</span>
             </div>
             <div class="loading-progress">
-                <div class="progress-bar"></div>
+                <div class="loading-bar"></div>
             </div>
         </div>
     </div>
 
+    <!-- Main Dashboard -->
     <div class="dashboard" id="dashboard" style="display: none;">
-        <!-- Animated Background -->
-        <div class="animated-bg">
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
+        <!-- Welcome Popup -->
+        <div class="welcome-popup" id="welcomePopup">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
+                    <h2>Welcome! <span id="welcomeUsername"></span>!</h2>
+                    <button class="popup-close" id="closeWelcomePopup"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="popup-body">
+                    <p>Untuk mengetahui perkembangan harga atau mendapatkan update silahkan join saluran whatsapp kami sekarang.</p>
+                    <a href="https://whatsapp.com/channel/0029Vb5PSnZF1YlOrxEO4n23" target="_blank" class="join-wa-btn">
+                        <i class="fab fa-whatsapp"></i> Join Now
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- Navbar -->
         <nav class="navbar">
             <div class="nav-left">
-                <div class="logo animated-logo">
-                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
-                </div>
-                <div class="user-greeting">
-                    <i class="fas fa-hand-wave"></i>
-                    <span>Hello, <span id="username">User</span></span>
-                </div>
-                <div class="user-credit">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span id="creditSaldo">0</span>
+                <div class="logo-container">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="nav-logo">
+                    <span class="logo-text">DRIP CLIENT</span>
                 </div>
             </div>
             <div class="nav-right">
-                <div class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-ellipsis-v"></i>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="navUsername"></span>
+                </div>
+                <div class="credit-info">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span id="navCredit">0</span>
+                </div>
+                <div class="hamburger-menu" id="hamburgerMenu">
+                    <i class="fas fa-ellipsis-h"></i>
                 </div>
             </div>
         </nav>
 
-        <!-- Side Menu -->
-        <div class="side-menu" id="sideMenu">
-            <div class="menu-header">
+        <!-- Side Navigation -->
+        <div class="side-nav" id="sideNav">
+            <div class="side-nav-header">
                 <h3>Quick Actions</h3>
-                <i class="fas fa-times close-menu" id="closeMenu"></i>
+                <button class="close-side-nav" id="closeSideNav"><i class="fas fa-times"></i></button>
             </div>
-            <div class="menu-items">
-                <div class="menu-item" onclick="openResetKeyModal()">
-                    <i class="fas fa-key"></i>
-                    <span>Reset Key</span>
-                </div>
-                <div class="menu-item" onclick="openTransactionLogs()">
-                    <i class="fas fa-history"></i>
-                    <span>Logs Transaksi</span>
-                </div>
-                <div class="menu-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </div>
-            </div>
+            <ul class="side-nav-menu">
+                <li><a href="#" id="resetKeyAction"><i class="fas fa-key"></i> Reset Key</a></li>
+                <li><a href="#" id="logsTransactionAction"><i class="fas fa-history"></i> Logs Transaksi</a></li>
+                <li><a href="#" id="profileAction"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="#" id="settingsAction"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#" id="logoutAction"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
         </div>
 
         <!-- Running Text -->
         <div class="running-text-container" id="runningTextContainer" style="display: none;">
-            <div class="running-text">
-                <span id="runningText"></span>
+            <div class="running-text" id="runningText">
+                <!-- Dynamic running text will be inserted here -->
             </div>
         </div>
 
-        <!-- Products Grid -->
-        <div class="products-grid" id="productsGrid"></div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be loaded here dynamically -->
+            </div>
+        </main>
+    </div>
 
-        <!-- Reset Key Modal -->
-        <div class="modal" id="resetKeyModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-logo">
-                        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
-                    </div>
-                    <i class="fas fa-times modal-close" onclick="closeResetKeyModal()"></i>
-                </div>
+    <!-- Reset Key Modal -->
+    <div class="modal" id="resetKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
                 <h3>Reset Key System</h3>
+                <button class="modal-close" id="closeResetModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
                 <div class="input-group">
-                    <input type="text" id="resetInput" placeholder="Masukkan key lama">
+                    <input type="text" id="resetInput" placeholder="Masukkan device ID" value="8279290197">
                 </div>
-                <button class="btn-primary" onclick="processResetKey()" id="resetKeyBtn">
-                    <span>Reset</span>
-                </button>
-                <div class="response-container" id="resetResponse"></div>
-            </div>
-        </div>
-
-        <!-- Product Detail Modal -->
-        <div class="modal" id="productModal">
-            <div class="modal-content product-detail">
-                <i class="fas fa-times modal-close" onclick="closeProductModal()"></i>
-                <div id="productDetailContent"></div>
-            </div>
-        </div>
-
-        <!-- Transaction Logs Modal -->
-        <div class="modal" id="transactionLogsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Logs Transaksi</h3>
-                    <i class="fas fa-times modal-close" onclick="closeTransactionLogs()"></i>
-                </div>
-                <div id="transactionLogsContent"></div>
+                <button class="reset-button" id="resetButton">Reset</button>
+                <div class="reset-response" id="resetResponse"></div>
             </div>
         </div>
     </div>
 
+    <!-- Product Detail Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-content product-modal">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
+                <h3 id="productModalTitle">Product Details</h3>
+                <button class="modal-close" id="closeProductModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="productModalBody">
+                <!-- Product details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Log Modal -->
+    <div class="modal" id="transactionsModal">
+        <div class="modal-content transactions-modal">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
+                <h3>Logs Transaksi</h3>
+                <button class="modal-close" id="closeTransactionsModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" id="transactionsList">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

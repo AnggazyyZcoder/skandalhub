@@ -1,14 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting to Login</title>
-    <script>
-        window.location.href = 'index.html';
-    </script>
+    <title>Drip Client - Register</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <p>Redirecting to login page...</p>
+<body class="register-page">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
+            </div>
+            <div class="loading-text">
+                <span class="loading-letter">D</span>
+                <span class="loading-letter">R</span>
+                <span class="loading-letter">I</span>
+                <span class="loading-letter">P</span>
+                <span class="loading-letter">&nbsp;</span>
+                <span class="loading-letter">C</span>
+                <span class="loading-letter">L</span>
+                <span class="loading-letter">I</span>
+                <span class="loading-letter">E</span>
+                <span class="loading-letter">N</span>
+                <span class="loading-letter">T</span>
+            </div>
+            <div class="loading-progress">
+                <div class="loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Container -->
+    <div class="register-container" id="registerContainer" style="display: none;">
+        <div class="register-card animate-fade-in">
+            <div class="register-logo">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
+                <div class="logo-glow"></div>
+            </div>
+            <h1 class="register-title">Buat Akun Baru</h1>
+            
+            <form id="registerForm">
+                <div class="input-group">
+                    <label for="regUsername">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="regUsername" placeholder="Pilih username" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="regPassword">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="regPassword" placeholder="Buat password" required>
+                        <i class="fas fa-eye toggle-password" id="toggleRegPassword"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" placeholder="Konfirmasi password" required>
+                        <i class="fas fa-eye toggle-password" id="toggleConfirmPassword"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="register-button" id="registerButton">
+                    <span>Daftar</span>
+                    <i class="fas fa-user-plus"></i>
+                </button>
+
+                <p class="login-link">
+                    Sudah punya akun? <a href="index.html">Login</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
