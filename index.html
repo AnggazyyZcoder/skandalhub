@@ -6,7 +6,8 @@
     <title>Drip Client - Login</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body class="login-page">
     <!-- Loading Screen -->
@@ -15,79 +16,78 @@
             <div class="loading-logo">
                 <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
             </div>
-            <div class="loading-text">
-                <span>D</span>
-                <span>R</span>
-                <span>I</span>
-                <span>P</span>
+            <h1 class="loading-text">
+                <span>D</span><span>R</span><span>I</span><span>P</span>
                 <span>&nbsp;</span>
-                <span>C</span>
-                <span>L</span>
-                <span>I</span>
-                <span>E</span>
-                <span>N</span>
-                <span>T</span>
-            </div>
+                <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
+            </h1>
             <div class="loading-progress">
-                <div class="progress-bar"></div>
+                <div class="loading-bar"></div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content hidden" id="mainContent">
-        <!-- Background Animation -->
-        <div class="background-animation">
+    <!-- Login Container -->
+    <div class="login-container" id="loginContainer" style="display: none;">
+        <div class="animated-bg">
             <div class="gradient-bg"></div>
             <div class="particles"></div>
         </div>
-
-        <!-- Login Container -->
-        <div class="auth-container fade-in">
-            <div class="auth-card">
-                <div class="auth-logo">
-                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
-                    <div class="logo-glow"></div>
+        
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo" class="animated-logo">
+                <div class="logo-glow"></div>
+            </div>
+            
+            <h2>Login To Dashboard</h2>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username"><i class="fas fa-user"></i> Username</label>
+                    <input type="text" id="username" placeholder="Masukkan username" required>
                 </div>
                 
-                <h1 class="auth-title">Login To Dashboard</h1>
-                
-                <form id="loginForm" class="auth-form">
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="username" placeholder="Username" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="password" placeholder="Password" required>
+                <div class="input-group">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <div class="password-input">
+                        <input type="password" id="password" placeholder="Masukkan password" required>
                         <i class="fas fa-eye toggle-password" onclick="togglePassword('password')"></i>
                     </div>
-                    
-                    <div class="form-options">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="rememberMe">
-                            <span class="checkmark"></span>
-                            Remember Me
-                        </label>
-                        <a href="#" class="forgot-password">Lupa Password?</a>
-                    </div>
-                    
-                    <button type="submit" class="auth-button" id="loginBtn">
-                        <span>Login</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-                
-                <div class="auth-footer">
-                    <p>Tidak punya akun? <a href="register.html">Daftar</a></p>
                 </div>
-            </div>
+                
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="rememberMe">
+                        <span class="checkmark"></span>
+                        Remember Me
+                    </label>
+                    <a href="register.html" class="register-link">Tidak punya akun? Daftar</a>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span>Login</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Loading screen animation
+            setTimeout(function() {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.style.animation = 'fadeOut 0.8s ease forwards';
+                
+                setTimeout(function() {
+                    loadingScreen.style.display = 'none';
+                    document.getElementById('loginContainer').style.display = 'flex';
+                }, 800);
+            }, 3000);
+        });
+    </script>
 </body>
 </html>
