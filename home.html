@@ -1,4 +1,3 @@
-<!-- home.html -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -7,19 +6,21 @@
     <title>Drip Client - Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo" class="loading-logo">
-            <div class="loading-text">
+        <div class="loader-container">
+            <div class="loader-logo">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+            </div>
+            <div class="loader-text">
                 <span>D</span><span>R</span><span>I</span><span>P</span>
                 <span>&nbsp;</span>
                 <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
             </div>
-            <div class="loading-progress">
+            <div class="loader-progress">
                 <div class="progress-bar"></div>
             </div>
         </div>
@@ -27,140 +28,171 @@
 
     <!-- Main Dashboard -->
     <div class="dashboard" id="dashboard" style="display: none;">
-        <!-- Floating Background Animation -->
-        <div class="floating-bg">
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
-        </div>
+        <!-- Running Teks -->
+        <div class="running-teks" id="runningTeks"></div>
 
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="user-welcome">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo" class="bar-logo">
-                <div class="welcome-text">
-                    <i class="fas fa-hand-wave"></i>
-                    <span id="welcomeUser">Loading...</span>
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo-animated">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
                 </div>
-                <div class="credit-balance">
+                <div class="user-welcome">
+                    <i class="fas fa-hand-wave"></i>
+                    <span>Hello, <span id="usernameDisplay"></span></span>
+                </div>
+                <div class="user-credit">
                     <i class="fas fa-dollar-sign"></i>
                     <span id="userCredit">0</span>
                 </div>
             </div>
-            
-            <div class="menu-toggle" id="menuToggle">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+            <div class="nav-right">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
             </div>
-        </div>
+        </nav>
 
-        <!-- Running Text -->
-        <div class="running-text-container" id="runningTextContainer" style="display: none;">
-            <div class="running-text">
-                <i class="fas fa-tag"></i>
-                <span id="runningTextContent"></span>
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                </div>
+                <button class="close-sidebar" id="closeSidebar">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-        </div>
-
-        <!-- Navigation Menu -->
-        <div class="nav-menu" id="navMenu">
-            <div class="nav-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo" class="nav-logo">
-                <button class="close-nav" id="closeNav"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="nav-items">
-                <div class="nav-item" onclick="showResetKeyPopup()">
-                    <i class="fas fa-key"></i>
-                    <span>Reset Key</span>
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3>Quick Actions</h3>
+                    <button class="menu-item" onclick="openResetKeyModal()">
+                        <i class="fas fa-key"></i>
+                        <span>Reset Key</span>
+                    </button>
+                    <button class="menu-item" onclick="openLogsModal()">
+                        <i class="fas fa-history"></i>
+                        <span>Logs Transaksi</span>
+                    </button>
                 </div>
-                <div class="nav-item" onclick="showLogsPopup()">
-                    <i class="fas fa-history"></i>
-                    <span>Logs Transaksi</span>
-                </div>
-                <div class="nav-item" onclick="showFAQPopup()">
-                    <i class="fas fa-question-circle"></i>
-                    <span>FAQ</span>
-                </div>
-                <div class="nav-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
+                <div class="menu-section">
+                    <h3>Information</h3>
+                    <button class="menu-item" onclick="openFAQModal()">
+                        <i class="fas fa-question-circle"></i>
+                        <span>FAQ</span>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Products Grid -->
-        <div class="products-grid" id="productsGrid">
-            <!-- Products will be loaded here -->
-        </div>
+        <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <!-- Reset Key Popup -->
-    <div class="popup-overlay" id="resetKeyPopup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" class="popup-logo">
-                <button class="close-popup" onclick="closePopup('resetKeyPopup')"><i class="fas fa-times"></i></button>
+    <!-- Reset Key Modal -->
+    <div class="modal" id="resetKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                <button class="close-modal"><i class="fas fa-times"></i></button>
             </div>
             <h3>Reset Key System</h3>
-            <div class="popup-body">
-                <input type="text" id="resetKeyInput" placeholder="Masukkan key lama" class="popup-input">
-                <button class="reset-btn" onclick="processResetKey()" id="resetKeyBtn">
-                    <span>Reset</span>
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <div class="reset-response" id="resetResponse"></div>
+            <div class="modal-body">
+                <input type="text" id="resetInput" placeholder="Masukkan Key Lama" class="modal-input">
+                <button class="modal-btn" onclick="processResetKey()">Reset</button>
+                <div class="loading-status" id="resetLoading"></div>
+                <div class="response-display" id="resetResponse"></div>
             </div>
         </div>
     </div>
 
-    <!-- Product Detail Popup -->
-    <div class="popup-overlay" id="productDetailPopup">
-        <div class="popup-content product-detail-popup">
-            <div class="popup-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" class="popup-logo">
-                <button class="close-popup" onclick="closePopup('productDetailPopup')"><i class="fas fa-times"></i></button>
+    <!-- Product Purchase Modal -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content purchase-modal">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                <button class="close-modal"><i class="fas fa-times"></i></button>
             </div>
-            <div id="productDetailContent"></div>
+            <div id="purchaseProductDetails"></div>
+            
+            <div class="price-options" id="priceOptions"></div>
+            
+            <div class="quantity-selector">
+                <label>Quantity:</label>
+                <div class="quantity-controls">
+                    <button onclick="updateQuantity(-1)"><i class="fas fa-minus"></i></button>
+                    <span id="quantity">1</span>
+                    <button onclick="updateQuantity(1)"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            
+            <div class="promo-section">
+                <label>Code Promo:</label>
+                <input type="text" id="promoCode" placeholder="Masukkan kode promo">
+                <small id="promoMessage"></small>
+            </div>
+            
+            <div class="whatsapp-input">
+                <label>Nomor Whatsapp:</label>
+                <input type="text" id="whatsappNumber" placeholder="Contoh: 628123456789">
+            </div>
+            
+            <div class="total-price">
+                <span>Total:</span>
+                <span id="totalPrice">$0</span>
+            </div>
+            
+            <button class="purchase-btn" onclick="processPurchase()">Buy Now</button>
         </div>
     </div>
 
-    <!-- Logs Popup -->
-    <div class="popup-overlay" id="logsPopup">
-        <div class="popup-content logs-popup">
-            <div class="popup-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" class="popup-logo">
-                <h3>Logs Transaksi</h3>
-                <button class="close-popup" onclick="closePopup('logsPopup')"><i class="fas fa-times"></i></button>
+    <!-- Logs Modal -->
+    <div class="modal" id="logsModal">
+        <div class="modal-content logs-modal">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                <button class="close-modal"><i class="fas fa-times"></i></button>
             </div>
+            <h3>Logs Transaksi</h3>
             <div class="logs-container" id="logsContainer"></div>
         </div>
     </div>
 
-    <!-- FAQ Popup -->
-    <div class="popup-overlay" id="faqPopup">
-        <div class="popup-content faq-popup">
-            <div class="popup-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" class="popup-logo">
-                <h3>FAQ</h3>
-                <button class="close-popup" onclick="closePopup('faqPopup')"><i class="fas fa-times"></i></button>
+    <!-- FAQ Modal -->
+    <div class="modal" id="faqModal">
+        <div class="modal-content faq-modal">
+            <div class="modal-header">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                <button class="close-modal"><i class="fas fa-times"></i></button>
             </div>
+            <h3>Frequently Asked Questions</h3>
             <div class="faq-container">
                 <div class="faq-item">
-                    <div class="faq-question">Apa itu Drip Client?</div>
-                    <div class="faq-answer">Drip Client adalah cheat android dengan fitur lengkap dan anti-ban.</div>
+                    <div class="faq-question">
+                        <span>Apa itu Drip Client?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Drip Client adalah cheat android dengan fitur lengkap dan anti-ban.
+                    </div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question">Bagaimana cara membeli key?</div>
-                    <div class="faq-answer">Pilih produk, tentukan durasi, masukkan nomor WA, dan lakukan pembayaran.</div>
+                    <div class="faq-question">
+                        <span>Bagaimana cara membeli?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Pilih produk, tentukan durasi, masukkan nomor WA, lalu lakukan pembayaran.
+                    </div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question">Apakah aman digunakan?</div>
-                    <div class="faq-answer">Ya, kami menggunakan sistem anti-ban yang teruji.</div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question">Berapa lama proses pembelian?</div>
-                    <div class="faq-answer">Proses maksimal 1x24 jam setelah pembayaran diverifikasi.</div>
+                    <div class="faq-question">
+                        <span>Apakah ada garansi?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Ya, kami memberikan garansi 24 jam untuk setiap pembelian.
+                    </div>
                 </div>
             </div>
         </div>
@@ -168,24 +200,16 @@
 
     <script src="script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                window.location.href = 'index.html';
-                return;
-            }
-
+        // Loading screen logic
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('fade-out');
             setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                loadingScreen.style.animation = 'fadeOut 0.8s ease forwards';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    initDashboard();
-                }, 800);
-            }, 3000);
-        });
+                loadingScreen.style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                initDashboard();
+            }, 500);
+        }, 3000);
     </script>
 </body>
 </html>

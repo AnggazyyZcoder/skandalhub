@@ -1,4 +1,3 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -7,19 +6,21 @@
     <title>Drip Client - Admin Panel</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo" class="loading-logo">
-            <div class="loading-text">
+        <div class="loader-container">
+            <div class="loader-logo">
+                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+            </div>
+            <div class="loader-text">
                 <span>D</span><span>R</span><span>I</span><span>P</span>
                 <span>&nbsp;</span>
                 <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
             </div>
-            <div class="loading-progress">
+            <div class="loader-progress">
                 <div class="progress-bar"></div>
             </div>
         </div>
@@ -27,179 +28,133 @@
 
     <!-- Admin Dashboard -->
     <div class="admin-dashboard" id="adminDashboard" style="display: none;">
-        <!-- Floating Background -->
-        <div class="floating-bg">
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
-            <div class="gradient-sphere"></div>
-        </div>
-
-        <!-- Admin Header -->
-        <div class="admin-header">
-            <div class="admin-title">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo" class="admin-logo">
+        <nav class="admin-nav">
+            <div class="nav-left">
+                <div class="logo-animated">
+                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client">
+                </div>
                 <h2>Admin Panel</h2>
             </div>
-            <button class="menu-toggle" id="adminMenuToggle">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </button>
-        </div>
+        </nav>
 
-        <!-- Admin Menu -->
-        <div class="admin-menu" id="adminMenu">
-            <div class="admin-menu-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Logo" class="menu-logo">
-                <button class="close-nav" id="closeAdminMenu"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="admin-menu-items">
-                <div class="admin-menu-item active" onclick="showAdminSection('products')">
-                    <i class="fas fa-box"></i>
-                    <span>Products</span>
-                </div>
-                <div class="admin-menu-item" onclick="showAdminSection('promos')">
-                    <i class="fas fa-tag"></i>
-                    <span>Promo Codes</span>
-                </div>
-                <div class="admin-menu-item" onclick="showAdminSection('running')">
-                    <i class="fas fa-running"></i>
-                    <span>Running Text</span>
-                </div>
-                <div class="admin-menu-item" onclick="showAdminSection('credit')">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>Add Credit</span>
-                </div>
-                <div class="admin-menu-item" onclick="showAdminSection('resetkey')">
-                    <i class="fas fa-key"></i>
-                    <span>Reset Key System</span>
-                </div>
-                <div class="admin-menu-item" onclick="showAdminSection('logs')">
-                    <i class="fas fa-history"></i>
-                    <span>Logs Transaksi</span>
-                </div>
-                <div class="admin-menu-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Content -->
-        <div class="admin-content">
-            <!-- Products Section -->
-            <div class="admin-section active" id="products-section">
-                <h3>Add New Product</h3>
-                <div class="admin-form">
+        <div class="admin-grid">
+            <!-- Add Product -->
+            <div class="admin-card">
+                <h3><i class="fas fa-plus-circle"></i> Add New Product</h3>
+                <div class="form-group">
                     <input type="text" id="productName" placeholder="Nama Product">
-                    <input type="text" id="productImage" placeholder="Link Image (jpg/png)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="productImage" placeholder="Link Gambar (URL)">
+                </div>
+                <div class="form-group">
                     <textarea id="productDesc" placeholder="Deskripsi Produk"></textarea>
-                    <input type="text" id="productFeatures" placeholder="Fitur (pisah dengan koma)">
-                    
-                    <div class="price-options">
-                        <h4>Harga Options (Max 5)</h4>
-                        <div id="priceInputs">
-                            <div class="price-row">
-                                <input type="text" placeholder="Label (1 DAYS)" class="price-label">
-                                <input type="number" placeholder="Harga ($)" class="price-value">
-                                <button onclick="addPriceRow()"><i class="fas fa-plus"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button class="admin-btn" onclick="addProduct()">Add New Product</button>
                 </div>
-                
-                <h3>Existing Products</h3>
-                <div id="productsList" class="products-list"></div>
+                <div class="form-group">
+                    <input type="text" id="productFitur" placeholder="Fitur (pisahkan dengan koma)">
+                </div>
+                <div class="form-group">
+                    <label>Harga Options (format: nama=harga)</label>
+                    <input type="text" id="priceOptions1" placeholder="1 Days=1">
+                    <input type="text" id="priceOptions2" placeholder="3 Days=10">
+                    <input type="text" id="priceOptions3" placeholder="7 Days=7">
+                </div>
+                <button onclick="addProduct()" class="admin-btn">Add Product</button>
             </div>
 
-            <!-- Promo Codes Section -->
-            <div class="admin-section" id="promos-section">
-                <h3>Add New Code Promo</h3>
-                <div class="admin-form">
-                    <input type="text" id="promoCode" placeholder="Code Promo">
-                    <input type="number" id="promoPercent" placeholder="Persen Promo (contoh: 70)">
-                    <input type="number" id="promoMax" placeholder="Maximal Penggunaan">
-                    <button class="admin-btn" onclick="addPromoCode()">Add New Code Promo</button>
+            <!-- Add Promo -->
+            <div class="admin-card">
+                <h3><i class="fas fa-tag"></i> Add Promo Code</h3>
+                <div class="form-group">
+                    <input type="text" id="promoCode" placeholder="Kode Promo">
                 </div>
-                
-                <h3>Existing Promos</h3>
-                <div id="promosList" class="promos-list"></div>
+                <div class="form-group">
+                    <input type="number" id="promoPercent" placeholder="Persen Promo">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="promoMax" placeholder="Max Penggunaan">
+                </div>
+                <button onclick="addPromo()" class="admin-btn">Add Promo</button>
             </div>
 
-            <!-- Running Text Section -->
-            <div class="admin-section" id="running-section">
-                <h3>Running Text Settings</h3>
-                <div class="admin-form">
-                    <textarea id="runningText" placeholder="Masukan teks running"></textarea>
+            <!-- Running Teks Control -->
+            <div class="admin-card">
+                <h3><i class="fas fa-running"></i> Running Teks</h3>
+                <div class="form-group">
+                    <input type="text" id="runningTeks" placeholder="Masukan teks">
+                </div>
+                <div class="toggle-switch">
                     <label class="switch">
-                        <input type="checkbox" id="runningToggle" onchange="toggleRunningText()">
+                        <input type="checkbox" id="runningTeksToggle">
                         <span class="slider"></span>
                     </label>
-                    <span class="toggle-label">On/Off Running Text</span>
-                    <button class="admin-btn" onclick="saveRunningText()">Save</button>
+                    <span>On/Off Running Teks</span>
                 </div>
+                <button onclick="saveRunningTeks()" class="admin-btn">Save</button>
             </div>
 
-            <!-- Add Credit Section -->
-            <div class="admin-section" id="credit-section">
-                <h3>Add Saldo User</h3>
-                <div class="admin-form">
-                    <input type="text" id="creditUsername" placeholder="Username">
-                    <input type="number" id="creditAmount" placeholder="Berapa Credit ($)">
-                    <button class="admin-btn" onclick="addCredit()">Transfer Saldo</button>
+            <!-- Add Saldo -->
+            <div class="admin-card">
+                <h3><i class="fas fa-coins"></i> Add Saldo User</h3>
+                <div class="form-group">
+                    <input type="text" id="saldoUsername" placeholder="Username">
                 </div>
+                <div class="form-group">
+                    <input type="number" id="saldoAmount" placeholder="Jumlah $">
+                </div>
+                <button onclick="transferSaldo()" class="admin-btn">Transfer Saldo</button>
             </div>
 
-            <!-- Reset Key System Section -->
-            <div class="admin-section" id="resetkey-section">
-                <h3>Reset Key System Operation</h3>
-                <div class="admin-form">
+            <!-- Reset Key Control -->
+            <div class="admin-card">
+                <h3><i class="fas fa-key"></i> Reset Key System</h3>
+                <div class="toggle-switch">
                     <label class="switch">
-                        <input type="checkbox" id="resetKeyToggle" onchange="toggleResetKey()">
+                        <input type="checkbox" id="resetKeyToggle">
                         <span class="slider"></span>
                     </label>
-                    <span class="toggle-label">On/Off Reset Key Feature</span>
+                    <span>On/Off Reset Key</span>
                 </div>
+                <button onclick="saveResetKeySetting()" class="admin-btn">Save Setting</button>
             </div>
 
-            <!-- Logs Transaksi Section -->
-            <div class="admin-section" id="logs-section">
-                <h3>Logs Transaksi</h3>
-                <div id="adminLogsList" class="logs-list"></div>
+            <!-- Product List -->
+            <div class="admin-card full-width">
+                <h3><i class="fas fa-edit"></i> Edit Products</h3>
+                <div class="products-list" id="adminProductsList"></div>
+            </div>
+
+            <!-- Transaction Logs -->
+            <div class="admin-card full-width">
+                <h3><i class="fas fa-history"></i> Logs Transaksi</h3>
+                <div class="transactions-list" id="transactionsList"></div>
             </div>
         </div>
     </div>
 
-    <!-- Approve Popup -->
-    <div class="popup-overlay" id="approvePopup">
-        <div class="popup-content">
-            <div class="popup-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" class="popup-logo">
-                <h3>Approve Transaction</h3>
-                <button class="close-popup" onclick="closePopup('approvePopup')"><i class="fas fa-times"></i></button>
+    <!-- Approve Modal -->
+    <div class="modal" id="approveModal">
+        <div class="modal-content">
+            <h3>Approve Transaction</h3>
+            <div class="form-group">
+                <label>Masukkan Key untuk dikirim:</label>
+                <textarea id="approveKeys" placeholder="Masukkan key (pisahkan dengan koma)"></textarea>
             </div>
-            <div class="popup-body">
-                <textarea id="approveKeys" placeholder="Masukan key untuk dikirim ke user (pisah dengan koma)" rows="5"></textarea>
-                <button class="admin-btn" onclick="submitApprove()">Send Keys</button>
-            </div>
+            <button onclick="submitApprove()" class="admin-btn">Submit Keys</button>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.add('fade-out');
             setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                loadingScreen.style.animation = 'fadeOut 0.8s ease forwards';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    document.getElementById('adminDashboard').style.display = 'block';
-                    initAdminDashboard();
-                }, 800);
-            }, 3000);
-        });
+                loadingScreen.style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                initAdminPanel();
+            }, 500);
+        }, 3000);
     </script>
 </body>
 </html>
