@@ -1,1409 +1,1625 @@
 /* =============================================
-   DRIP CLIENT - MAIN SCRIPT
-   All features & functions
+   DRIP CLIENT - SCRIPT.JS
+   All JS Functions
    ============================================= */
 
-// ============================================
+// =============================================
 // JSONBIN CONFIG
-// ============================================
-const JSONBIN_ID = '69b788adc3097a1dd52ba7ec'; // Will be created dynamically
-const JSONBIN_API_KEY = '$2a$10$uzdLhr/GM.l1rf7rJ11x3ey4eWi0Kj7V5eMtEE6o.RfixGw5qAsXG'; // Replace with real key
+// =============================================
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+const JSONBIN_KEY = '$2a$10$FrRFp7JmBmpnrWofdI2GyOHCeiMwzhvrVQ.Hh2H3FaBCiFlkxh4c6'; // Replace with your JSONBin Master Key
 
-// JSONBin base URL - using a public bin approach
-const BIN_BASE = 'https://api.jsonbin.io/v3/b';
+// BIN IDs - Create these bins on jsonbin.io first, then replace:
+const BINS = {
+  users:    '69b799d7c3097a1dd52bdbc1',       // { users: [] }
+  products: '69b799f8b7ec241ddc712bfd',   // { products: [] }
+  promos:   '69b79a0fb7ec241ddc712c4f',     // { promos: [] }
+  transactions: '69b79a26c3097a1dd52bdceb',   // { transactions: [] }
+  settings: '69b79a44b7ec241ddc712d0a',  // { ticker_enabled, ticker_text, reset_key_enabled, stats:{} }
+};
 
-// We'll use a simpler approach: localStorage-based with sessionStorage for persistence
-// This makes the demo fully functional. For production, replace with real JSONBin keys.
-
-// ============================================
-// LOCAL DATABASE (JSONBin-backed)
-// ============================================
-
-const STORAGE_KEY = 'drip_client_db';
-
-function getDB() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) return JSON.parse(raw);
-  // Default database structure
-  return {
-    users: [
-      { username: 'admin', password: 'admin123', credit: 999, role: 'admin', created: Date.now() },
-      { username: 'demo', password: 'demo123', credit: 10, role: 'user', created: Date.now() }
-    ],
-    products: [
-      {
-        id: 'prod_1',
-        name: 'DRIP CLIENT',
-        subtitle: 'Cheat Android Pro',
-        image: 'https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg',
-        desc: 'Cheat Android terpercaya & aman',
-        features: ['No Ban Protection', 'Silent Aim', 'ESP Wallhack', 'Auto Headshot', 'Speed Hack'],
-        prices: [
-          { label: '1 Day', price: 1 },
-          { label: '3 Days', price: 3 },
-          { label: '7 Days', price: 7 },
-          { label: '15 Days', price: 15 },
-          { label: '1 Bulan', price: 30 }
-        ]
-      }
-    ],
-    promos: [],
-    transactions: [],
-    ticker: {
-      active: false,
-      text: 'KODE PROMO TERBARU : DISKON70%  |  UPDATE TERBARU SUDAH DIRILIS!  |  JOIN CHANNEL WA KAMI!'
-    },
-    resetSystem: true,
-    userResets: {} // track daily resets per user
-  };
-}
-
-function saveDB(db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-  // In production: POST to JSONBin
-  syncToJsonbin(db);
-}
-
-async function syncToJsonbin(db) {
-  // Placeholder for JSONBin sync
-  // In production, uncomment and add real API key:
-  /*
+// =============================================
+// JSONBIN HELPERS
+// =============================================
+async function dbGet(binId) {
   try {
-    await fetch(`${BIN_BASE}/${JSONBIN_ID}`, {
+    const r = await fetch(`${JSONBIN_BASE}/${binId}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const d = await r.json();
+    return d.record;
+  } catch (e) {
+    console.error('DB GET error:', e);
+    return null;
+  }
+}
+
+async function dbSet(binId, data) {
+  try {
+    const r = await fetch(`${JSONBIN_BASE}/${binId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_API_KEY
+        'X-Master-Key': JSONBIN_KEY
       },
-      body: JSON.stringify(db)
+      body: JSON.stringify(data)
     });
-  } catch(e) { console.log('Sync error:', e); }
-  */
+    const d = await r.json();
+    return d.record;
+  } catch (e) {
+    console.error('DB SET error:', e);
+    return null;
+  }
 }
 
-async function loadFromJsonbin() {
-  // In production: fetch from JSONBin
-  // For now, uses localStorage
-  return getDB();
-}
-
-// ============================================
-// PARTICLES INIT
-// ============================================
+// =============================================
+// PARTICLE BACKGROUND
+// =============================================
 function initParticles() {
-  if (typeof particlesJS === 'undefined') return;
-  particlesJS('particles-js', {
-    particles: {
-      number: { value: 80, density: { enable: true, value_area: 800 } },
-      color: { value: ['#7c4dff', '#c084fc', '#4c2f8a', '#9c6fff'] },
-      shape: { type: 'circle' },
-      opacity: { value: 0.6, random: true, anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } },
-      size: { value: 3, random: true, anim: { enable: true, speed: 2, size_min: 0.5, sync: false } },
-      line_linked: { enable: true, distance: 120, color: '#7c4dff', opacity: 0.3, width: 1 },
-      move: { enable: true, speed: 1.5, direction: 'none', random: true, out_mode: 'out', bounce: false }
-    },
-    interactivity: {
-      detect_on: 'canvas',
-      events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
-      modes: { grab: { distance: 140, line_linked: { opacity: 0.6 } }, push: { particles_nb: 4 } }
-    },
-    retina_detect: true
+  const canvas = document.getElementById('particle-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const count = window.innerWidth < 768 ? 40 : 80;
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 0.5,
+      dx: (Math.random() - 0.5) * 0.4,
+      dy: (Math.random() - 0.5) * 0.4,
+      opacity: Math.random() * 0.6 + 0.1,
+      color: Math.random() > 0.5 ? '139,0,255' : '168,85,247'
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dist = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(139,0,255,${0.08 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw particles
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color},${p.opacity})`;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = `rgba(${p.color},0.5)`;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      p.x += p.dx;
+      p.y += p.dy;
+
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
   });
 }
 
-// ============================================
+// =============================================
 // LOADING SCREEN
-// ============================================
-function initLoadingScreen(page) {
-  const chars = 'DRIPCLIENT'.split('');
-  const container = document.getElementById('loading-chars');
-  if (!container) return;
+// =============================================
+function initLoadingScreen(contentId, callback) {
+  initParticles();
 
-  chars.forEach((ch, i) => {
-    const span = document.createElement('span');
-    span.className = 'loading-char';
-    span.textContent = ch;
-    span.style.animationDelay = `${i * 0.12}s`;
-    if (ch === 'C') span.style.marginLeft = '14px';
-    container.appendChild(span);
-  });
+  const title = 'DRIPCLIENT';
+  const container = document.getElementById('loadingChars');
+  if (container) {
+    title.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.textContent = char;
+      span.style.animationDelay = `${0.1 * i + 0.3}s`;
+      container.appendChild(span);
+    });
+  }
 
+  // Animate percent
+  let pct = 0;
+  const percentEl = document.getElementById('loadingPercent');
+  const interval = setInterval(() => {
+    pct = Math.min(pct + Math.floor(Math.random() * 4) + 1, 100);
+    if (percentEl) percentEl.textContent = pct + '%';
+    if (pct >= 100) clearInterval(interval);
+  }, 30);
+
+  // Hide after 3s
   setTimeout(() => {
     const ls = document.getElementById('loading-screen');
-    if (ls) ls.classList.add('fade-out');
-    setTimeout(() => {
-      if (ls) ls.style.display = 'none';
-      afterLoad(page);
-    }, 800);
+    if (ls) {
+      ls.classList.add('loading-hide');
+      setTimeout(() => {
+        ls.style.display = 'none';
+        const content = document.getElementById(contentId);
+        if (content) content.style.display = '';
+        if (callback) callback();
+        initScrollAnimations();
+      }, 800);
+    }
   }, 3000);
 }
 
-function afterLoad(page) {
-  if (page === 'login') {
-    const wrap = document.getElementById('auth-content');
-    if (wrap) {
-      wrap.style.display = 'flex';
-      setTimeout(() => {
-        const card = document.getElementById('auth-card');
-        if (card) card.classList.add('active');
-      }, 100);
-    }
-    // Check already logged in
-    const sess = sessionStorage.getItem('drip_session');
-    if (sess) window.location.href = 'home.html';
-  } else if (page === 'register') {
-    const wrap = document.getElementById('auth-content');
-    if (wrap) {
-      wrap.style.display = 'flex';
-      setTimeout(() => {
-        const card = document.getElementById('auth-card');
-        if (card) card.classList.add('active');
-      }, 100);
-    }
-  } else if (page === 'home') {
-    const sess = sessionStorage.getItem('drip_session');
-    if (!sess) { window.location.href = 'index.html'; return; }
-    const user = JSON.parse(sess);
-    initDashboard(user);
-  } else if (page === 'admin') {
-    const content = document.getElementById('admin-content');
-    if (content) content.style.display = 'flex';
-    initAdmin();
-  }
+// =============================================
+// SCROLL ANIMATIONS
+// =============================================
+function initScrollAnimations() {
+  const els = document.querySelectorAll('.fade-in');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => observer.observe(el));
 }
 
-// ============================================
-// AUTH - TOGGLE PASSWORD
-// ============================================
-function togglePass(inputId, btnId) {
-  const input = document.getElementById(inputId);
-  const btn = document.getElementById(btnId);
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (btn) btn.innerHTML = '<i class="fa fa-eye-slash"></i>';
+// =============================================
+// TOGGLE PASSWORD
+// =============================================
+function togglePassword(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if (icon) icon.innerHTML = '<i class="fas fa-eye-slash"></i>';
   } else {
-    input.type = 'password';
-    if (btn) btn.innerHTML = '<i class="fa fa-eye"></i>';
+    inp.type = 'password';
+    if (icon) icon.innerHTML = '<i class="fas fa-eye"></i>';
   }
 }
 
-// ============================================
+// =============================================
+// TOAST UTILITY
+// =============================================
+function toast(icon, title, timer = 2000) {
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon,
+    title,
+    showConfirmButton: false,
+    timer,
+    timerProgressBar: true,
+    background: 'var(--bg-card2)',
+    color: 'var(--text-primary)',
+    iconColor: icon === 'success' ? 'var(--accent-green)' : icon === 'error' ? 'var(--accent-red)' : 'var(--purple-3)'
+  });
+}
+
+// =============================================
+// SESSION
+// =============================================
+function getSession() {
+  try {
+    const s = localStorage.getItem('dc_session');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function setSession(user) {
+  localStorage.setItem('dc_session', JSON.stringify(user));
+}
+
+function clearSession() {
+  localStorage.removeItem('dc_session');
+}
+
+function requireAuth() {
+  const s = getSession();
+  if (!s) {
+    window.location.href = 'index.html';
+    return null;
+  }
+  return s;
+}
+
+// =============================================
 // LOGIN
-// ============================================
-async function doLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  const remember = document.getElementById('remember-me')?.checked;
+// =============================================
+async function handleLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const btn = document.getElementById('loginBtn');
 
   if (!username || !password) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Username dan password wajib diisi!', confirmButtonText: 'OK' });
+    toast('warning', 'Username dan password wajib diisi!');
     return;
   }
 
-  const btn = document.getElementById('login-btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> &nbsp;Memproses...';
+  btn.innerHTML = '<span class="spinner"></span> Memproses...';
 
-  // Simulate API delay
-  await sleep(1200);
+  try {
+    const db = await dbGet(BINS.users);
+    if (!db || !db.users) {
+      toast('error', 'Gagal terhubung ke database!');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> LOGIN';
+      return;
+    }
 
-  const db = getDB();
-  const user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+    const user = db.users.find(u => u.username === username && u.password === password);
 
-  if (!user) {
+    if (!user) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal!',
+        text: 'Username atau password tidak valid.',
+        background: 'var(--bg-card2)',
+        color: 'var(--text-primary)',
+        confirmButtonText: 'Coba Lagi'
+      });
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> LOGIN';
+      return;
+    }
+
+    if (remember) {
+      localStorage.setItem('dc_remember', JSON.stringify({ username, password }));
+    } else {
+      localStorage.removeItem('dc_remember');
+    }
+
+    // Show welcome animation
+    setSession(user);
+    showWelcomeAnimation(username);
+
+  } catch (e) {
+    toast('error', 'Terjadi kesalahan: ' + e.message);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-sign-in-alt"></i> &nbsp;LOGIN';
-    Swal.fire({ icon: 'error', title: 'Login Gagal', text: 'Username atau password salah. Coba lagi!', confirmButtonText: 'OK' });
-    return;
-  }
-
-  // Remember me
-  if (remember) {
-    localStorage.setItem('drip_remember', JSON.stringify({ u: username, p: password }));
-  } else {
-    localStorage.removeItem('drip_remember');
-  }
-
-  // Save session
-  sessionStorage.setItem('drip_session', JSON.stringify({ username: user.username, credit: user.credit, role: user.role }));
-
-  // Welcome animation
-  const overlay = document.getElementById('welcome-overlay');
-  const wt = document.getElementById('welcome-text');
-  if (overlay && wt) {
-    wt.textContent = `Welcome, ${user.username}! 🎉`;
-    overlay.classList.add('show');
-    setTimeout(() => {
-      overlay.classList.remove('show');
-      window.location.href = 'home.html';
-    }, 3000);
-  } else {
-    window.location.href = 'home.html';
+    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> LOGIN';
   }
 }
 
-// ============================================
+function showWelcomeAnimation(username) {
+  // Create welcome overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'welcome-anim';
+  overlay.innerHTML = `
+    <div class="welcome-text">Welcome ${username}! 🎉</div>
+    <div class="welcome-sub">REDIRECTING TO DASHBOARD</div>
+  `;
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    window.location.href = 'home.html';
+  }, 3000);
+}
+
+// =============================================
 // REGISTER
-// ============================================
-async function doRegister() {
-  const username = document.getElementById('reg-username').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const confirm = document.getElementById('reg-confirm').value;
+// =============================================
+async function handleRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regConfirmPassword').value;
+  const btn = document.getElementById('registerBtn');
 
-  if (!username || !password || !confirm) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Semua field wajib diisi!', confirmButtonText: 'OK' });
-    return;
-  }
-
-  if (username.length < 3) {
-    Swal.fire({ icon: 'warning', title: 'Username Terlalu Pendek', text: 'Minimal 3 karakter.', confirmButtonText: 'OK' });
-    return;
-  }
-
-  if (password.length < 5) {
-    Swal.fire({ icon: 'warning', title: 'Password Lemah', text: 'Password minimal 5 karakter.', confirmButtonText: 'OK' });
+  if (!username || !email || !password || !confirm) {
+    toast('warning', 'Semua field wajib diisi!');
     return;
   }
 
   if (password !== confirm) {
-    Swal.fire({ icon: 'error', title: 'Password Tidak Cocok', text: 'Konfirmasi password tidak sesuai.', confirmButtonText: 'OK' });
+    toast('error', 'Password tidak cocok!');
     return;
   }
 
-  const btn = document.getElementById('register-btn');
+  if (password.length < 6) {
+    toast('warning', 'Password minimal 6 karakter!');
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast('warning', 'Format email tidak valid!');
+    return;
+  }
+
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> &nbsp;Mendaftarkan...';
+  btn.innerHTML = '<span class="spinner"></span> Mendaftarkan...';
 
-  await sleep(1500);
+  try {
+    const db = await dbGet(BINS.users);
+    if (!db) {
+      toast('error', 'Gagal terhubung ke database!');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> DAFTAR SEKARANG';
+      return;
+    }
 
-  const db = getDB();
-  const exists = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    const users = db.users || [];
 
-  if (exists) {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-user-plus"></i> &nbsp;REGISTER';
-    Swal.fire({ icon: 'error', title: 'Username Sudah Ada', text: 'Username ini sudah digunakan. Coba username lain.', confirmButtonText: 'OK' });
-    return;
-  }
-
-  // Add user
-  db.users.push({
-    username,
-    password,
-    credit: 0,
-    role: 'user',
-    created: Date.now()
-  });
-  saveDB(db);
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa fa-user-plus"></i> &nbsp;REGISTER';
-
-  await Swal.fire({
-    icon: 'success',
-    title: '✅ Akun Berhasil Dibuat!',
-    html: `Selamat <strong>${username}</strong>! Akun kamu sudah terdaftar.<br>Silahkan login dengan kredensial baru kamu.`,
-    confirmButtonText: 'Login Sekarang'
-  });
-
-  window.location.href = 'index.html';
-}
-
-// ============================================
-// DASHBOARD INIT
-// ============================================
-function initDashboard(user) {
-  // Refresh user data from DB
-  const db = getDB();
-  const dbUser = db.users.find(u => u.username === user.username);
-  if (dbUser) {
-    user.credit = dbUser.credit;
-    sessionStorage.setItem('drip_session', JSON.stringify(user));
-  }
-
-  // Show dashboard
-  const dc = document.getElementById('dashboard-content');
-  if (dc) dc.style.display = 'block';
-
-  // Update topbar
-  const tu = document.getElementById('topbar-username');
-  const tc = document.getElementById('topbar-credit');
-  if (tu) tu.textContent = user.username;
-  if (tc) tc.textContent = user.credit.toFixed(2);
-
-  // Nav info
-  const nu = document.getElementById('nav-uname');
-  const nc = document.getElementById('nav-credit');
-  const na = document.getElementById('nav-avatar');
-  if (nu) nu.textContent = user.username;
-  if (nc) nc.textContent = user.credit.toFixed(2);
-  if (na) na.textContent = user.username.charAt(0).toUpperCase();
-
-  // Welcome popup
-  setTimeout(() => {
-    const popup = document.getElementById('welcome-popup');
-    const pu = document.getElementById('popup-username');
-    if (pu) pu.textContent = user.username;
-    if (popup) popup.classList.add('show');
-  }, 500);
-
-  // Load ticker
-  loadTicker();
-
-  // Load products
-  loadProducts();
-
-  // Load FAQ
-  loadFAQ();
-
-  // Scroll animations
-  initScrollAnimations();
-}
-
-// ============================================
-// TICKER
-// ============================================
-function loadTicker() {
-  const db = getDB();
-  const ticker = db.ticker;
-  const tickerEl = document.getElementById('running-ticker');
-  const track = document.getElementById('ticker-track');
-
-  if (ticker.active && ticker.text && tickerEl && track) {
-    tickerEl.classList.add('visible');
-    const items = ticker.text.split('|');
-    let html = '';
-    // Duplicate for seamless loop
-    for (let r = 0; r < 2; r++) {
-      items.forEach(item => {
-        html += `<span class="ticker-item"><i class="fa fa-star"></i>${item.trim()}</span>`;
+    // Check duplicate
+    if (users.find(u => u.username === username)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Username Sudah Dipakai!',
+        text: 'Pilih username lain.',
+        background: 'var(--bg-card2)',
+        color: 'var(--text-primary)'
       });
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> DAFTAR SEKARANG';
+      return;
     }
-    track.innerHTML = html;
-  }
-}
 
-// ============================================
-// PRODUCTS
-// ============================================
-function loadProducts() {
-  const db = getDB();
-  const grid = document.getElementById('products-grid');
-  if (!grid) return;
-
-  if (!db.products || db.products.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;" class="empty-state"><i class="fa fa-box-open"></i><p>Belum ada produk tersedia</p></div>`;
-    return;
-  }
-
-  grid.innerHTML = db.products.map(p => `
-    <div class="product-card fade-in-scroll" onclick="openProductModal('${p.id}')">
-      <div class="product-image-wrap">
-        <img src="${p.image}" alt="${p.name}" onerror="this.src='https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg'"/>
-      </div>
-      <div class="product-info">
-        <div class="product-name">${p.name}</div>
-        <div class="product-desc">${p.subtitle || p.desc}</div>
-        <ul class="product-features">
-          ${(p.features || []).slice(0, 4).map(f => `<li>${f}</li>`).join('')}
-        </ul>
-      </div>
-    </div>
-  `).join('');
-
-  initScrollAnimations();
-}
-
-// ============================================
-// FAQ
-// ============================================
-function loadFAQ() {
-  const faqs = [
-    { q: 'Apa itu Drip Client?', a: 'Drip Client adalah platform jual beli key / lisensi software premium. Kami menyediakan berbagai produk dengan harga terjangkau dan layanan terpercaya.' },
-    { q: 'Bagaimana cara membeli key?', a: 'Pilih produk yang kamu inginkan, pilih durasi / paket, masukan nomor WhatsApp, lalu klik Buy Now. Pastikan saldo credit kamu mencukupi.' },
-    { q: 'Bagaimana cara mengisi saldo?', a: 'Hubungi admin melalui channel WhatsApp kami untuk pengisian saldo. Admin akan memproses transfer credit ke akun kamu.' },
-    { q: 'Berapa lama proses pengiriman key?', a: 'Admin akan memproses pesananmu sesegera mungkin. Biasanya dalam 1-24 jam setelah pembayaran dikonfirmasi.' },
-    { q: 'Apakah ada garansi?', a: 'Ya, kami memberikan garansi sesuai durasi yang dibeli. Jika ada masalah teknis, hubungi support kami melalui WhatsApp.' },
-    { q: 'Bagaimana cara reset key?', a: 'Buka menu Quick Action (titik tiga di pojok kanan atas), pilih Reset Key, masukan key yang ingin direset, dan klik tombol Reset. Fitur ini tersedia jika diaktifkan oleh admin.' },
-    { q: 'Apakah bisa menggunakan kode promo?', a: 'Ya! Saat melakukan pembelian, kamu bisa memasukan kode promo di kolom yang tersedia. Diskon akan otomatis terpotong dari total harga.' }
-  ];
-
-  const container = document.getElementById('faq-list');
-  if (!container) return;
-
-  container.innerHTML = faqs.map((f, i) => `
-    <div class="faq-item fade-in-scroll" onclick="toggleFaq(this)">
-      <div class="faq-question">
-        <span>${f.q}</span>
-        <i class="fa fa-chevron-down"></i>
-      </div>
-      <div class="faq-answer">
-        <div class="faq-answer-inner">${f.a}</div>
-      </div>
-    </div>
-  `).join('');
-
-  initScrollAnimations();
-}
-
-function toggleFaq(el) {
-  el.classList.toggle('open');
-}
-
-// ============================================
-// HAMBURGER NAV
-// ============================================
-function toggleNav() {
-  const nav = document.getElementById('side-nav');
-  const overlay = document.getElementById('nav-overlay');
-  if (nav) nav.classList.toggle('open');
-  if (overlay) overlay.classList.toggle('show');
-}
-
-function closeNav() {
-  const nav = document.getElementById('side-nav');
-  const overlay = document.getElementById('nav-overlay');
-  if (nav) nav.classList.remove('open');
-  if (overlay) overlay.classList.remove('show');
-}
-
-function scrollToProducts() {
-  const el = document.getElementById('products-section');
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-function scrollToFaq() {
-  const el = document.getElementById('faq-section');
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-// ============================================
-// WELCOME POPUP
-// ============================================
-function closeWelcomePopup() {
-  const p = document.getElementById('welcome-popup');
-  if (p) p.classList.remove('show');
-}
-
-// ============================================
-// PRODUCT MODAL
-// ============================================
-let currentProduct = null;
-let selectedPrice = null;
-let currentQty = 1;
-let promoApplied = null;
-
-function openProductModal(productId) {
-  const db = getDB();
-  const product = db.products.find(p => p.id === productId);
-  if (!product) return;
-
-  currentProduct = product;
-  selectedPrice = null;
-  currentQty = 1;
-  promoApplied = null;
-
-  document.getElementById('modal-product-name').textContent = product.name;
-  document.getElementById('qty-display').textContent = '1';
-  document.getElementById('total-price-display').textContent = '$0';
-  document.getElementById('promo-input').value = '';
-  document.getElementById('promo-status').innerHTML = '';
-  document.getElementById('wa-input').value = '';
-
-  // Build price options
-  const priceContainer = document.getElementById('modal-price-options');
-  priceContainer.innerHTML = product.prices.map((p, i) => `
-    <div class="price-option" onclick="selectPrice(${i})" data-idx="${i}">
-      <div class="price-duration">${p.label}</div>
-      <div class="price-amount">$${p.price}</div>
-    </div>
-  `).join('');
-
-  document.getElementById('product-modal').classList.add('show');
-}
-
-function selectPrice(idx) {
-  document.querySelectorAll('.price-option').forEach(el => el.classList.remove('selected'));
-  const el = document.querySelector(`.price-option[data-idx="${idx}"]`);
-  if (el) el.classList.add('selected');
-  selectedPrice = currentProduct.prices[idx];
-  promoApplied = null;
-  document.getElementById('promo-status').innerHTML = '';
-  document.getElementById('promo-input').value = '';
-  updateTotal();
-}
-
-function changeQty(delta) {
-  currentQty = Math.max(1, currentQty + delta);
-  document.getElementById('qty-display').textContent = currentQty;
-  updateTotal();
-}
-
-function updateTotal() {
-  if (!selectedPrice) return;
-  let base = selectedPrice.price * currentQty;
-  if (promoApplied) {
-    base = base * (1 - promoApplied.pct / 100);
-  }
-  document.getElementById('total-price-display').textContent = `$${base.toFixed(2)}`;
-}
-
-function applyPromo() {
-  const code = document.getElementById('promo-input').value.trim().toUpperCase();
-  const statusEl = document.getElementById('promo-status');
-
-  if (!code) {
-    statusEl.innerHTML = '<div style="color:var(--accent-red);font-size:0.8rem;margin-top:5px;"><i class="fa fa-exclamation-circle"></i> Masukan kode promo terlebih dahulu.</div>';
-    return;
-  }
-
-  const db = getDB();
-  const promo = db.promos.find(p => p.code === code);
-
-  if (!promo) {
-    statusEl.innerHTML = '<div style="color:var(--accent-red);font-size:0.8rem;margin-top:5px;"><i class="fa fa-times-circle"></i> Kode promo tidak valid.</div>';
-    return;
-  }
-
-  // Check max usage
-  if (promo.maxUse > 0 && promo.usedBy && promo.usedBy.length >= promo.maxUse) {
-    statusEl.innerHTML = `<div style="color:var(--accent-red);font-size:0.8rem;margin-top:5px;"><i class="fa fa-ban"></i> Kode promo sudah mencapai batas penggunaan (${promo.maxUse} orang).</div>`;
-    return;
-  }
-
-  // Check if user already used
-  const sess = JSON.parse(sessionStorage.getItem('drip_session') || '{}');
-  if (promo.usedBy && promo.usedBy.includes(sess.username)) {
-    statusEl.innerHTML = `<div style="color:var(--accent-red);font-size:0.8rem;margin-top:5px;"><i class="fa fa-ban"></i> Kamu sudah pernah menggunakan kode promo ini.</div>`;
-    return;
-  }
-
-  promoApplied = promo;
-  statusEl.innerHTML = `<div class="promo-applied"><i class="fa fa-check-circle"></i> Promo <strong>${code}</strong> berhasil! Diskon ${promo.pct}%</div>`;
-  updateTotal();
-}
-
-async function doBuyNow() {
-  if (!selectedPrice) {
-    Swal.fire({ icon: 'warning', title: 'Pilih Paket', text: 'Silahkan pilih paket terlebih dahulu!', confirmButtonText: 'OK' });
-    return;
-  }
-
-  const wa = document.getElementById('wa-input').value.trim();
-  if (!wa) {
-    Swal.fire({ icon: 'warning', title: 'Nomor WA Diperlukan', text: 'Masukan nomor WhatsApp untuk notifikasi pembelian.', confirmButtonText: 'OK' });
-    return;
-  }
-
-  const sess = JSON.parse(sessionStorage.getItem('drip_session') || '{}');
-  const db = getDB();
-  const dbUser = db.users.find(u => u.username === sess.username);
-
-  if (!dbUser) { window.location.href = 'index.html'; return; }
-
-  let totalPrice = selectedPrice.price * currentQty;
-  if (promoApplied) totalPrice = totalPrice * (1 - promoApplied.pct / 100);
-  totalPrice = parseFloat(totalPrice.toFixed(2));
-
-  if (dbUser.credit < totalPrice) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Saldo Tidak Cukup',
-      html: `Saldo kamu: <strong>$${dbUser.credit}</strong><br>Total pembelian: <strong>$${totalPrice}</strong><br><br>Silahkan hubungi admin untuk top-up saldo.`,
-      confirmButtonText: 'OK'
-    });
-    return;
-  }
-
-  const confirm = await Swal.fire({
-    icon: 'question',
-    title: 'Konfirmasi Pembelian',
-    html: `
-      <div style="text-align:left;font-size:0.9rem;line-height:1.8;">
-        <b>Produk:</b> ${currentProduct.name}<br>
-        <b>Paket:</b> ${selectedPrice.label}<br>
-        <b>Qty:</b> ${currentQty}x<br>
-        ${promoApplied ? `<b>Promo:</b> ${promoApplied.code} (-${promoApplied.pct}%)<br>` : ''}
-        <b>Total:</b> <span style="color:var(--accent-green);font-weight:700;">$${totalPrice}</span>
-      </div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: 'Beli Sekarang',
-    cancelButtonText: 'Batal'
-  });
-
-  if (!confirm.isConfirmed) return;
-
-  const btn = document.getElementById('buy-now-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> &nbsp;Memproses...';
-
-  await sleep(1500);
-
-  // Deduct credit
-  dbUser.credit = parseFloat((dbUser.credit - totalPrice).toFixed(2));
-
-  // Mark promo used
-  if (promoApplied) {
-    const promoIdx = db.promos.findIndex(p => p.code === promoApplied.code);
-    if (promoIdx > -1) {
-      if (!db.promos[promoIdx].usedBy) db.promos[promoIdx].usedBy = [];
-      db.promos[promoIdx].usedBy.push(sess.username);
+    if (users.find(u => u.email === email)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email Sudah Terdaftar!',
+        text: 'Gunakan email lain.',
+        background: 'var(--bg-card2)',
+        color: 'var(--text-primary)'
+      });
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> DAFTAR SEKARANG';
+      return;
     }
-  }
 
-  // Create transaction
-  const trxId = 'TRX' + Date.now();
-  const trx = {
-    id: trxId,
-    username: sess.username,
-    product: currentProduct.name,
-    plan: selectedPrice.label,
-    qty: currentQty,
-    promo: promoApplied ? promoApplied.code : null,
-    discount: promoApplied ? promoApplied.pct : 0,
-    total: totalPrice,
-    wa,
-    status: 'waiting',
-    keys: [],
-    date: new Date().toISOString()
-  };
+    const newUser = {
+      id: 'user_' + Date.now(),
+      username,
+      email,
+      password,
+      balance: 0,
+      createdAt: new Date().toISOString(),
+      usedPromos: []
+    };
 
-  db.transactions.push(trx);
+    users.push(newUser);
+    const result = await dbSet(BINS.users, { users });
 
-  // Update user session
-  sess.credit = dbUser.credit;
-  sessionStorage.setItem('drip_session', JSON.stringify(sess));
+    if (result) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Akun Berhasil Dibuat! 🎉',
+        text: `Selamat datang, ${username}! Silahkan login sekarang.`,
+        background: 'var(--bg-card2)',
+        color: 'var(--text-primary)',
+        confirmButtonText: 'Login Sekarang'
+      }).then(() => {
+        window.location.href = 'index.html';
+      });
+    } else {
+      toast('error', 'Gagal menyimpan akun. Coba lagi!');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> DAFTAR SEKARANG';
+    }
 
-  saveDB(db);
-
-  // Update topbar credit
-  const tc = document.getElementById('topbar-credit');
-  if (tc) tc.textContent = dbUser.credit.toFixed(2);
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa fa-shopping-cart"></i> &nbsp;BUY NOW';
-
-  closeProductModal();
-
-  Swal.fire({
-    icon: 'success',
-    title: '✅ Pembelian Berhasil!',
-    html: `
-      <div style="text-align:left;font-size:0.85rem;line-height:1.8;">
-        <b>ID Transaksi:</b> <span style="font-family:monospace;color:var(--purple-neon);">${trxId}</span><br>
-        <b>Produk:</b> ${currentProduct.name} - ${selectedPrice.label}<br>
-        <b>Total Dipotong:</b> $${totalPrice}<br>
-        <b>Status:</b> <span style="color:var(--accent-orange);">Menunggu Proses Admin</span><br>
-        <br>
-        Admin akan memproses pesananmu dan mengirimkan key melalui dashboard ini.
-      </div>
-    `,
-    confirmButtonText: 'OK'
-  });
-}
-
-function closeProductModal() {
-  document.getElementById('product-modal').classList.remove('show');
-}
-
-// ============================================
-// TRANSACTION LOGS
-// ============================================
-function openTrxModal() {
-  const sess = JSON.parse(sessionStorage.getItem('drip_session') || '{}');
-  const db = getDB();
-  const userTrx = db.transactions.filter(t => t.username === sess.username).reverse();
-
-  const container = document.getElementById('trx-list-container');
-
-  if (userTrx.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i><p>Belum ada transaksi</p></div>`;
-  } else {
-    container.innerHTML = `<div class="trx-list">${userTrx.map(t => `
-      <div class="trx-item">
-        <div class="trx-header">
-          <div class="trx-name">${t.product}</div>
-          <span class="badge badge-${t.status}">${t.status === 'waiting' ? 'Waiting' : t.status === 'approved' ? 'Approved' : 'Rejected'}</span>
-        </div>
-        <div class="trx-info">
-          <b>${t.plan}</b> &nbsp;|&nbsp; Qty: ${t.qty} &nbsp;|&nbsp; Total: $${t.total}<br>
-          ID: <span style="font-family:monospace;font-size:0.78rem;color:var(--purple-neon);">${t.id}</span><br>
-          Tanggal: ${new Date(t.date).toLocaleString('id-ID')}
-        </div>
-        ${t.keys && t.keys.length > 0 ? `
-          <div class="trx-keys">
-            <div style="color:var(--text-muted);font-size:0.75rem;margin-bottom:6px;"><i class="fa fa-key"></i> KEY / LISENSI:</div>
-            ${t.keys.map(k => `<div>→ ${k}</div>`).join('')}
-          </div>
-        ` : ''}
-      </div>
-    `).join('')}</div>`;
-  }
-
-  document.getElementById('trx-modal').classList.add('show');
-}
-
-function closeTrxModal() {
-  document.getElementById('trx-modal').classList.remove('show');
-}
-
-// ============================================
-// RESET KEY POPUP
-// ============================================
-function openResetKeyPopup() {
-  document.getElementById('reset-popup').classList.add('show');
-  document.getElementById('reset-terminal').style.display = 'none';
-  document.getElementById('reset-terminal').innerHTML = '';
-  document.getElementById('reset-key-input').value = '';
-}
-
-function closeResetPopup() {
-  document.getElementById('reset-popup').classList.remove('show');
-}
-
-async function doResetKey() {
-  const keyInput = document.getElementById('reset-key-input').value.trim();
-  if (!keyInput) {
-    Swal.fire({ icon: 'warning', title: 'Input Kosong', text: 'Masukan key terlebih dahulu!', confirmButtonText: 'OK' });
-    return;
-  }
-
-  const db = getDB();
-  if (!db.resetSystem) {
-    const term = document.getElementById('reset-terminal');
-    term.style.display = 'block';
-    term.innerHTML = `<div class="terminal-line error" style="animation-delay:0.1s">❌ SYSTEM OFFLINE</div>
-    <div class="terminal-line muted" style="animation-delay:0.3s">Status: 503 Service Unavailable</div>
-    <div class="terminal-line error" style="animation-delay:0.6s">Maaf fitur ini sedang di nonaktifkan oleh admin atau sedang tidak beroperasi normal. Silahkan coba lagi nanti.</div>`;
-    return;
-  }
-
-  const btn = document.getElementById('reset-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Processing...';
-
-  const term = document.getElementById('reset-terminal');
-  term.style.display = 'block';
-  term.innerHTML = '';
-
-  const addLine = (text, cls, delay) => {
-    setTimeout(() => {
-      const line = document.createElement('div');
-      line.className = `terminal-line ${cls}`;
-      line.textContent = text;
-      term.appendChild(line);
-    }, delay);
-  };
-
-  addLine('> Connecting to server...', 'info', 200);
-  addLine('> Fetching Server.....', 'muted', 600);
-  addLine('> Response Database....', 'muted', 1200);
-
-  await sleep(2000);
-
-  // Check daily reset limit
-  const sess = JSON.parse(sessionStorage.getItem('drip_session') || '{}');
-  const today = new Date().toDateString();
-  const resetKey = `reset_${sess.username}_${today}`;
-  const resetCount = parseInt(localStorage.getItem(resetKey) || '0');
-
-  if (resetCount >= 1) {
-    addLine('> ERROR: Daily reset limit reached', 'error', 0);
-    addLine(`> {"success":false,"message":"Reset limit 1x per day","resetsused":${resetCount},"resetsmax":1}`, 'error', 300);
+  } catch (e) {
+    toast('error', 'Terjadi kesalahan: ' + e.message);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-sync-alt"></i> &nbsp;Reset Key';
-    return;
+    btn.innerHTML = '<i class="fas fa-user-plus"></i> DAFTAR SEKARANG';
   }
-
-  // Success simulation
-  const newKey = generateKey();
-  const now = new Date();
-  const nextReset = new Date(now.getTime() + 24*60*60*1000);
-
-  localStorage.setItem(resetKey, '1');
-
-  setTimeout(() => {
-    addLine('> ✅ Reset Successful', 'success', 0);
-    addLine(`> Status: 200 OK`, 'info', 200);
-    addLine(`> {"success":true,"message":"Token reset successfully","resetsused":1,"resetsmax":1,"nextresettime":"${nextReset.toISOString().replace('T',' ').substr(0,19)}"}`, 'white', 400);
-    addLine(`> New Key Generated:`, 'muted', 700);
-    addLine(`> ${newKey}`, 'success', 900);
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-sync-alt"></i> &nbsp;Reset Key';
-  }, 500);
 }
 
-function generateKey() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let key = '';
-  for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 5; j++) key += chars[Math.floor(Math.random() * chars.length)];
-    if (i < 4) key += '-';
-  }
-  return key;
-}
-
-// ============================================
+// =============================================
 // LOGOUT
-// ============================================
-function doLogout() {
+// =============================================
+function handleLogout() {
   Swal.fire({
-    icon: 'question',
-    title: 'Logout',
+    title: 'Logout?',
     text: 'Yakin ingin keluar dari dashboard?',
+    icon: 'question',
     showCancelButton: true,
     confirmButtonText: 'Ya, Logout',
-    cancelButtonText: 'Batal'
-  }).then(result => {
-    if (result.isConfirmed) {
-      sessionStorage.removeItem('drip_session');
+    cancelButtonText: 'Batal',
+    background: 'var(--bg-card2)',
+    color: 'var(--text-primary)'
+  }).then(r => {
+    if (r.isConfirmed) {
+      clearSession();
       window.location.href = 'index.html';
     }
   });
 }
 
-// ============================================
-// SCROLL ANIMATIONS
-// ============================================
-function initScrollAnimations() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  }, { threshold: 0.1 });
+// =============================================
+// DASHBOARD INIT
+// =============================================
+async function initDashboard() {
+  const user = requireAuth();
+  if (!user) return;
 
-  document.querySelectorAll('.fade-in-scroll').forEach(el => observer.observe(el));
+  // Set header info
+  document.getElementById('headerUsername').textContent = user.username;
+  document.getElementById('headerBalance').textContent = formatRp(user.balance || 0);
+  document.getElementById('welcomeUsername').textContent = user.username;
+
+  // Show welcome popup
+  setTimeout(() => {
+    document.getElementById('welcomePopup').classList.remove('hidden');
+  }, 500);
+
+  // Load settings (ticker)
+  loadTickerDashboard();
+
+  // Load products
+  loadProductsDashboard();
+
+  // Load user transactions
+  loadUserLogs(user.username);
 }
 
-// ============================================
-// ADMIN PANEL
-// ============================================
-function initAdmin() {
-  const content = document.getElementById('admin-content');
-  if (content) content.style.display = 'flex';
-  loadAdminStats();
-  loadAdminProducts();
-  loadAdminPromos();
-  loadAdminTransactions();
-  loadAdminSettings();
-  loadRecentTrx();
+function closeWelcomePopup() {
+  const p = document.getElementById('welcomePopup');
+  p.style.animation = 'fadeIn 0.3s ease reverse';
+  setTimeout(() => p.classList.add('hidden'), 300);
 }
 
-function showSection(name) {
-  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
-
-  const section = document.getElementById(`section-${name}`);
-  if (section) section.classList.add('active');
-
-  const navItem = document.querySelector(`[data-section="${name}"]`);
-  if (navItem) navItem.classList.add('active');
-}
-
-function loadAdminStats() {
-  const db = getDB();
-  const statUsers = document.getElementById('stat-users');
-  const statProd = document.getElementById('stat-products');
-  const statTrx = document.getElementById('stat-trx');
-  const statWait = document.getElementById('stat-waiting');
-
-  if (statUsers) statUsers.textContent = db.users.length;
-  if (statProd) statProd.textContent = db.products.length;
-  if (statTrx) statTrx.textContent = db.transactions.length;
-  if (statWait) statWait.textContent = db.transactions.filter(t => t.status === 'waiting').length;
-}
-
-function loadRecentTrx() {
-  const db = getDB();
-  const container = document.getElementById('recent-trx-list');
-  if (!container) return;
-
-  const recent = db.transactions.slice(-5).reverse();
-  if (recent.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i><p>Belum ada transaksi</p></div>`;
-    return;
-  }
-
-  container.innerHTML = recent.map(t => `
-    <div class="admin-trx-item">
-      <div class="admin-trx-header">
-        <span class="admin-trx-title">${t.product} - ${t.plan}</span>
-        <span class="badge badge-${t.status}">${t.status}</span>
-      </div>
-      <div class="admin-trx-info">
-        <span><i class="fa fa-user"></i> ${t.username}</span>
-        <span><i class="fa fa-dollar-sign"></i> $${t.total}</span>
-        <span><i class="fa fa-calendar"></i> ${new Date(t.date).toLocaleString('id-ID')}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-function loadAdminProducts() {
-  const db = getDB();
-  const container = document.getElementById('admin-product-list');
-  if (!container) return;
-
-  if (db.products.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i><p>Belum ada produk</p></div>`;
-    return;
-  }
-
-  container.innerHTML = db.products.map(p => `
-    <div class="product-edit-item">
-      <img src="${p.image}" class="product-edit-img" alt="${p.name}" onerror="this.src='https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg'"/>
-      <div class="product-edit-info">
-        <div class="product-edit-name">${p.name}</div>
-        <div class="product-edit-desc">${p.desc}</div>
-      </div>
-      <div class="product-edit-actions">
-        <button class="btn-edit" onclick="openEditProduct('${p.id}')"><i class="fa fa-edit"></i> Edit</button>
-        <button class="btn-delete" onclick="deleteProduct('${p.id}')"><i class="fa fa-trash"></i></button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function loadAdminPromos() {
-  const db = getDB();
-  const container = document.getElementById('admin-promo-list');
-  if (!container) return;
-
-  if (!db.promos || db.promos.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="fa fa-tag"></i><p>Belum ada kode promo</p></div>`;
-    return;
-  }
-
-  container.innerHTML = db.promos.map((p, i) => `
-    <div style="background:rgba(10,6,18,0.7);border:1px solid var(--border-purple);border-radius:12px;padding:15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-      <div>
-        <div style="font-family:var(--font-mono);font-size:1rem;color:var(--purple-neon);font-weight:700;">${p.code}</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);">Diskon ${p.pct}% &nbsp;|&nbsp; Penggunaan: ${(p.usedBy||[]).length}/${p.maxUse == 0 ? '∞' : p.maxUse}</div>
-      </div>
-      <button class="btn-delete" onclick="deletePromo(${i})"><i class="fa fa-trash"></i></button>
-    </div>
-  `).join('');
-}
-
-function loadAdminTransactions() {
-  const db = getDB();
-  const container = document.getElementById('admin-trx-list');
-  if (!container) return;
-
-  const allTrx = db.transactions.slice().reverse();
-  if (allTrx.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i><p>Belum ada transaksi</p></div>`;
-    return;
-  }
-
-  container.innerHTML = allTrx.map(t => `
-    <div class="admin-trx-item" id="trx-item-${t.id}">
-      <div class="admin-trx-header">
-        <span class="admin-trx-title">${t.product} - ${t.plan}</span>
-        <span class="badge badge-${t.status}">${t.status}</span>
-      </div>
-      <div class="admin-trx-info">
-        <span><i class="fa fa-hashtag"></i> ${t.id}</span>
-        <span><i class="fa fa-user"></i> ${t.username}</span>
-        <span><i class="fa fa-dollar-sign"></i> $${t.total}</span>
-        <span><i class="fab fa-whatsapp" style="color:#25D366;"></i> ${t.wa}</span>
-        <span><i class="fa fa-calendar"></i> ${new Date(t.date).toLocaleString('id-ID')}</span>
-      </div>
-      ${t.status === 'waiting' ? `
-        <div class="admin-action-btns">
-          <button class="btn-approve" onclick="openApproveModal('${t.id}')"><i class="fa fa-check"></i> Approve</button>
-          <button class="btn-reject" onclick="rejectTrx('${t.id}')"><i class="fa fa-times"></i> Reject</button>
-        </div>
-      ` : ''}
-      ${t.keys && t.keys.length > 0 ? `
-        <div class="trx-keys" style="margin-top:10px;">
-          <div style="color:var(--text-muted);font-size:0.75rem;margin-bottom:6px;"><i class="fa fa-key"></i> KEYS DIKIRIM:</div>
-          ${t.keys.map(k => `<div>→ ${k}</div>`).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `).join('');
-}
-
-function loadAdminSettings() {
-  const db = getDB();
-  const resetToggle = document.getElementById('reset-system-toggle');
-  const resetStatus = document.getElementById('reset-system-status');
-  const tickerToggle = document.getElementById('ticker-toggle');
-  const tickerText = document.getElementById('ticker-text-input');
-
-  if (resetToggle) resetToggle.checked = db.resetSystem;
-  if (resetStatus) {
-    resetStatus.textContent = db.resetSystem ? 'ON - Aktif' : 'OFF - Tidak Aktif';
-    resetStatus.style.color = db.resetSystem ? 'var(--accent-green)' : 'var(--accent-red)';
-  }
-  if (tickerToggle) tickerToggle.checked = db.ticker.active;
-  if (tickerText) tickerText.value = db.ticker.text;
-}
-
-// Admin: Add Product
-function addPriceRow() {
-  const container = document.getElementById('price-fields');
-  if (!container) return;
-  const rows = container.querySelectorAll('.price-field-row');
-  if (rows.length >= 5) {
-    Swal.fire({ icon: 'warning', title: 'Maksimal 5 Harga', text: 'Tidak bisa menambah pilihan harga lagi.', confirmButtonText: 'OK' });
-    return;
-  }
-  const row = document.createElement('div');
-  row.className = 'price-field-row';
-  row.innerHTML = `
-    <input type="text" class="form-control" placeholder="Label"/>
-    <input type="number" class="form-control" placeholder="Harga ($)" min="0.01" step="0.01"/>
-    <input type="text" class="form-control" placeholder="Keterangan"/>
-    <button onclick="removePriceRow(this)" title="Hapus"><i class="fa fa-trash"></i></button>
-  `;
-  container.appendChild(row);
-}
-
-function removePriceRow(btn) {
-  const container = document.getElementById('price-fields');
-  if (container && container.querySelectorAll('.price-field-row').length > 1) {
-    btn.closest('.price-field-row').remove();
-  }
-}
-
-async function adminAddProduct() {
-  const name = document.getElementById('new-product-name').value.trim();
-  const image = document.getElementById('new-product-image').value.trim();
-  const desc = document.getElementById('new-product-desc').value.trim();
-  const featuresRaw = document.getElementById('new-product-features').value.trim();
-
-  if (!name || !desc) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Nama dan deskripsi produk wajib diisi!', confirmButtonText: 'OK' });
-    return;
-  }
-
-  const priceRows = document.querySelectorAll('#price-fields .price-field-row');
-  const prices = [];
-  priceRows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const label = inputs[0].value.trim();
-    const price = parseFloat(inputs[1].value);
-    if (label && !isNaN(price) && price > 0) {
-      prices.push({ label, price });
+// =============================================
+// TICKER
+// =============================================
+async function loadTickerDashboard() {
+  const settings = await dbGet(BINS.settings);
+  if (!settings) return;
+  if (settings.ticker_enabled && settings.ticker_text) {
+    const wrap = document.getElementById('tickerWrap');
+    const text = document.getElementById('tickerText');
+    if (wrap && text) {
+      text.textContent = settings.ticker_text;
+      wrap.style.display = '';
     }
-  });
+  }
+}
+
+// =============================================
+// LOAD PRODUCTS (Dashboard)
+// =============================================
+async function loadProductsDashboard() {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+
+  const db = await dbGet(BINS.products);
+  const products = db?.products || [];
+
+  if (products.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);font-family:var(--font-ui);">
+        <i class="fas fa-box-open" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
+        Belum ada produk tersedia
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = products.map((p, i) => `
+    <div class="product-card fade-in fade-in-delay-${Math.min(i+1, 4)}" onclick="openProductModal(${i})">
+      ${p.image
+        ? `<img class="product-image" src="${p.image}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="product-image-placeholder" style="display:none;"><i class="fas fa-gamepad"></i></div>`
+        : `<div class="product-image-placeholder"><i class="fas fa-gamepad"></i></div>`
+      }
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.description || ''}</div>
+        <ul class="product-features">
+          ${(p.features || []).map(f => `<li><i class="fas fa-check-circle"></i>${f}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `).join('');
+
+  // Store products globally
+  window._products = products;
+  initScrollAnimations();
+}
+
+// =============================================
+// PRODUCT MODAL
+// =============================================
+let currentProduct = null;
+let currentPlanType = 'full';
+let currentQty = 1;
+let currentPlanPrice = 0;
+let currentPlanLabel = '';
+let appliedPromoDiscount = 0;
+let appliedPromoCode = '';
+
+function openProductModal(idx) {
+  const products = window._products || [];
+  currentProduct = products[idx];
+  if (!currentProduct) return;
+
+  currentQty = 1;
+  currentPlanType = 'full';
+  currentPlanPrice = 0;
+  currentPlanLabel = '';
+  appliedPromoDiscount = 0;
+  appliedPromoCode = '';
+
+  document.getElementById('modalProductName').textContent = currentProduct.name;
+  document.getElementById('qtyValue').textContent = 1;
+  document.getElementById('totalPrice').textContent = 'Rp 0';
+  document.getElementById('promoCode').value = '';
+  document.getElementById('promoResult').textContent = '';
+  document.getElementById('buyerWa').value = '';
+  document.getElementById('originalPriceDisplay').classList.add('hidden');
+
+  const btnRental = document.getElementById('btnRentalKey');
+  btnRental.style.display = currentProduct.rentalEnabled ? '' : 'none';
+
+  renderPlanOptions('full');
+
+  document.getElementById('btnFullKey').classList.add('active');
+  document.getElementById('btnRentalKey').classList.remove('active');
+
+  document.getElementById('productModal').classList.remove('hidden');
+}
+
+function closeProductModal() {
+  const m = document.getElementById('productModal');
+  m.style.animation = 'fadeIn 0.3s ease reverse';
+  setTimeout(() => {
+    m.classList.add('hidden');
+    m.style.animation = '';
+  }, 300);
+}
+
+function switchPlan(type) {
+  currentPlanType = type;
+  currentPlanPrice = 0;
+  currentPlanLabel = '';
+
+  document.getElementById('btnFullKey').classList.toggle('active', type === 'full');
+  document.getElementById('btnRentalKey').classList.toggle('active', type === 'rental');
+
+  renderPlanOptions(type);
+  updateTotal();
+}
+
+function renderPlanOptions(type) {
+  const container = document.getElementById('planOptions');
+  const prices = type === 'full'
+    ? (currentProduct.fullKeyPrices || [])
+    : (currentProduct.rentalKeyPrices || []);
 
   if (prices.length === 0) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Tambahkan minimal 1 pilihan harga!', confirmButtonText: 'OK' });
+    container.innerHTML = `<div style="color:var(--text-muted);font-family:var(--font-ui);text-align:center;padding:16px;">Harga belum tersedia</div>`;
     return;
   }
 
-  const db = getDB();
-  const newProduct = {
-    id: 'prod_' + Date.now(),
-    name,
-    subtitle: desc,
-    image: image || 'https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg',
-    desc,
-    features: featuresRaw.split(',').map(f => f.trim()).filter(Boolean),
-    prices
-  };
+  container.innerHTML = prices.filter(p => p.label && p.price).map((p, i) => `
+    <div class="plan-option" onclick="selectPlan(${p.price},'${p.label}',this)">
+      <div style="display:flex;align-items:center;">
+        <input type="radio" class="plan-radio" name="plan" ${i === 0 ? 'checked' : ''} />
+        <div class="plan-option-left">${p.label}</div>
+      </div>
+      <div class="plan-option-price">${formatRp(p.price)}</div>
+    </div>
+  `).join('');
 
-  db.products.push(newProduct);
-  saveDB(db);
-
-  Swal.fire({ icon: 'success', title: '✅ Produk Ditambahkan!', text: `Produk "${name}" berhasil ditambahkan.`, confirmButtonText: 'OK' });
-  loadAdminProducts();
-  loadAdminStats();
+  // Auto-select first
+  const first = prices.find(p => p.label && p.price);
+  if (first) selectPlan(first.price, first.label);
 }
 
-// Admin: Edit Product
-function openEditProduct(productId) {
-  const db = getDB();
-  const p = db.products.find(p => p.id === productId);
-  if (!p) return;
-
-  document.getElementById('edit-product-id').value = p.id;
-  document.getElementById('edit-product-name').value = p.name;
-  document.getElementById('edit-product-image').value = p.image;
-  document.getElementById('edit-product-desc').value = p.desc;
-  document.getElementById('edit-product-features').value = (p.features || []).join(', ');
-  document.getElementById('edit-product-prices').value = (p.prices || []).map(pr => `${pr.label}:${pr.price}`).join('|');
-
-  document.getElementById('edit-product-modal').classList.add('show');
+function selectPlan(price, label, el) {
+  currentPlanPrice = price;
+  currentPlanLabel = label;
+  document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  updateTotal();
 }
 
-function closeEditModal() {
-  document.getElementById('edit-product-modal').classList.remove('show');
+function changeQty(delta) {
+  currentQty = Math.max(1, currentQty + delta);
+  document.getElementById('qtyValue').textContent = currentQty;
+  updateTotal();
 }
 
-function saveEditProduct() {
-  const id = document.getElementById('edit-product-id').value;
-  const db = getDB();
-  const idx = db.products.findIndex(p => p.id === id);
-  if (idx === -1) return;
+function updateTotal() {
+  let base = currentPlanPrice * currentQty;
+  const orig = base;
 
-  const pricesRaw = document.getElementById('edit-product-prices').value;
-  const prices = pricesRaw.split('|').map(item => {
-    const [label, price] = item.split(':');
-    return { label: label?.trim(), price: parseFloat(price) };
-  }).filter(p => p.label && !isNaN(p.price));
+  if (appliedPromoDiscount > 0) {
+    const disc = Math.floor(base * appliedPromoDiscount / 100);
+    base = base - disc;
+    const origEl = document.getElementById('originalPriceDisplay');
+    origEl.textContent = formatRp(orig);
+    origEl.classList.remove('hidden');
+  } else {
+    document.getElementById('originalPriceDisplay').classList.add('hidden');
+  }
 
-  db.products[idx] = {
-    ...db.products[idx],
-    name: document.getElementById('edit-product-name').value.trim(),
-    image: document.getElementById('edit-product-image').value.trim(),
-    desc: document.getElementById('edit-product-desc').value.trim(),
-    subtitle: document.getElementById('edit-product-desc').value.trim(),
-    features: document.getElementById('edit-product-features').value.split(',').map(f => f.trim()).filter(Boolean),
-    prices
-  };
-
-  saveDB(db);
-  closeEditModal();
-  loadAdminProducts();
-  Swal.fire({ icon: 'success', title: '✅ Produk Diperbarui!', text: 'Perubahan berhasil disimpan.', confirmButtonText: 'OK' });
+  document.getElementById('totalPrice').textContent = formatRp(base);
 }
 
-// Admin: Delete Product
-function deleteProduct(productId) {
+async function applyPromo() {
+  const code = document.getElementById('promoCode').value.trim().toUpperCase();
+  const resultEl = document.getElementById('promoResult');
+
+  if (!code) {
+    resultEl.innerHTML = `<span style="color:var(--accent-red);">Masukan kode promo terlebih dahulu!</span>`;
+    return;
+  }
+
+  resultEl.innerHTML = `<span class="loading-dots" style="color:var(--text-muted);">Memvalidasi kode</span>`;
+
+  const user = getSession();
+  const db = await dbGet(BINS.promos);
+  const promos = db?.promos || [];
+
+  const promo = promos.find(p => p.code === code);
+
+  if (!promo) {
+    resultEl.innerHTML = `<span style="color:var(--accent-red);"><i class="fas fa-times-circle"></i> Kode promo tidak valid!</span>`;
+    appliedPromoDiscount = 0;
+    appliedPromoCode = '';
+    return;
+  }
+
+  // Check max usage
+  if (promo.maxUse > 0 && (promo.usedCount || 0) >= promo.maxUse) {
+    resultEl.innerHTML = `<span style="color:var(--accent-red);"><i class="fas fa-ban"></i> Promo telah mencapai batas pemakaian!</span>`;
+    appliedPromoDiscount = 0;
+    appliedPromoCode = '';
+    return;
+  }
+
+  // Check if user already used this promo
+  const usersDb = await dbGet(BINS.users);
+  const userRecord = (usersDb?.users || []).find(u => u.username === user.username);
+  if (userRecord && (userRecord.usedPromos || []).includes(code)) {
+    resultEl.innerHTML = `<span style="color:var(--accent-red);"><i class="fas fa-ban"></i> Kamu sudah pernah memakai promo ini!</span>`;
+    appliedPromoDiscount = 0;
+    appliedPromoCode = '';
+    return;
+  }
+
+  appliedPromoDiscount = promo.percent;
+  appliedPromoCode = code;
+  resultEl.innerHTML = `<span style="color:var(--accent-green);"><i class="fas fa-check-circle"></i> Promo aktif! Diskon ${promo.percent}% berhasil diterapkan</span>`;
+  updateTotal();
+}
+
+async function processBuy() {
+  const user = getSession();
+  const wa = document.getElementById('buyerWa').value.trim();
+
+  if (!currentPlanPrice || !currentPlanLabel) {
+    toast('warning', 'Pilih paket terlebih dahulu!');
+    return;
+  }
+
+  if (!wa) {
+    toast('warning', 'Masukan nomor WhatsApp!');
+    return;
+  }
+
+  let totalBayar = currentPlanPrice * currentQty;
+  if (appliedPromoDiscount > 0) {
+    totalBayar = Math.floor(totalBayar * (1 - appliedPromoDiscount / 100));
+  }
+
+  // Check balance
+  const usersDb = await dbGet(BINS.users);
+  const userRecord = (usersDb?.users || []).find(u => u.username === user.username);
+
+  if (!userRecord || (userRecord.balance || 0) < totalBayar) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Saldo Tidak Cukup!',
+      html: `Saldo kamu: <b style="color:var(--accent-red);">${formatRp(userRecord?.balance || 0)}</b><br>Dibutuhkan: <b style="color:var(--accent-green);">${formatRp(totalBayar)}</b>`,
+      background: 'var(--bg-card2)',
+      color: 'var(--text-primary)'
+    });
+    return;
+  }
+
   Swal.fire({
-    icon: 'warning',
-    title: 'Hapus Produk?',
-    text: 'Tindakan ini tidak dapat dibatalkan!',
+    title: 'Konfirmasi Pembelian',
+    html: `
+      <div style="text-align:left;font-family:var(--font-ui);">
+        <div style="padding:8px 0;border-bottom:1px solid rgba(139,0,255,0.2);">Produk: <b style="color:var(--purple-3);">${currentProduct.name}</b></div>
+        <div style="padding:8px 0;border-bottom:1px solid rgba(139,0,255,0.2);">Plan: <b>${currentPlanLabel}</b></div>
+        <div style="padding:8px 0;border-bottom:1px solid rgba(139,0,255,0.2);">Qty: <b>${currentQty}</b></div>
+        <div style="padding:8px 0;">Total: <b style="color:var(--accent-green);font-size:1.1rem;">${formatRp(totalBayar)}</b></div>
+      </div>`,
+    icon: 'question',
     showCancelButton: true,
-    confirmButtonText: 'Ya, Hapus',
-    cancelButtonText: 'Batal'
-  }).then(result => {
-    if (result.isConfirmed) {
-      const db = getDB();
-      db.products = db.products.filter(p => p.id !== productId);
-      saveDB(db);
-      loadAdminProducts();
-      loadAdminStats();
-      Swal.fire({ icon: 'success', title: 'Produk Dihapus!', text: 'Produk berhasil dihapus.', confirmButtonText: 'OK' });
+    confirmButtonText: 'Bayar Sekarang',
+    cancelButtonText: 'Batal',
+    background: 'var(--bg-card2)',
+    color: 'var(--text-primary)'
+  }).then(async r => {
+    if (!r.isConfirmed) return;
+
+    // Deduct balance
+    const users = usersDb.users.map(u => {
+      if (u.username === user.username) {
+        return {
+          ...u,
+          balance: (u.balance || 0) - totalBayar,
+          usedPromos: appliedPromoCode
+            ? [...(u.usedPromos || []), appliedPromoCode]
+            : (u.usedPromos || [])
+        };
+      }
+      return u;
+    });
+    await dbSet(BINS.users, { users });
+
+    // Update session balance
+    const updatedUser = { ...userRecord, balance: (userRecord.balance || 0) - totalBayar };
+    setSession(updatedUser);
+    document.getElementById('headerBalance').textContent = formatRp(updatedUser.balance);
+
+    // Update promo usage
+    if (appliedPromoCode) {
+      const promosDb = await dbGet(BINS.promos);
+      const promos = (promosDb?.promos || []).map(p => {
+        if (p.code === appliedPromoCode) {
+          return { ...p, usedCount: (p.usedCount || 0) + 1 };
+        }
+        return p;
+      });
+      await dbSet(BINS.promos, { promos });
     }
+
+    // Create transaction
+    const trxId = 'TRX' + Date.now();
+    const trxDb = await dbGet(BINS.transactions);
+    const transactions = trxDb?.transactions || [];
+
+    const newTrx = {
+      id: trxId,
+      username: user.username,
+      product: currentProduct.name,
+      planType: currentPlanType === 'full' ? 'Access Full Key' : 'Rental Keys',
+      planLabel: currentPlanLabel,
+      qty: currentQty,
+      total: totalBayar,
+      wa,
+      promoUsed: appliedPromoCode || null,
+      status: 'waiting',
+      keys: [],
+      date: new Date().toISOString(),
+      image: currentProduct.image || null
+    };
+
+    transactions.push(newTrx);
+    await dbSet(BINS.transactions, { transactions });
+
+    // Update stats
+    updateStats(totalBayar);
+
+    closeProductModal();
+    toast('success', 'Pembelian berhasil! Menunggu konfirmasi admin 🎉', 4000);
+    loadUserLogs(user.username);
   });
 }
 
-// Admin: Add Promo
-async function adminAddPromo() {
-  const code = document.getElementById('new-promo-code').value.trim().toUpperCase();
-  const pct = parseInt(document.getElementById('new-promo-pct').value);
-  const maxUse = parseInt(document.getElementById('new-promo-max').value);
+// =============================================
+// USER LOGS
+// =============================================
+async function loadUserLogs(username) {
+  const container = document.getElementById('logsList');
+  if (!container) return;
 
-  if (!code || isNaN(pct) || isNaN(maxUse)) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Semua field wajib diisi!', confirmButtonText: 'OK' });
+  const db = await dbGet(BINS.transactions);
+  const transactions = (db?.transactions || []).filter(t => t.username === username);
+
+  if (transactions.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:30px;color:var(--text-muted);font-family:var(--font-ui);">
+        <i class="fas fa-inbox" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
+        Belum ada transaksi
+      </div>`;
     return;
   }
 
-  if (pct < 1 || pct > 99) {
-    Swal.fire({ icon: 'warning', title: 'Persen Tidak Valid', text: 'Persen diskon harus antara 1-99%', confirmButtonText: 'OK' });
+  container.innerHTML = transactions.reverse().map(t => `
+    <div class="log-card fade-in" onclick="openLogDetail('${t.id}')">
+      <div class="log-card-header">
+        <div class="log-product-name"><i class="fas fa-box" style="color:var(--purple-3);margin-right:8px;"></i>${t.product}</div>
+        <div class="log-status ${t.status}">${t.status === 'waiting' ? '⏳ Menunggu' : t.status === 'approved' ? '✅ Approved' : '❌ Rejected'}</div>
+      </div>
+      <div class="log-details">
+        <span><i class="fas fa-tag" style="color:var(--purple-3);margin-right:4px;"></i>${t.planLabel}</span>
+        <span><i class="fas fa-dollar-sign" style="color:var(--accent-green);margin-right:4px;"></i>${formatRp(t.total)}</span>
+        <span><i class="fas fa-calendar" style="color:var(--text-muted);margin-right:4px;"></i>${formatDate(t.date)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  window._userTransactions = transactions;
+  initScrollAnimations();
+}
+
+function openLogDetail(trxId) {
+  const trx = (window._userTransactions || []).find(t => t.id === trxId);
+  if (!trx) return;
+
+  const keysHtml = trx.keys && trx.keys.length > 0
+    ? `<div class="keys-display">${trx.keys.map(k => `<div class="key-item"><i class="fas fa-key"></i>${k}</div>`).join('')}</div>`
+    : `<div style="color:var(--text-muted);font-family:var(--font-ui);font-size:0.82rem;padding:8px 0;">Belum ada key yang dikirim</div>`;
+
+  document.getElementById('logDetailContent').innerHTML = `
+    <div class="log-detail-box">
+      <div class="log-detail-row"><span class="log-detail-key">Nama Produk</span><span class="log-detail-val">${trx.product}</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">Pembelian</span><span class="log-detail-val">${trx.planLabel} (${trx.planType})</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">Qty</span><span class="log-detail-val">${trx.qty}</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">Tanggal Trx</span><span class="log-detail-val">${formatDate(trx.date)}</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">ID Trx</span><span class="log-detail-val" style="font-size:0.72rem;">${trx.id}</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">Total</span><span class="log-detail-val" style="color:var(--accent-green);">${formatRp(trx.total)}</span></div>
+      <div class="log-detail-row"><span class="log-detail-key">Status</span><span class="log-detail-val"><span class="log-status ${trx.status}">${trx.status === 'waiting' ? '⏳ Menunggu' : trx.status === 'approved' ? '✅ Approved' : '❌ Rejected'}</span></span></div>
+    </div>
+    <div style="margin-top:14px;font-family:var(--font-display);font-size:0.78rem;color:var(--purple-3);letter-spacing:2px;margin-bottom:8px;">🔑 KEYS</div>
+    ${keysHtml}
+  `;
+
+  document.getElementById('logDetailPopup').classList.remove('hidden');
+}
+
+function closeLogDetail() {
+  document.getElementById('logDetailPopup').classList.add('hidden');
+}
+
+// =============================================
+// RESET KEY
+// =============================================
+function openResetKeyPopup() {
+  document.getElementById('resetKeyPopup').classList.remove('hidden');
+  document.getElementById('resetTerminal').classList.add('hidden');
+  document.getElementById('resetTerminal').innerHTML = '';
+  document.getElementById('resetKeyInput').value = '';
+  closeNav();
+}
+
+function closeResetPopup() {
+  document.getElementById('resetKeyPopup').classList.add('hidden');
+}
+
+async function processResetKey() {
+  const keyId = document.getElementById('resetKeyInput').value.trim();
+  if (!keyId) {
+    toast('warning', 'Masukan Key ID terlebih dahulu!');
     return;
   }
 
-  const db = getDB();
-  if (db.promos.find(p => p.code === code)) {
-    Swal.fire({ icon: 'error', title: 'Kode Sudah Ada', text: 'Kode promo ini sudah terdaftar.', confirmButtonText: 'OK' });
+  const btn = document.getElementById('resetBtn');
+  const terminal = document.getElementById('resetTerminal');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Memproses...';
+  terminal.classList.remove('hidden');
+
+  // Check if reset key is enabled
+  const settings = await dbGet(BINS.settings);
+  const resetEnabled = settings?.reset_key_enabled !== false;
+
+  // Simulate visual terminal loading
+  async function addLine(text, cls, delay) {
+    await new Promise(res => setTimeout(res, delay));
+    const div = document.createElement('div');
+    div.className = 'terminal-line ' + (cls || '');
+    div.textContent = text;
+    terminal.appendChild(div);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  await addLine('> Connecting to server...', 'terminal-info', 400);
+  await addLine('> Fetching Server.....', 'terminal-info', 600);
+  await addLine('> Response Database....', 'terminal-info', 700);
+
+  if (!resetEnabled) {
+    await addLine('', '', 200);
+    await addLine('❌ ERROR: Feature Disabled', 'terminal-error', 300);
+    await addLine('', '', 100);
+    await addLine('Maaf fitur ini sedang di nonaktifkan oleh admin atau sedang tidak beroperasi normal. Silahkan coba lagi nanti.', 'terminal-error', 200);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> RESET';
     return;
   }
 
-  db.promos.push({ code, pct, maxUse, usedBy: [], created: Date.now() });
-  saveDB(db);
+  // Check daily reset limit
+  const user = getSession();
+  const resetKey = `dc_reset_${user.username}_${new Date().toDateString()}`;
+  const todayReset = localStorage.getItem(resetKey);
 
-  document.getElementById('new-promo-code').value = '';
-  document.getElementById('new-promo-pct').value = '';
-  document.getElementById('new-promo-max').value = '';
-
-  loadAdminPromos();
-  Swal.fire({ icon: 'success', title: '✅ Promo Ditambahkan!', html: `Kode: <strong>${code}</strong> - Diskon ${pct}%`, confirmButtonText: 'OK' });
-}
-
-// Admin: Delete Promo
-function deletePromo(idx) {
-  const db = getDB();
-  db.promos.splice(idx, 1);
-  saveDB(db);
-  loadAdminPromos();
-  Swal.fire({ icon: 'success', title: 'Promo Dihapus!', timer: 1500, showConfirmButton: false });
-}
-
-// Admin: Save Ticker
-function adminSaveTicker() {
-  const text = document.getElementById('ticker-text-input').value.trim();
-  if (!text) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Teks running tidak boleh kosong!', confirmButtonText: 'OK' });
-    return;
-  }
-  const db = getDB();
-  db.ticker.text = text;
-  saveDB(db);
-  Swal.fire({ icon: 'success', title: '✅ Running Text Disimpan!', timer: 1500, showConfirmButton: false });
-}
-
-function adminToggleTicker() {
-  const db = getDB();
-  db.ticker.active = document.getElementById('ticker-toggle').checked;
-  saveDB(db);
-}
-
-// Admin: Toggle Reset System
-function adminToggleResetSystem() {
-  const db = getDB();
-  db.resetSystem = document.getElementById('reset-system-toggle').checked;
-  saveDB(db);
-  const status = document.getElementById('reset-system-status');
-  if (status) {
-    status.textContent = db.resetSystem ? 'ON - Aktif' : 'OFF - Tidak Aktif';
-    status.style.color = db.resetSystem ? 'var(--accent-green)' : 'var(--accent-red)';
-  }
-  Swal.fire({
-    icon: 'success',
-    title: `Reset System ${db.resetSystem ? 'Diaktifkan' : 'Dinonaktifkan'}`,
-    timer: 1500,
-    showConfirmButton: false
-  });
-}
-
-// Admin: Add Saldo
-async function adminAddSaldo() {
-  const username = document.getElementById('saldo-username').value.trim();
-  const amount = parseFloat(document.getElementById('saldo-amount').value);
-
-  if (!username || isNaN(amount) || amount <= 0) {
-    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Username dan jumlah saldo wajib diisi dengan benar!', confirmButtonText: 'OK' });
+  if (todayReset) {
+    await addLine('', '', 200);
+    await addLine('❌ RATE LIMIT EXCEEDED', 'terminal-error', 300);
+    await addLine('Status: 429', 'terminal-error', 200);
+    await addLine('Response: {"success":false,"message":"Reset limit reached","resetsused":1,"resetsmax":1,"nextresettime":"tomorrow 00:00"}', 'terminal-error', 200);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> RESET';
     return;
   }
 
-  const db = getDB();
-  const userIdx = db.users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+  // Success
+  await addLine('> Authenticating...', 'terminal-info', 500);
+  await addLine('> Resetting device...', 'terminal-info', 700);
+  await addLine('', '', 300);
+  await addLine('✅ Reset Successful', 'terminal-success', 200);
+  await addLine('', '', 100);
+  await addLine('Status: 200', 'terminal-success', 200);
+  await addLine(`Response: {"success":true,"message":"Token reset successfully","resetsused":1,"resetsmax":1,"nextresettime":"${getTomorrowMidnight()}"}`, 'terminal-success', 300);
 
-  if (userIdx === -1) {
-    Swal.fire({ icon: 'error', title: 'User Tidak Ditemukan', text: `Username "${username}" tidak terdaftar di database.`, confirmButtonText: 'OK' });
+  localStorage.setItem(resetKey, '1');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-sync-alt"></i> RESET';
+}
+
+// =============================================
+// NAVBAR
+// =============================================
+function toggleNav() {
+  const nav = document.getElementById('sideNav');
+  const overlay = document.getElementById('navOverlay');
+  nav.classList.toggle('open');
+  overlay.classList.toggle('show');
+}
+
+function closeNav() {
+  const nav = document.getElementById('sideNav');
+  const overlay = document.getElementById('navOverlay');
+  nav.classList.remove('open');
+  overlay.classList.remove('show');
+}
+
+function scrollToSection(id) {
+  closeNav();
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// =============================================
+// FAQ
+// =============================================
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// =============================================
+// ADMIN PANEL
+// =============================================
+async function initAdminPanel() {
+  await loadAdminStats();
+  await loadAdminLogs();
+  await loadAdminProducts();
+  await loadAdminPromos();
+  await loadAdminSettings();
+  await loadAdminUsers();
+}
+
+function adminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+
+  // Refresh relevant data
+  if (tab === 'logs') loadAdminLogs();
+  if (tab === 'products') loadAdminProducts();
+  if (tab === 'promo') loadAdminPromos();
+  if (tab === 'saldo') loadAdminUsers();
+}
+
+// =============================================
+// ADMIN STATS
+// =============================================
+async function loadAdminStats() {
+  const settings = await dbGet(BINS.settings);
+  const stats = settings?.stats || {};
+
+  const todayKey = new Date().toDateString();
+
+  document.getElementById('statTotalPembeli').textContent = stats.totalPembeli || 0;
+  document.getElementById('statPenghasilan').textContent = formatRp(stats.totalPenghasilan || 0);
+  document.getElementById('statTerjualHari').textContent = (stats.terjualHari || {})[todayKey] || 0;
+}
+
+async function updateStats(amount) {
+  const settings = await dbGet(BINS.settings);
+  const todayKey = new Date().toDateString();
+  const stats = settings?.stats || {};
+  const terjualHari = stats.terjualHari || {};
+
+  const newSettings = {
+    ...settings,
+    stats: {
+      ...stats,
+      totalPembeli: (stats.totalPembeli || 0) + 1,
+      totalPenghasilan: (stats.totalPenghasilan || 0) + amount,
+      terjualHari: {
+        ...terjualHari,
+        [todayKey]: ((terjualHari[todayKey] || 0) + 1)
+      }
+    }
+  };
+  await dbSet(BINS.settings, newSettings);
+}
+
+// =============================================
+// ADMIN LOGS
+// =============================================
+async function loadAdminLogs() {
+  const tbody = document.getElementById('adminLogsTableBody');
+  if (!tbody) return;
+
+  const db = await dbGet(BINS.transactions);
+  const transactions = db?.transactions || [];
+
+  if (transactions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">Belum ada transaksi</td></tr>';
     return;
   }
 
-  db.users[userIdx].credit = parseFloat((db.users[userIdx].credit + amount).toFixed(2));
-  saveDB(db);
+  window._allTransactions = transactions;
 
-  document.getElementById('saldo-username').value = '';
-  document.getElementById('saldo-amount').value = '';
-
-  Swal.fire({
-    icon: 'success',
-    title: '✅ Saldo Berhasil Ditransfer!',
-    html: `<b>$${amount}</b> berhasil dikirim ke akun <b>${db.users[userIdx].username}</b><br>Saldo baru: <b style="color:var(--accent-green);">$${db.users[userIdx].credit}</b>`,
-    confirmButtonText: 'OK'
-  });
+  tbody.innerHTML = [...transactions].reverse().map(t => `
+    <tr>
+      <td style="font-size:0.72rem;font-family:monospace;color:var(--purple-3);">${t.id}</td>
+      <td><b>${t.username}</b></td>
+      <td>${t.product}</td>
+      <td>${t.planLabel} (x${t.qty})</td>
+      <td style="color:var(--accent-green);">${formatRp(t.total)}</td>
+      <td style="font-size:0.8rem;">${t.wa || '-'}</td>
+      <td><span class="log-status ${t.status}">${t.status === 'waiting' ? '⏳ Menunggu' : t.status === 'approved' ? '✅ Approved' : '❌ Rejected'}</span></td>
+      <td>
+        ${t.status === 'waiting' ? `
+          <button class="btn-admin success" style="padding:6px 12px;font-size:0.68rem;margin-right:4px;" onclick="adminApprove('${t.id}')"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn-admin danger" style="padding:6px 12px;font-size:0.68rem;" onclick="adminReject('${t.id}')"><i class="fas fa-times"></i> Reject</button>
+        ` : `<span style="font-size:0.78rem;color:var(--text-muted);">${t.status === 'approved' ? 'Diproses' : 'Ditolak'}</span>`}
+      </td>
+    </tr>
+  `).join('');
 }
 
-// Admin: Open Approve Modal
-function openApproveModal(trxId) {
-  document.getElementById('approve-trx-id').value = trxId;
-  document.getElementById('keys-input-area').innerHTML = `
-    <div class="key-input-row">
-      <input type="text" class="form-control" placeholder="Key / Lisensi 1" style="font-family:var(--font-mono);font-size:0.85rem;"/>
-      <button class="btn-add-key" onclick="addKeyRow()"><i class="fa fa-plus"></i> Tambah</button>
+async function adminApprove(trxId) {
+  const trx = (window._allTransactions || []).find(t => t.id === trxId);
+  if (!trx) return;
+
+  // Show key input modal
+  document.getElementById('approveModalTitle').textContent = `Approve: ${trx.product}`;
+
+  let keyInputsHtml = '';
+  for (let i = 1; i <= 5; i++) {
+    keyInputsHtml += `<div class="key-input-row"><input type="text" class="form-input" id="approveKey${i}" placeholder="Key ${i} (opsional)" /></div>`;
+  }
+
+  document.getElementById('approveModalContent').innerHTML = `
+    <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;">
+      Masukan key untuk dikirim ke user <b style="color:var(--purple-3);">${trx.username}</b>
+    </div>
+    <div class="approve-keys-section">
+      ${keyInputsHtml}
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-admin success" onclick="confirmApprove('${trxId}')">
+        <i class="fas fa-check"></i> APPROVE & KIRIM KEY
+      </button>
+      <button class="btn-admin" onclick="closeApproveModal()" style="background:rgba(139,0,255,0.2);">
+        Batal
+      </button>
     </div>
   `;
-  document.getElementById('approve-modal').classList.add('show');
+
+  document.getElementById('approveModal').classList.remove('hidden');
+}
+
+async function confirmApprove(trxId) {
+  const keys = [];
+  for (let i = 1; i <= 5; i++) {
+    const val = document.getElementById('approveKey' + i)?.value.trim();
+    if (val) keys.push(val);
+  }
+
+  const db = await dbGet(BINS.transactions);
+  const transactions = (db?.transactions || []).map(t => {
+    if (t.id === trxId) {
+      return { ...t, status: 'approved', keys };
+    }
+    return t;
+  });
+
+  const result = await dbSet(BINS.transactions, { transactions });
+  if (result) {
+    toast('success', 'Transaksi berhasil di-approve!');
+    closeApproveModal();
+    loadAdminLogs();
+  } else {
+    toast('error', 'Gagal update database!');
+  }
+}
+
+async function adminReject(trxId) {
+  const r = await Swal.fire({
+    title: 'Reject Transaksi?',
+    text: 'Dana akan dikembalikan ke user.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Reject',
+    cancelButtonText: 'Batal',
+    background: 'var(--bg-card2)',
+    color: 'var(--text-primary)'
+  });
+
+  if (!r.isConfirmed) return;
+
+  const trxDb = await dbGet(BINS.transactions);
+  const trx = (trxDb?.transactions || []).find(t => t.id === trxId);
+
+  if (!trx) return;
+
+  // Refund
+  const usersDb = await dbGet(BINS.users);
+  const users = (usersDb?.users || []).map(u => {
+    if (u.username === trx.username) {
+      return { ...u, balance: (u.balance || 0) + trx.total };
+    }
+    return u;
+  });
+  await dbSet(BINS.users, { users });
+
+  // Update transaction
+  const transactions = (trxDb?.transactions || []).map(t => {
+    if (t.id === trxId) return { ...t, status: 'rejected' };
+    return t;
+  });
+  await dbSet(BINS.transactions, { transactions });
+
+  toast('success', 'Transaksi di-reject & saldo dikembalikan!');
+  loadAdminLogs();
 }
 
 function closeApproveModal() {
-  document.getElementById('approve-modal').classList.remove('show');
+  document.getElementById('approveModal').classList.add('hidden');
 }
 
-function addKeyRow() {
-  const area = document.getElementById('keys-input-area');
-  const existingRows = area.querySelectorAll('.key-input-row');
-  if (existingRows.length >= 5) {
-    Swal.fire({ icon: 'warning', title: 'Maksimal 5 Key', text: 'Tidak bisa menambah key lagi.', confirmButtonText: 'OK' });
-    return;
-  }
-  const row = document.createElement('div');
-  row.className = 'key-input-row';
-  row.innerHTML = `
-    <input type="text" class="form-control" placeholder="Key / Lisensi ${existingRows.length + 1}" style="font-family:var(--font-mono);font-size:0.85rem;"/>
-    <button class="btn-delete" onclick="this.parentElement.remove()" style="white-space:nowrap;"><i class="fa fa-trash"></i></button>
-  `;
-  area.appendChild(row);
-}
+// =============================================
+// ADMIN PRODUCTS
+// =============================================
+async function loadAdminProducts() {
+  const container = document.getElementById('adminProductList');
+  if (!container) return;
 
-async function submitApprove() {
-  const trxId = document.getElementById('approve-trx-id').value;
-  const keyInputs = document.querySelectorAll('#keys-input-area input[type="text"]');
-  const keys = Array.from(keyInputs).map(i => i.value.trim()).filter(Boolean);
+  const db = await dbGet(BINS.products);
+  const products = db?.products || [];
 
-  if (keys.length === 0) {
-    Swal.fire({ icon: 'warning', title: 'Key Kosong', text: 'Masukan minimal 1 key untuk dikirim ke user.', confirmButtonText: 'OK' });
+  if (products.length === 0) {
+    container.innerHTML = `<div style="color:var(--text-muted);font-family:var(--font-ui);padding:20px;grid-column:1/-1;">Belum ada produk</div>`;
     return;
   }
 
-  const db = getDB();
-  const trxIdx = db.transactions.findIndex(t => t.id === trxId);
-  if (trxIdx === -1) return;
+  window._adminProducts = products;
 
-  db.transactions[trxIdx].status = 'approved';
-  db.transactions[trxIdx].keys = keys;
-  db.transactions[trxIdx].approvedAt = new Date().toISOString();
-  saveDB(db);
-
-  closeApproveModal();
-  loadAdminTransactions();
-  loadAdminStats();
-  loadRecentTrx();
-
-  Swal.fire({
-    icon: 'success',
-    title: '✅ Pesanan Diapprove!',
-    html: `Transaksi <strong>${trxId}</strong> berhasil diapprove.<br>${keys.length} key telah dikirim ke user.`,
-    confirmButtonText: 'OK'
-  });
+  container.innerHTML = products.map((p, i) => `
+    <div class="admin-product-item">
+      ${p.image ? `<img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'" />` : ''}
+      <div>
+        <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--text-primary);margin-bottom:4px;">${p.name}</div>
+        <div style="font-family:var(--font-ui);font-size:0.78rem;color:var(--text-muted);">${p.description || ''}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-admin" style="padding:7px 14px;font-size:0.68rem;" onclick="openEditProduct(${i})">
+          <i class="fas fa-edit"></i> Edit
+        </button>
+        <button class="btn-admin danger" style="padding:7px 14px;font-size:0.68rem;" onclick="adminDeleteProduct(${i})">
+          <i class="fas fa-trash"></i> Hapus
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
-function rejectTrx(trxId) {
-  Swal.fire({
-    icon: 'warning',
-    title: 'Reject Transaksi?',
-    text: 'Pesanan ini akan ditolak dan saldo user akan dikembalikan.',
-    showCancelButton: true,
-    confirmButtonText: 'Ya, Reject',
-    cancelButtonText: 'Batal'
-  }).then(result => {
-    if (result.isConfirmed) {
-      const db = getDB();
-      const trxIdx = db.transactions.findIndex(t => t.id === trxId);
-      if (trxIdx === -1) return;
+async function adminAddProduct() {
+  const name = document.getElementById('newProdName').value.trim();
+  const image = document.getElementById('newProdImage').value.trim();
+  const desc = document.getElementById('newProdDesc').value.trim();
+  const featuresRaw = document.getElementById('newProdFeatures').value.trim();
+  const rentalEnabled = document.getElementById('newProdRentalEnabled').checked;
 
-      // Refund
-      const trx = db.transactions[trxIdx];
-      const userIdx = db.users.findIndex(u => u.username === trx.username);
-      if (userIdx > -1) {
-        db.users[userIdx].credit = parseFloat((db.users[userIdx].credit + trx.total).toFixed(2));
-      }
+  if (!name) {
+    toast('warning', 'Nama produk wajib diisi!');
+    return;
+  }
 
-      db.transactions[trxIdx].status = 'rejected';
-      db.transactions[trxIdx].rejectedAt = new Date().toISOString();
-      saveDB(db);
+  // Collect full key prices
+  const fullKeyPrices = [];
+  for (let i = 1; i <= 5; i++) {
+    const label = document.getElementById(`fk_label_${i}`)?.value.trim();
+    const price = parseFloat(document.getElementById(`fk_price_${i}`)?.value);
+    if (label && price) fullKeyPrices.push({ label, price });
+  }
 
-      loadAdminTransactions();
-      loadAdminStats();
-      loadRecentTrx();
+  // Collect rental key prices
+  const rentalKeyPrices = [];
+  if (rentalEnabled) {
+    for (let i = 1; i <= 5; i++) {
+      const label = document.getElementById(`rk_label_${i}`)?.value.trim();
+      const price = parseFloat(document.getElementById(`rk_price_${i}`)?.value);
+      if (label && price) rentalKeyPrices.push({ label, price });
+    }
+  }
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Transaksi Ditolak',
-        html: `Pesanan ${trxId} ditolak.<br>Saldo <strong>$${trx.total}</strong> telah dikembalikan ke user.`,
-        confirmButtonText: 'OK'
+  const features = featuresRaw ? featuresRaw.split(',').map(f => f.trim()).filter(Boolean) : [];
+
+  const newProduct = {
+    id: 'prod_' + Date.now(),
+    name, image, description: desc, features,
+    rentalEnabled,
+    fullKeyPrices,
+    rentalKeyPrices
+  };
+
+  const db = await dbGet(BINS.products);
+  const products = [...(db?.products || []), newProduct];
+  const result = await dbSet(BINS.products, { products });
+
+  if (result) {
+    toast('success', `Produk "${name}" berhasil ditambahkan!`);
+    loadAdminProducts();
+    // Reset form
+    ['newProdName','newProdImage','newProdDesc','newProdFeatures'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    for (let i = 1; i <= 5; i++) {
+      ['fk_label_','fk_price_','rk_label_','rk_price_'].forEach(p => {
+        const el = document.getElementById(p + i);
+        if (el) el.value = '';
       });
     }
+  } else {
+    toast('error', 'Gagal menambahkan produk!');
+  }
+}
+
+function toggleRentalSection(scope) {
+  const enabled = document.getElementById(`newProdRentalEnabled`)?.checked;
+  const section = document.getElementById(`rentalPricesNew`);
+  if (section) section.style.display = enabled ? '' : 'none';
+}
+
+function openEditProduct(idx) {
+  const products = window._adminProducts || [];
+  const p = products[idx];
+  if (!p) return;
+
+  const fullPricesHtml = [1,2,3,4,5].map(i => {
+    const entry = (p.fullKeyPrices || [])[i-1] || {};
+    return `<div class="price-input-row">
+      <input type="text" class="form-input" id="efk_label_${i}" value="${entry.label || ''}" placeholder="Label" />
+      <input type="number" class="form-input" id="efk_price_${i}" value="${entry.price || ''}" placeholder="Harga" />
+    </div>`;
+  }).join('');
+
+  const rentalPricesHtml = [1,2,3,4,5].map(i => {
+    const entry = (p.rentalKeyPrices || [])[i-1] || {};
+    return `<div class="price-input-row">
+      <input type="text" class="form-input" id="erk_label_${i}" value="${entry.label || ''}" placeholder="Label" />
+      <input type="number" class="form-input" id="erk_price_${i}" value="${entry.price || ''}" placeholder="Harga" />
+    </div>`;
+  }).join('');
+
+  document.getElementById('editProductContent').innerHTML = `
+    <div class="form-group"><label class="form-label">Nama</label><input type="text" class="form-input" id="editProdName" value="${p.name}" /></div>
+    <div class="form-group"><label class="form-label">Image URL</label><input type="text" class="form-input" id="editProdImage" value="${p.image || ''}" /></div>
+    <div class="form-group"><label class="form-label">Deskripsi</label><input type="text" class="form-input" id="editProdDesc" value="${p.description || ''}" /></div>
+    <div class="form-group"><label class="form-label">Fitur (koma)</label><input type="text" class="form-input" id="editProdFeatures" value="${(p.features || []).join(', ')}" /></div>
+    <div class="toggle-row">
+      <span class="toggle-label-text">Rental Keys</span>
+      <label class="toggle-switch"><input type="checkbox" id="editProdRental" ${p.rentalEnabled ? 'checked' : ''} /><span class="toggle-slider"></span></label>
+    </div>
+    <div style="margin-top:12px;"><label class="form-label">Harga Full Key</label>${fullPricesHtml}</div>
+    <div style="margin-top:12px;"><label class="form-label">Harga Rental Key</label>${rentalPricesHtml}</div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn-admin success" onclick="saveEditProduct(${idx})"><i class="fas fa-save"></i> SAVE</button>
+      <button class="btn-admin" onclick="closeEditProductModal()" style="background:rgba(139,0,255,0.2);">Batal</button>
+    </div>
+  `;
+
+  document.getElementById('editProductModal').classList.remove('hidden');
+}
+
+async function saveEditProduct(idx) {
+  const products = [...(window._adminProducts || [])];
+
+  const fullKeyPrices = [], rentalKeyPrices = [];
+  for (let i = 1; i <= 5; i++) {
+    const l = document.getElementById(`efk_label_${i}`)?.value.trim();
+    const pr = parseFloat(document.getElementById(`efk_price_${i}`)?.value);
+    if (l && pr) fullKeyPrices.push({ label: l, price: pr });
+    const rl = document.getElementById(`erk_label_${i}`)?.value.trim();
+    const rpr = parseFloat(document.getElementById(`erk_price_${i}`)?.value);
+    if (rl && rpr) rentalKeyPrices.push({ label: rl, price: rpr });
+  }
+
+  products[idx] = {
+    ...products[idx],
+    name: document.getElementById('editProdName').value.trim(),
+    image: document.getElementById('editProdImage').value.trim(),
+    description: document.getElementById('editProdDesc').value.trim(),
+    features: document.getElementById('editProdFeatures').value.split(',').map(f => f.trim()).filter(Boolean),
+    rentalEnabled: document.getElementById('editProdRental').checked,
+    fullKeyPrices,
+    rentalKeyPrices
+  };
+
+  const result = await dbSet(BINS.products, { products });
+  if (result) {
+    toast('success', 'Produk berhasil diupdate!');
+    closeEditProductModal();
+    loadAdminProducts();
+  } else {
+    toast('error', 'Gagal update produk!');
+  }
+}
+
+async function adminDeleteProduct(idx) {
+  const r = await Swal.fire({
+    title: 'Hapus Produk?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Hapus',
+    cancelButtonText: 'Batal',
+    background: 'var(--bg-card2)',
+    color: 'var(--text-primary)'
+  });
+  if (!r.isConfirmed) return;
+
+  const products = [...(window._adminProducts || [])];
+  products.splice(idx, 1);
+  const result = await dbSet(BINS.products, { products });
+  if (result) {
+    toast('success', 'Produk berhasil dihapus!');
+    loadAdminProducts();
+  }
+}
+
+function closeEditProductModal() {
+  document.getElementById('editProductModal').classList.add('hidden');
+}
+
+// =============================================
+// ADMIN PROMOS
+// =============================================
+async function loadAdminPromos() {
+  const tbody = document.getElementById('promoTableBody');
+  if (!tbody) return;
+
+  const db = await dbGet(BINS.promos);
+  const promos = db?.promos || [];
+
+  if (promos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Belum ada promo</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = promos.map((p, i) => `
+    <tr>
+      <td><b style="color:var(--purple-3);font-family:var(--font-display);letter-spacing:1px;">${p.code}</b></td>
+      <td style="color:var(--accent-green);">${p.percent}%</td>
+      <td>${p.maxUse === 0 ? 'Bebas' : p.maxUse}</td>
+      <td>${p.usedCount || 0}</td>
+      <td>
+        <button class="btn-admin danger" style="padding:6px 12px;font-size:0.68rem;" onclick="adminDeletePromo(${i})">
+          <i class="fas fa-trash"></i> Hapus
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function adminAddPromo() {
+  const code = document.getElementById('promoCodeAdmin').value.trim().toUpperCase();
+  const percent = parseInt(document.getElementById('promoPercent').value);
+  const maxUse = parseInt(document.getElementById('promoMaxUse').value) || 0;
+
+  if (!code || !percent) {
+    toast('warning', 'Kode dan persen diskon wajib diisi!');
+    return;
+  }
+
+  const db = await dbGet(BINS.promos);
+  const promos = db?.promos || [];
+
+  if (promos.find(p => p.code === code)) {
+    toast('error', 'Kode promo sudah ada!');
+    return;
+  }
+
+  promos.push({ code, percent, maxUse, usedCount: 0, createdAt: new Date().toISOString() });
+  const result = await dbSet(BINS.promos, { promos });
+
+  if (result) {
+    toast('success', `Promo ${code} berhasil ditambahkan!`);
+    loadAdminPromos();
+    document.getElementById('promoCodeAdmin').value = '';
+    document.getElementById('promoPercent').value = '';
+    document.getElementById('promoMaxUse').value = '';
+  } else {
+    toast('error', 'Gagal menambahkan promo!');
+  }
+}
+
+async function adminDeletePromo(idx) {
+  const r = await Swal.fire({
+    title: 'Hapus Promo ini?', icon: 'warning',
+    showCancelButton: true, confirmButtonText: 'Hapus', cancelButtonText: 'Batal',
+    background: 'var(--bg-card2)', color: 'var(--text-primary)'
+  });
+  if (!r.isConfirmed) return;
+
+  const db = await dbGet(BINS.promos);
+  const promos = [...(db?.promos || [])];
+  promos.splice(idx, 1);
+  const result = await dbSet(BINS.promos, { promos });
+  if (result) { toast('success', 'Promo berhasil dihapus!'); loadAdminPromos(); }
+}
+
+// =============================================
+// ADMIN TICKER
+// =============================================
+async function adminSaveTicker() {
+  const text = document.getElementById('tickerTextAdmin').value.trim();
+  if (!text) { toast('warning', 'Isi teks terlebih dahulu!'); return; }
+
+  const settings = await dbGet(BINS.settings);
+  const newSettings = { ...settings, ticker_text: text };
+  const result = await dbSet(BINS.settings, newSettings);
+  if (result) toast('success', 'Teks berhasil disimpan!');
+  else toast('error', 'Gagal menyimpan!');
+}
+
+async function adminToggleTicker() {
+  const enabled = document.getElementById('tickerEnabled').checked;
+  const settings = await dbGet(BINS.settings);
+  const newSettings = { ...settings, ticker_enabled: enabled };
+  await dbSet(BINS.settings, newSettings);
+  toast('success', enabled ? 'Running teks diaktifkan!' : 'Running teks dinonaktifkan!');
+}
+
+async function loadAdminSettings() {
+  const settings = await dbGet(BINS.settings);
+  if (!settings) return;
+
+  const tickerEl = document.getElementById('tickerEnabled');
+  const tickerTextEl = document.getElementById('tickerTextAdmin');
+  const resetKeyEl = document.getElementById('resetKeyEnabled');
+
+  if (tickerEl) tickerEl.checked = !!settings.ticker_enabled;
+  if (tickerTextEl) tickerTextEl.value = settings.ticker_text || '';
+  if (resetKeyEl) resetKeyEl.checked = settings.reset_key_enabled !== false;
+}
+
+async function adminToggleResetKey() {
+  const enabled = document.getElementById('resetKeyEnabled').checked;
+  const settings = await dbGet(BINS.settings);
+  const newSettings = { ...settings, reset_key_enabled: enabled };
+  await dbSet(BINS.settings, newSettings);
+  toast('success', enabled ? 'Reset key diaktifkan!' : 'Reset key dinonaktifkan!');
+}
+
+// =============================================
+// ADMIN SALDO
+// =============================================
+async function loadAdminUsers() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+
+  const db = await dbGet(BINS.users);
+  const users = db?.users || [];
+
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Belum ada user</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><b style="color:var(--purple-3);">${u.username}</b></td>
+      <td style="font-size:0.82rem;">${u.email || '-'}</td>
+      <td style="color:var(--accent-green);">${formatRp(u.balance || 0)}</td>
+      <td>
+        <button class="btn-admin" style="padding:6px 12px;font-size:0.68rem;" onclick="quickAddSaldo('${u.username}')">
+          <i class="fas fa-plus"></i> Tambah Saldo
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function quickAddSaldo(username) {
+  document.getElementById('saldoUsername').value = username;
+  document.getElementById('saldoAmount').focus();
+}
+
+async function adminTransferSaldo() {
+  const username = document.getElementById('saldoUsername').value.trim();
+  const amount = parseInt(document.getElementById('saldoAmount').value);
+
+  if (!username || !amount || amount <= 0) {
+    toast('warning', 'Username dan jumlah saldo wajib diisi!');
+    return;
+  }
+
+  const db = await dbGet(BINS.users);
+  const users = db?.users || [];
+  const userIdx = users.findIndex(u => u.username === username);
+
+  if (userIdx === -1) {
+    toast('error', 'Username tidak ditemukan di database!');
+    return;
+  }
+
+  users[userIdx] = { ...users[userIdx], balance: (users[userIdx].balance || 0) + amount };
+  const result = await dbSet(BINS.users, { users });
+
+  if (result) {
+    toast('success', `Saldo ${formatRp(amount)} berhasil dikirim ke ${username}!`);
+    document.getElementById('saldoUsername').value = '';
+    document.getElementById('saldoAmount').value = '';
+    loadAdminUsers();
+  } else {
+    toast('error', 'Gagal transfer saldo!');
+  }
+}
+
+// =============================================
+// UTILITY FUNCTIONS
+// =============================================
+function formatRp(amount) {
+  if (isNaN(amount)) return 'Rp 0';
+  return 'Rp ' + parseInt(amount).toLocaleString('id-ID');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
 }
 
-// ============================================
-// UTILITY
-// ============================================
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function getTomorrowMidnight() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().replace('T', ' ').substring(0, 19);
 }
+
+// =============================================
+// AUTO-INIT ON LOAD
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Prevent multiple nav toggles from accidental mouse interaction
+  const hamburger = document.getElementById('hamburgerBtn');
+  if (hamburger) {
+    hamburger.addEventListener('mousedown', e => e.preventDefault());
+  }
+});

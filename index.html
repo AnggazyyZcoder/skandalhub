@@ -1,95 +1,90 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Drip Client - Login</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip Client — Login</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="icon" href="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" type="image/jpeg" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
+  <!-- BG BLOBS -->
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
 
-<!-- Particles Background -->
-<div id="particles-js"></div>
+  <!-- PARTICLE CANVAS -->
+  <canvas id="particle-canvas"></canvas>
 
-<!-- Loading Screen -->
-<div id="loading-screen">
-  <div class="loading-logo-wrapper">
-    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="loading-logo-img"/>
-    <div class="loading-title-row" id="loading-chars"></div>
-    <div class="loading-subtitle">Buy Key Platform</div>
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <div class="loading-logo-wrap">
+      <img class="loading-logo-img" src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" />
+      <div class="loading-title-chars" id="loadingChars"></div>
+    </div>
+    <div class="loading-subtitle">BUY KEY SYSTEM</div>
     <div class="loading-bar-wrap">
-      <div class="loading-bar-fill"></div>
+      <div class="loading-bar"></div>
     </div>
+    <div class="loading-percent" id="loadingPercent">0%</div>
   </div>
-</div>
 
-<!-- Welcome Overlay -->
-<div id="welcome-overlay">
-  <div class="welcome-text" id="welcome-text"></div>
-</div>
+  <!-- PAGE WRAPPER -->
+  <div class="page-wrapper" id="mainContent" style="display:none;">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-logo-wrap">
+          <img class="auth-logo" src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" />
+          <div class="auth-title"><i class="fas fa-meteor"></i> DRIP CLIENT</div>
+          <div class="auth-subtitle">Login To Dashboard</div>
+        </div>
 
-<!-- Auth Wrapper -->
-<div class="auth-wrapper" id="auth-content" style="display:none;">
-  <div class="auth-card" id="auth-card">
-    <div class="auth-logo-section">
-      <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="auth-logo-img animated-logo"/>
-      <div>
-        <div class="auth-title">DRIP CLIENT</div>
-        <div class="auth-subtitle">Login To Dashboard</div>
-      </div>
-    </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user"></i> Username</label>
+          <div class="input-with-icon">
+            <input type="text" class="form-input" id="loginUsername" placeholder="Masukan username..." autocomplete="username" />
+          </div>
+        </div>
 
-    <div class="form-group">
-      <label class="form-label"><i class="fa fa-user"></i> &nbsp;Username</label>
-      <input type="text" class="form-control" id="login-username" placeholder="Masukan username" autocomplete="off"/>
-    </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-lock"></i> Password</label>
+          <div class="input-with-icon" style="position:relative;">
+            <input type="password" class="form-input" id="loginPassword" placeholder="Masukan password..." autocomplete="current-password" style="padding-right:48px;" />
+            <span class="input-icon" id="toggleLoginPw" onclick="togglePassword('loginPassword','toggleLoginPw')">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+        </div>
 
-    <div class="form-group">
-      <label class="form-label"><i class="fa fa-lock"></i> &nbsp;Password</label>
-      <div class="input-icon-wrap">
-        <input type="password" class="form-control" id="login-password" placeholder="Masukan password" autocomplete="off"/>
-        <button class="input-icon-btn" id="toggle-pass" type="button" onclick="togglePass('login-password','toggle-pass')">
-          <i class="fa fa-eye"></i>
+        <div class="remember-row">
+          <input type="checkbox" id="rememberMe" />
+          <label for="rememberMe">Remember Me</label>
+        </div>
+
+        <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
+          <i class="fas fa-sign-in-alt"></i> LOGIN
         </button>
+
+        <div class="auth-footer" style="margin-top:20px;">
+          Tidak punya akun? <a href="register.html"><i class="fas fa-user-plus"></i> Daftar</a>
+        </div>
       </div>
     </div>
-
-    <div class="remember-row">
-      <label class="checkbox-wrap">
-        <input type="checkbox" id="remember-me"/>
-        <span>Remember Me</span>
-      </label>
-    </div>
-
-    <button class="btn-primary" id="login-btn" onclick="doLogin()">
-      <i class="fa fa-sign-in-alt"></i> &nbsp;LOGIN
-    </button>
-
-    <div class="auth-link">
-      Tidak punya akun? <a href="register.html">Daftar Sekarang</a>
-    </div>
   </div>
-</div>
 
-<script src="script.js"></script>
-<script>
-  // Init loading screen
-  initLoadingScreen('login');
-  initParticles();
-
-  // Auto-fill if remembered
-  window.addEventListener('load', () => {
-    const saved = localStorage.getItem('drip_remember');
-    if (saved) {
-      const d = JSON.parse(saved);
-      document.getElementById('login-username').value = d.u || '';
-      document.getElementById('login-password').value = d.p || '';
-      document.getElementById('remember-me').checked = true;
-    }
-  });
-</script>
+  <script src="script.js"></script>
+  <script>
+    initLoadingScreen('mainContent', function() {
+      // Check if already remembered
+      const rem = localStorage.getItem('dc_remember');
+      if (rem) {
+        const data = JSON.parse(rem);
+        document.getElementById('loginUsername').value = data.username;
+        document.getElementById('loginPassword').value = data.password;
+        document.getElementById('rememberMe').checked = true;
+      }
+    });
+  </script>
 </body>
 </html>
