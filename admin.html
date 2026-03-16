@@ -1,252 +1,707 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Client - Admin Panel</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip Client – Admin Panel</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="admin-page">
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
-            </div>
-            <div class="loading-text">
-                <span class="loading-letter">D</span>
-                <span class="loading-letter">R</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">P</span>
-                <span class="loading-letter">&nbsp;</span>
-                <span class="loading-letter">C</span>
-                <span class="loading-letter">L</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">E</span>
-                <span class="loading-letter">N</span>
-                <span class="loading-letter">T</span>
-            </div>
-            <div class="loading-progress">
-                <div class="loading-bar"></div>
-            </div>
+<body>
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- LOADING -->
+  <div id="loading-screen">
+    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" class="loading-logo" alt="Drip Client" />
+    <div class="loading-letters">
+      <span>D</span><span>R</span><span>I</span><span>P</span>
+      <span style="opacity:0;animation:none;width:12px"> </span>
+      <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
+    </div>
+    <div class="loading-subtitle">Admin Panel</div>
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  </div>
+
+  <div class="page-content" id="main-content" style="display:none;">
+
+    <!-- TOPBAR -->
+    <nav class="topbar">
+      <div class="topbar-brand">
+        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" />
+        <span class="brand-name">DRIP CLIENT <span style="color:var(--accent-yellow);font-size:0.75rem;letter-spacing:1px;">ADMIN</span></span>
+      </div>
+      <div class="topbar-right">
+        <div class="credit-badge" style="color:var(--accent-yellow);">
+          <i class="fa-solid fa-shield-halved"></i> ADMIN PANEL
         </div>
-    </div>
+        <a href="index.html" class="btn btn-outline" style="padding:8px 14px;font-size:0.82rem;">
+          <i class="fa-solid fa-right-from-bracket"></i> Exit
+        </a>
+      </div>
+    </nav>
 
-    <!-- Admin Dashboard -->
-    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
-        <!-- Navbar -->
-        <nav class="navbar admin-navbar">
-            <div class="nav-left">
-                <div class="logo-container">
-                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="nav-logo">
-                    <span class="logo-text">DRIP ADMIN</span>
-                </div>
-            </div>
-            <div class="nav-right">
-                <div class="user-info">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Administrator</span>
-                </div>
-            </div>
-        </nav>
+    <!-- ADMIN LAYOUT -->
+    <div class="admin-grid">
 
-        <!-- Admin Main Content -->
-        <main class="admin-main">
-            <!-- Admin Tabs -->
-            <div class="admin-tabs">
-                <button class="tab-btn active" data-tab="products">Products</button>
-                <button class="tab-btn" data-tab="promos">Promo Codes</button>
-                <button class="tab-btn" data-tab="running-text">Running Text</button>
-                <button class="tab-btn" data-tab="users">Users</button>
-                <button class="tab-btn" data-tab="transactions">Transactions</button>
-                <button class="tab-btn" data-tab="settings">Settings</button>
-            </div>
-
-            <!-- Products Tab -->
-            <div class="tab-content active" id="products-tab">
-                <div class="admin-section">
-                    <h2>Add New Product</h2>
-                    <form id="addProductForm">
-                        <div class="form-group">
-                            <label>Nama Product</label>
-                            <input type="text" id="productName" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Image Product (URL)</label>
-                            <input type="url" id="productImage" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Deskripsi Produk</label>
-                            <textarea id="productDescription" rows="3" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Fitur (pisahkan dengan koma)</label>
-                            <input type="text" id="productFeatures" placeholder="antiban, silent aim, wallhack" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Harga Options (format: nama: harga)</label>
-                            <div id="priceOptions">
-                                <div class="price-option">
-                                    <input type="text" placeholder="1 DAYS" value="1 DAYS">
-                                    <input type="number" placeholder="Harga $" value="1">
-                                </div>
-                                <div class="price-option">
-                                    <input type="text" placeholder="3 DAYS" value="3 DAYS">
-                                    <input type="number" placeholder="Harga $" value="10">
-                                </div>
-                                <div class="price-option">
-                                    <input type="text" placeholder="7 DAYS" value="7 DAYS">
-                                    <input type="number" placeholder="Harga $" value="7">
-                                </div>
-                                <div class="price-option">
-                                    <input type="text" placeholder="15 DAYS" value="15 DAYS">
-                                    <input type="number" placeholder="Harga $" value="15">
-                                </div>
-                                <div class="price-option">
-                                    <input type="text" placeholder="1 MONTH" value="1 MONTH">
-                                    <input type="number" placeholder="Harga $" value="30">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="admin-btn">Add New Product</button>
-                    </form>
-                </div>
-
-                <div class="admin-section">
-                    <h2>Existing Products</h2>
-                    <div id="productsList" class="products-list">
-                        <!-- Products will be loaded here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Promos Tab -->
-            <div class="tab-content" id="promos-tab">
-                <div class="admin-section">
-                    <h2>Add New Code Promo</h2>
-                    <form id="addPromoForm">
-                        <div class="form-group">
-                            <label>Masukan Code</label>
-                            <input type="text" id="promoCode" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Persen Promo</label>
-                            <input type="number" id="promoPercent" min="1" max="100" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Maximal penggunaan</label>
-                            <input type="number" id="promoMaxUse" min="1" required>
-                        </div>
-                        <button type="submit" class="admin-btn">Add New Code Promo</button>
-                    </form>
-                </div>
-
-                <div class="admin-section">
-                    <h2>Existing Promos</h2>
-                    <div id="promosList" class="promos-list">
-                        <!-- Promos will be loaded here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Running Text Tab -->
-            <div class="tab-content" id="running-text-tab">
-                <div class="admin-section">
-                    <h2>Running Text Settings</h2>
-                    <form id="runningTextForm">
-                        <div class="form-group">
-                            <label>Masukan teks</label>
-                            <input type="text" id="runningTextInput" placeholder="KODE PROMO TERBARU : DISKON70%">
-                        </div>
-                        <div class="form-group toggle-switch">
-                            <label>Status</label>
-                            <div class="switch-container">
-                                <span>Off</span>
-                                <label class="switch">
-                                    <input type="checkbox" id="runningTextToggle">
-                                    <span class="slider"></span>
-                                </label>
-                                <span>On</span>
-                            </div>
-                        </div>
-                        <button type="submit" class="admin-btn">Update Running Text</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Users Tab -->
-            <div class="tab-content" id="users-tab">
-                <div class="admin-section">
-                    <h2>Add Saldo User</h2>
-                    <form id="addSaldoForm">
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input type="text" id="targetUsername" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Berapa Credit yang akan dikirim ($)</label>
-                            <input type="number" id="creditAmount" min="1" required>
-                        </div>
-                        <button type="submit" class="admin-btn">Transfer Saldo</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Transactions Tab -->
-            <div class="tab-content" id="transactions-tab">
-                <div class="admin-section">
-                    <h2>Transaction Logs</h2>
-                    <div id="adminTransactionsList" class="transactions-list">
-                        <!-- Transactions will be loaded here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div class="tab-content" id="settings-tab">
-                <div class="admin-section">
-                    <h2>Reset Key System Operation</h2>
-                    <div class="toggle-switch">
-                        <label>Status</label>
-                        <div class="switch-container">
-                            <span>Off</span>
-                            <label class="switch">
-                                <input type="checkbox" id="resetKeyToggle">
-                                <span class="slider"></span>
-                            </label>
-                            <span>On</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Approve Transaction Modal -->
-    <div class="modal" id="approveModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Approve Transaction</h3>
-                <button class="modal-close" id="closeApproveModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <form id="approveForm">
-                    <div class="form-group">
-                        <label>Masukan key untuk dikirim ke user</label>
-                        <textarea id="keysInput" rows="3" placeholder="Masukkan key (pisahkan dengan koma jika lebih dari satu)"></textarea>
-                    </div>
-                    <button type="submit" class="admin-btn success">Approve & Send</button>
-                </form>
-            </div>
+      <!-- SIDEBAR -->
+      <div class="admin-sidebar">
+        <div style="padding:16px 22px 20px;border-bottom:1px solid var(--border-purple);margin-bottom:10px;">
+          <div style="font-family:var(--font-display);font-size:0.7rem;letter-spacing:3px;color:var(--text-muted);">NAVIGATION</div>
         </div>
+        <div class="admin-sidebar-item active" onclick="switchSection('dashboard')">
+          <i class="fa-solid fa-gauge"></i> Dashboard
+        </div>
+        <div class="admin-sidebar-item" onclick="switchSection('logs')">
+          <i class="fa-solid fa-receipt"></i> Logs Transaksi
+        </div>
+        <div class="admin-sidebar-item" onclick="switchSection('products')">
+          <i class="fa-solid fa-box-open"></i> Kelola Produk
+        </div>
+        <div class="admin-sidebar-item" onclick="switchSection('promos')">
+          <i class="fa-solid fa-tag"></i> Kode Promo
+        </div>
+        <div class="admin-sidebar-item" onclick="switchSection('users')">
+          <i class="fa-solid fa-users"></i> Kelola User
+        </div>
+        <div class="admin-sidebar-item" onclick="switchSection('settings')">
+          <i class="fa-solid fa-gear"></i> Pengaturan
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="admin-content">
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="admin-section active" id="section-dashboard">
+          <div class="section-title"><i class="fa-solid fa-gauge"></i> OVERVIEW</div>
+          <div class="stats-row" id="stats-row">
+            <div class="stat-card"><span class="stat-number" id="stat-users">-</span><span class="stat-label">Total User</span></div>
+            <div class="stat-card"><span class="stat-number" id="stat-trx">-</span><span class="stat-label">Transaksi</span></div>
+            <div class="stat-card"><span class="stat-number" id="stat-waiting">-</span><span class="stat-label">Menunggu</span></div>
+            <div class="stat-card"><span class="stat-number" id="stat-products">-</span><span class="stat-label">Produk</span></div>
+          </div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:16px;"><i class="fa-solid fa-clock-rotate-left"></i> TRANSAKSI TERBARU</div>
+            <div id="recent-trx">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== LOGS TRANSAKSI ===== -->
+        <div class="admin-section" id="section-logs">
+          <div class="section-title"><i class="fa-solid fa-receipt"></i> LOGS TRANSAKSI</div>
+          <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="filterLogs('all')" id="filter-all" style="padding:8px 16px;font-size:0.82rem;">Semua</button>
+            <button class="btn btn-outline" onclick="filterLogs('waiting')" id="filter-waiting" style="padding:8px 16px;font-size:0.82rem;">Menunggu</button>
+            <button class="btn btn-outline" onclick="filterLogs('approved')" id="filter-approved" style="padding:8px 16px;font-size:0.82rem;">Approved</button>
+            <button class="btn btn-outline" onclick="filterLogs('rejected')" id="filter-rejected" style="padding:8px 16px;font-size:0.82rem;">Rejected</button>
+          </div>
+          <div id="admin-logs-list">
+            <div style="text-align:center;padding:30px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--purple-main);"></i></div>
+          </div>
+        </div>
+
+        <!-- ===== KELOLA PRODUK ===== -->
+        <div class="admin-section" id="section-products">
+          <div class="section-title"><i class="fa-solid fa-box-open"></i> KELOLA PRODUK</div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:20px;"><i class="fa-solid fa-plus"></i> TAMBAH PRODUK BARU</div>
+
+            <div class="form-group">
+              <label class="form-label">Nama Produk</label>
+              <input type="text" id="prod-name" class="form-control" placeholder="Drip Client Cheat..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL Gambar Produk</label>
+              <input type="text" id="prod-image" class="form-control" placeholder="https://example.com/image.jpg" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deskripsi</label>
+              <input type="text" id="prod-desc" class="form-control" placeholder="Cheat android premium..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fitur (pisahkan dengan koma)</label>
+              <input type="text" id="prod-features" class="form-control" placeholder="Anti Ban, Silent Aim, ESP, Speed Hack" />
+            </div>
+
+            <div style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-secondary);letter-spacing:1px;margin-bottom:12px;">PILIHAN HARGA (max 5)</div>
+
+            <div id="plan-inputs">
+              <div class="plan-row" style="display:grid;grid-template-columns:1fr 80px 36px;gap:8px;margin-bottom:8px;">
+                <input type="text" class="form-control plan-label" placeholder="1 Day" />
+                <input type="number" class="form-control plan-price" placeholder="$" step="0.01" min="0" />
+                <button class="btn btn-danger" onclick="this.parentNode.remove()" style="padding:8px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+            </div>
+            <button class="btn btn-outline" onclick="addPlanRow()" style="padding:8px 16px;font-size:0.82rem;margin-bottom:16px;">
+              <i class="fa-solid fa-plus"></i> Tambah Opsi Harga
+            </button>
+
+            <button class="btn btn-primary btn-full" onclick="addProduct()">
+              <i class="fa-solid fa-plus"></i> Tambah Produk
+            </button>
+          </div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:16px;"><i class="fa-solid fa-list"></i> DAFTAR PRODUK</div>
+            <div id="product-list-admin">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== KODE PROMO ===== -->
+        <div class="admin-section" id="section-promos">
+          <div class="section-title"><i class="fa-solid fa-tag"></i> KODE PROMO</div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:20px;"><i class="fa-solid fa-plus"></i> TAMBAH KODE PROMO</div>
+            <div class="form-group">
+              <label class="form-label">Kode Promo</label>
+              <input type="text" id="promo-code" class="form-control" placeholder="DISKON70" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Persen Diskon (%)</label>
+              <input type="number" id="promo-discount" class="form-control" placeholder="70" min="1" max="100" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maksimal Penggunaan</label>
+              <input type="number" id="promo-maxuse" class="form-control" placeholder="10" min="1" />
+            </div>
+            <button class="btn btn-primary btn-full" onclick="addPromo()">
+              <i class="fa-solid fa-plus"></i> Tambah Kode Promo
+            </button>
+          </div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:16px;">DAFTAR PROMO AKTIF</div>
+            <div id="promo-list-admin">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== KELOLA USER ===== -->
+        <div class="admin-section" id="section-users">
+          <div class="section-title"><i class="fa-solid fa-users"></i> KELOLA USER</div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:20px;"><i class="fa-solid fa-coins"></i> TAMBAH SALDO USER</div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" id="topup-username" class="form-control" placeholder="Username user..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jumlah Credit ($)</label>
+              <input type="number" id="topup-amount" class="form-control" placeholder="10" min="1" step="0.01" />
+            </div>
+            <button class="btn btn-primary btn-full" onclick="addCredit()">
+              <i class="fa-solid fa-paper-plane"></i> Transfer Saldo
+            </button>
+          </div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:16px;"><i class="fa-solid fa-list"></i> DAFTAR USER</div>
+            <div id="user-list-admin">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PENGATURAN ===== -->
+        <div class="admin-section" id="section-settings">
+          <div class="section-title"><i class="fa-solid fa-gear"></i> PENGATURAN SISTEM</div>
+
+          <div class="admin-card">
+            <div style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);letter-spacing:2px;margin-bottom:20px;">KONTROL FITUR</div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>Reset Key System</h4>
+                <p>Aktifkan/nonaktifkan fitur reset key untuk semua user</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-resetkey" onchange="saveSetting('resetKeyOn', this.checked)" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>Running Text / Promo Banner</h4>
+                <p>Tampilkan teks berjalan di dashboard user</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-marquee" onchange="saveSetting('marqueeOn', this.checked)" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div style="margin-top:20px;" class="form-group">
+              <label class="form-label">Teks Running Banner</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="marquee-text-input" class="form-control" placeholder="KODE PROMO TERBARU : DISKON70%" />
+                <button class="btn btn-primary" onclick="saveMarqueeText()" style="padding:12px 16px;white-space:nowrap;">
+                  <i class="fa-solid fa-floppy-disk"></i> Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
 
-    <!-- Particles Background -->
-    <div id="particles-js"></div>
+  <!-- APPROVE MODAL -->
+  <div class="modal-overlay" id="approve-modal">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-check"></i> APPROVE TRANSAKSI</span>
+        <button class="modal-close" onclick="closeModal('approve-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="approve-modal-body"></div>
+    </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="script.js"></script>
+  <!-- EDIT PRODUCT MODAL -->
+  <div class="modal-overlay" id="edit-product-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-pen"></i> EDIT PRODUK</span>
+        <button class="modal-close" onclick="closeModal('edit-product-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="edit-product-body"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    let allLogs = [];
+    let currentFilter = 'all';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initParticles();
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('hide');
+        setTimeout(async () => {
+          document.getElementById('loading-screen').style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+          await initAdmin();
+        }, 800);
+      }, 3000);
+    });
+
+    async function initAdmin() {
+      await loadStats();
+      await loadRecentTrx();
+      await loadSettings();
+    }
+
+    async function loadStats() {
+      const [users, transactions, products] = await Promise.all([dbGetUsers(), dbGetTransactions(), dbGetProducts()]);
+      document.getElementById('stat-users').textContent = users.length;
+      document.getElementById('stat-trx').textContent = transactions.length;
+      document.getElementById('stat-waiting').textContent = transactions.filter(t => t.status === 'waiting').length;
+      document.getElementById('stat-products').textContent = products.length;
+    }
+
+    async function loadRecentTrx() {
+      const transactions = await dbGetTransactions();
+      const recent = transactions.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt)).slice(0,5);
+      const el = document.getElementById('recent-trx');
+      if (!recent.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada transaksi</div>'; return; }
+      el.innerHTML = recent.map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border-purple);">
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;">${t.productName}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${t.username} • ${new Date(t.createdAt).toLocaleString('id-ID')}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--purple-glow);font-family:var(--font-display);font-size:0.85rem;">$${t.total}</span>
+            <span class="badge badge-${t.status}" style="font-size:0.7rem;">${t.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function switchSection(name) {
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.admin-sidebar-item').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + name).classList.add('active');
+      document.querySelectorAll('.admin-sidebar-item').forEach(s => {
+        if (s.textContent.toLowerCase().includes(name === 'dashboard' ? 'dashboard' : name === 'logs' ? 'logs' : name === 'products' ? 'produk' : name === 'promos' ? 'promo' : name === 'users' ? 'user' : 'pengaturan')) {
+          s.classList.add('active');
+        }
+      });
+      if (name === 'logs') await loadAdminLogs();
+      if (name === 'products') await loadProductListAdmin();
+      if (name === 'promos') await loadPromoListAdmin();
+      if (name === 'users') await loadUserListAdmin();
+    }
+
+    async function loadAdminLogs() {
+      allLogs = await dbGetTransactions();
+      renderLogs();
+    }
+
+    function filterLogs(f) {
+      currentFilter = f;
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const filtered = currentFilter === 'all' ? allLogs : allLogs.filter(t => t.status === currentFilter);
+      const sorted = filtered.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
+      const el = document.getElementById('admin-logs-list');
+
+      if (!sorted.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Tidak ada transaksi</div>'; return; }
+
+      el.innerHTML = sorted.map(t => `
+        <div class="log-item">
+          <div class="log-header">
+            <div>
+              <div style="font-weight:700;font-size:0.95rem;">${t.productName}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${t.id}</div>
+            </div>
+            <span class="badge badge-${t.status}">${t.status}</span>
+          </div>
+          <div class="log-info">
+            <span><span class="k">User:</span><span class="v">${t.username}</span></span>
+            <span><span class="k">Paket:</span><span class="v">${t.plan} x${t.quantity}</span></span>
+            <span><span class="k">Total:</span><span class="v" style="color:var(--purple-glow);">$${t.total}</span></span>
+            <span><span class="k">WA:</span><span class="v">${t.waNumber || '-'}</span></span>
+            <span><span class="k">Tanggal:</span><span class="v">${new Date(t.createdAt).toLocaleString('id-ID')}</span></span>
+            ${t.promoCode ? `<span><span class="k">Promo:</span><span class="v">${t.promoCode}</span></span>` : ''}
+          </div>
+          ${t.keys && t.keys.length ? `<div style="margin-top:10px;font-size:0.82rem;color:var(--accent-green);"><i class="fa-solid fa-key"></i> Keys: ${t.keys.join(', ')}</div>` : ''}
+          <div class="log-actions">
+            ${t.status === 'waiting' ? `
+              <button class="btn btn-success" onclick="openApprove('${t.id}')" style="padding:8px 14px;font-size:0.8rem;"><i class="fa-solid fa-check"></i> Approve</button>
+              <button class="btn btn-danger" onclick="rejectTrx('${t.id}')" style="padding:8px 14px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i> Reject</button>
+            ` : ''}
+            ${t.status === 'approved' && (!t.keys || !t.keys.length) ? `
+              <button class="btn btn-primary" onclick="openApprove('${t.id}')" style="padding:8px 14px;font-size:0.8rem;"><i class="fa-solid fa-key"></i> Kirim Key</button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openApprove(trxId) {
+      const trx = allLogs.find(t => t.id === trxId);
+      if (!trx) return;
+
+      document.getElementById('approve-modal-body').innerHTML = `
+        <div style="margin-bottom:16px;padding:14px;background:rgba(11,11,22,0.8);border:1px solid var(--border-purple);border-radius:12px;">
+          <div style="font-weight:700;margin-bottom:6px;">${trx.productName}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${trx.username} • ${trx.plan} • $${trx.total}</div>
+        </div>
+        <div class="form-label" style="margin-bottom:10px;"><i class="fa-solid fa-key"></i> Masukan Key (Pisahkan enter atau titik koma)</div>
+        <textarea id="approve-keys-input" class="form-control" rows="4" placeholder="KEY-ABCD-1234&#10;KEY-EFGH-5678&#10;KEY-IJKL-9012" style="resize:vertical;"></textarea>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin:8px 0 16px;">Pisahkan multiple key dengan baris baru</div>
+        <button class="btn btn-success btn-full" onclick="submitApprove('${trxId}')">
+          <i class="fa-solid fa-paper-plane"></i> Approve & Kirim Key
+        </button>
+      `;
+      openModal('approve-modal');
+    }
+
+    async function submitApprove(trxId) {
+      const keysRaw = document.getElementById('approve-keys-input').value.trim();
+      if (!keysRaw) {
+        Swal.fire({ icon: 'warning', title: 'Key Kosong', text: 'Masukan minimal 1 key!', background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+
+      const keys = keysRaw.split(/[\n;,]+/).map(k => k.trim()).filter(Boolean);
+      const transactions = await dbGetTransactions();
+      const idx = transactions.findIndex(t => t.id === trxId);
+      if (idx < 0) return;
+
+      transactions[idx].status = 'approved';
+      transactions[idx].keys = keys;
+      transactions[idx].approvedAt = new Date().toISOString();
+      await dbSaveTransactions(transactions);
+      allLogs = transactions;
+
+      closeModal('approve-modal');
+      Swal.fire({ icon: 'success', title: 'Approved!', text: `${keys.length} key berhasil dikirim ke user.`, background: '#0d0d1a', color: '#e9d5ff' });
+      renderLogs();
+      await loadStats();
+    }
+
+    async function rejectTrx(trxId) {
+      const result = await Swal.fire({
+        title: 'Reject Transaksi?', text: 'Yakin ingin menolak transaksi ini?',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonText: 'Ya, Reject', cancelButtonText: 'Batal',
+        background: '#0d0d1a', color: '#e9d5ff'
+      });
+      if (!result.isConfirmed) return;
+
+      const transactions = await dbGetTransactions();
+      const idx = transactions.findIndex(t => t.id === trxId);
+      if (idx < 0) return;
+      transactions[idx].status = 'rejected';
+      transactions[idx].rejectedAt = new Date().toISOString();
+      await dbSaveTransactions(transactions);
+      allLogs = transactions;
+
+      // Refund credit
+      const users = await dbGetUsers();
+      const uIdx = users.findIndex(u => u.id === transactions[idx].userId);
+      if (uIdx >= 0) {
+        users[uIdx].credit = (users[uIdx].credit || 0) + transactions[idx].total;
+        await dbSaveUsers(users);
+      }
+
+      Swal.fire({ icon: 'info', title: 'Rejected', text: 'Transaksi ditolak. Saldo user sudah dikembalikan.', background: '#0d0d1a', color: '#e9d5ff' });
+      renderLogs();
+      await loadStats();
+    }
+
+    // ===== PRODUCTS =====
+    function addPlanRow() {
+      const container = document.getElementById('plan-inputs');
+      if (container.children.length >= 5) {
+        Swal.fire({ icon: 'warning', title: 'Maksimal 5 Pilihan', background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+      const row = document.createElement('div');
+      row.className = 'plan-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 80px 36px;gap:8px;margin-bottom:8px;';
+      row.innerHTML = `
+        <input type="text" class="form-control plan-label" placeholder="Label harga..." />
+        <input type="number" class="form-control plan-price" placeholder="$" step="0.01" min="0" />
+        <button class="btn btn-danger" onclick="this.parentNode.remove()" style="padding:8px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+      `;
+      container.appendChild(row);
+    }
+
+    async function addProduct() {
+      const name = document.getElementById('prod-name').value.trim();
+      const image = document.getElementById('prod-image').value.trim();
+      const desc = document.getElementById('prod-desc').value.trim();
+      const featStr = document.getElementById('prod-features').value.trim();
+      if (!name) { Swal.fire({ icon: 'warning', title: 'Nama wajib diisi!', background: '#0d0d1a', color: '#e9d5ff' }); return; }
+
+      const plans = [];
+      document.querySelectorAll('.plan-row').forEach(row => {
+        const label = row.querySelector('.plan-label').value.trim();
+        const price = parseFloat(row.querySelector('.plan-price').value);
+        if (label && !isNaN(price)) plans.push({ label, price });
+      });
+
+      const product = {
+        id: 'prod_' + Date.now(),
+        name, image, desc,
+        features: featStr.split(',').map(f => f.trim()).filter(Boolean),
+        plans,
+        createdAt: new Date().toISOString()
+      };
+
+      const products = await dbGetProducts();
+      products.push(product);
+      await dbSaveProducts(products);
+
+      Swal.fire({ icon: 'success', title: 'Produk Ditambahkan!', background: '#0d0d1a', color: '#e9d5ff' });
+      document.getElementById('prod-name').value = '';
+      document.getElementById('prod-image').value = '';
+      document.getElementById('prod-desc').value = '';
+      document.getElementById('prod-features').value = '';
+      document.getElementById('plan-inputs').innerHTML = `
+        <div class="plan-row" style="display:grid;grid-template-columns:1fr 80px 36px;gap:8px;margin-bottom:8px;">
+          <input type="text" class="form-control plan-label" placeholder="1 Day" />
+          <input type="number" class="form-control plan-price" placeholder="$" step="0.01" min="0" />
+          <button class="btn btn-danger" onclick="this.parentNode.remove()" style="padding:8px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+        </div>`;
+      await loadProductListAdmin();
+      await loadStats();
+    }
+
+    async function loadProductListAdmin() {
+      const products = await dbGetProducts();
+      const el = document.getElementById('product-list-admin');
+      if (!products.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada produk</div>'; return; }
+      el.innerHTML = products.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--border-purple);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${p.image ? `<img src="${p.image}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border-purple);" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;border-radius:8px;background:var(--purple-deep);display:flex;align-items:center;justify-content:center;color:var(--purple-bright);"><i class="fa-solid fa-box"></i></div>`}
+            <div>
+              <div style="font-weight:700;">${p.name}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${(p.plans||[]).map(pl=>`${pl.label}=$${pl.price}`).join(' | ')}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline" onclick="editProduct('${p.id}')" style="padding:8px 12px;font-size:0.8rem;"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger" onclick="deleteProduct('${p.id}')" style="padding:8px 12px;font-size:0.8rem;"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function editProduct(id) {
+      const products = await dbGetProducts();
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+
+      document.getElementById('edit-product-body').innerHTML = `
+        <div class="form-group"><label class="form-label">Nama</label><input id="ep-name" class="form-control" value="${p.name}" /></div>
+        <div class="form-group"><label class="form-label">URL Gambar</label><input id="ep-image" class="form-control" value="${p.image||''}" /></div>
+        <div class="form-group"><label class="form-label">Deskripsi</label><input id="ep-desc" class="form-control" value="${p.desc||''}" /></div>
+        <div class="form-group"><label class="form-label">Fitur (koma)</label><input id="ep-features" class="form-control" value="${(p.features||[]).join(', ')}" /></div>
+        <div class="form-label" style="margin-bottom:10px;">Pilihan Harga</div>
+        <div id="ep-plans">
+          ${(p.plans||[]).map((pl,i) => `
+            <div class="plan-row" style="display:grid;grid-template-columns:1fr 80px 36px;gap:8px;margin-bottom:8px;">
+              <input type="text" class="form-control ep-plan-label" value="${pl.label}" />
+              <input type="number" class="form-control ep-plan-price" value="${pl.price}" step="0.01" min="0" />
+              <button class="btn btn-danger" onclick="this.parentNode.remove()" style="padding:8px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-outline" onclick="addEditPlanRow()" style="padding:8px 14px;font-size:0.82rem;margin-bottom:16px;"><i class="fa-solid fa-plus"></i> Tambah Opsi</button>
+        <button class="btn btn-primary btn-full" onclick="saveEditProduct('${id}')"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+      `;
+      openModal('edit-product-modal');
+    }
+
+    function addEditPlanRow() {
+      const c = document.getElementById('ep-plans');
+      const row = document.createElement('div');
+      row.className = 'plan-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 80px 36px;gap:8px;margin-bottom:8px;';
+      row.innerHTML = `<input type="text" class="form-control ep-plan-label" placeholder="Label" /><input type="number" class="form-control ep-plan-price" placeholder="$" step="0.01" min="0" /><button class="btn btn-danger" onclick="this.parentNode.remove()" style="padding:8px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>`;
+      c.appendChild(row);
+    }
+
+    async function saveEditProduct(id) {
+      const products = await dbGetProducts();
+      const idx = products.findIndex(x => x.id === id);
+      if (idx < 0) return;
+      const plans = [];
+      document.querySelectorAll('#ep-plans .plan-row').forEach(row => {
+        const label = row.querySelector('.ep-plan-label').value.trim();
+        const price = parseFloat(row.querySelector('.ep-plan-price').value);
+        if (label && !isNaN(price)) plans.push({ label, price });
+      });
+      products[idx] = { ...products[idx], name: document.getElementById('ep-name').value.trim(), image: document.getElementById('ep-image').value.trim(), desc: document.getElementById('ep-desc').value.trim(), features: document.getElementById('ep-features').value.split(',').map(f=>f.trim()).filter(Boolean), plans };
+      await dbSaveProducts(products);
+      closeModal('edit-product-modal');
+      Swal.fire({ icon: 'success', title: 'Produk Diperbarui!', background: '#0d0d1a', color: '#e9d5ff' });
+      await loadProductListAdmin();
+    }
+
+    async function deleteProduct(id) {
+      const r = await Swal.fire({ title: 'Hapus Produk?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Hapus', cancelButtonText: 'Batal', background: '#0d0d1a', color: '#e9d5ff' });
+      if (!r.isConfirmed) return;
+      const products = await dbGetProducts();
+      await dbSaveProducts(products.filter(p => p.id !== id));
+      Swal.fire({ icon: 'success', title: 'Produk Dihapus!', background: '#0d0d1a', color: '#e9d5ff' });
+      await loadProductListAdmin();
+      await loadStats();
+    }
+
+    // ===== PROMOS =====
+    async function addPromo() {
+      const code = document.getElementById('promo-code').value.trim().toUpperCase();
+      const discount = parseInt(document.getElementById('promo-discount').value);
+      const maxUse = parseInt(document.getElementById('promo-maxuse').value);
+      if (!code || isNaN(discount) || isNaN(maxUse)) { Swal.fire({ icon: 'warning', title: 'Isi semua field!', background: '#0d0d1a', color: '#e9d5ff' }); return; }
+      const promos = await dbGetPromos();
+      if (promos.find(p => p.code === code)) { Swal.fire({ icon: 'error', title: 'Kode sudah ada!', background: '#0d0d1a', color: '#e9d5ff' }); return; }
+      promos.push({ code, discount, maxUse, usedCount: 0, usedBy: [], createdAt: new Date().toISOString() });
+      await dbSavePromos(promos);
+      Swal.fire({ icon: 'success', title: 'Promo Ditambahkan!', background: '#0d0d1a', color: '#e9d5ff' });
+      document.getElementById('promo-code').value = '';
+      document.getElementById('promo-discount').value = '';
+      document.getElementById('promo-maxuse').value = '';
+      await loadPromoListAdmin();
+    }
+
+    async function loadPromoListAdmin() {
+      const promos = await dbGetPromos();
+      const el = document.getElementById('promo-list-admin');
+      if (!promos.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada promo</div>'; return; }
+      el.innerHTML = promos.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--border-purple);">
+          <div>
+            <span style="font-family:var(--font-display);font-size:0.85rem;color:var(--purple-glow);">${p.code}</span>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Diskon ${p.discount}% • ${p.usedCount}/${p.maxUse} pemakaian</div>
+          </div>
+          <button class="btn btn-danger" onclick="deletePromo('${p.code}')" style="padding:8px 12px;font-size:0.8rem;"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+
+    async function deletePromo(code) {
+      const r = await Swal.fire({ title: 'Hapus Promo?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Hapus', background: '#0d0d1a', color: '#e9d5ff' });
+      if (!r.isConfirmed) return;
+      const promos = await dbGetPromos();
+      await dbSavePromos(promos.filter(p => p.code !== code));
+      await loadPromoListAdmin();
+    }
+
+    // ===== USERS =====
+    async function addCredit() {
+      const username = document.getElementById('topup-username').value.trim();
+      const amount = parseFloat(document.getElementById('topup-amount').value);
+      if (!username || isNaN(amount) || amount <= 0) { Swal.fire({ icon: 'warning', title: 'Data tidak valid!', background: '#0d0d1a', color: '#e9d5ff' }); return; }
+      const users = await dbGetUsers();
+      const idx = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+      if (idx < 0) { Swal.fire({ icon: 'error', title: 'User tidak ditemukan!', background: '#0d0d1a', color: '#e9d5ff' }); return; }
+      users[idx].credit = (users[idx].credit || 0) + amount;
+      await dbSaveUsers(users);
+      Swal.fire({ icon: 'success', title: 'Saldo Ditambahkan!', html: `<p style="color:#a89ec9">$${amount} berhasil dikirim ke <strong style="color:#a855f7">${username}</strong><br>Saldo sekarang: <strong>$${users[idx].credit}</strong></p>`, background: '#0d0d1a', color: '#e9d5ff' });
+      document.getElementById('topup-username').value = '';
+      document.getElementById('topup-amount').value = '';
+      await loadUserListAdmin();
+    }
+
+    async function loadUserListAdmin() {
+      const users = await dbGetUsers();
+      const el = document.getElementById('user-list-admin');
+      if (!users.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada user</div>'; return; }
+      el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="border-bottom:1px solid var(--border-purple);">
+          <th style="padding:10px;text-align:left;font-size:0.78rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">Username</th>
+          <th style="padding:10px;text-align:left;font-size:0.78rem;color:var(--text-muted);letter-spacing:1px;">Credit</th>
+          <th style="padding:10px;text-align:left;font-size:0.78rem;color:var(--text-muted);letter-spacing:1px;">Dibuat</th>
+        </tr></thead>
+        <tbody>${users.map(u => `
+          <tr style="border-bottom:1px solid rgba(108,35,192,0.15);">
+            <td style="padding:12px 10px;"><i class="fa-solid fa-user" style="color:var(--purple-bright);margin-right:8px;"></i>${u.username}</td>
+            <td style="padding:12px 10px;color:var(--purple-glow);font-family:var(--font-display);font-size:0.85rem;">$${u.credit || 0}</td>
+            <td style="padding:12px 10px;font-size:0.78rem;color:var(--text-muted);">${new Date(u.createdAt).toLocaleDateString('id-ID')}</td>
+          </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+    // ===== SETTINGS =====
+    async function loadSettings() {
+      const settings = await dbGetSettings();
+      document.getElementById('toggle-resetkey').checked = !!settings.resetKeyOn;
+      document.getElementById('toggle-marquee').checked = !!settings.marqueeOn;
+      document.getElementById('marquee-text-input').value = settings.marqueeText || '';
+    }
+
+    async function saveSetting(key, value) {
+      const settings = await dbGetSettings();
+      settings[key] = value;
+      await dbSaveSettings(settings);
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Pengaturan disimpan!', showConfirmButton: false, timer: 2000, background: '#0d0d1a', color: '#e9d5ff' });
+    }
+
+    async function saveMarqueeText() {
+      const text = document.getElementById('marquee-text-input').value.trim();
+      const settings = await dbGetSettings();
+      settings.marqueeText = text;
+      await dbSaveSettings(settings);
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Teks banner disimpan!', showConfirmButton: false, timer: 2000, background: '#0d0d1a', color: '#e9d5ff' });
+    }
+  </script>
 </body>
 </html>
