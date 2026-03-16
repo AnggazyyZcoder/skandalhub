@@ -1,368 +1,356 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Drip Client - Admin Panel</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip Client — Admin Panel</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="icon" href="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" type="image/jpeg" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <canvas id="particle-canvas"></canvas>
 
-<!-- Particles Background -->
-<div id="particles-js"></div>
-
-<!-- Loading Screen -->
-<div id="loading-screen">
-  <div class="loading-logo-wrapper">
-    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="loading-logo-img"/>
-    <div class="loading-title-row" id="loading-chars"></div>
-    <div class="loading-subtitle">Admin Panel</div>
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <div class="loading-logo-wrap">
+      <img class="loading-logo-img" src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" />
+      <div class="loading-title-chars" id="loadingChars"></div>
+    </div>
+    <div class="loading-subtitle">ADMIN PANEL</div>
     <div class="loading-bar-wrap">
-      <div class="loading-bar-fill"></div>
+      <div class="loading-bar"></div>
     </div>
+    <div class="loading-percent" id="loadingPercent">0%</div>
   </div>
-</div>
 
-<!-- Top Bar -->
-<div class="topbar">
-  <div class="topbar-left">
-    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" class="topbar-logo" alt="Drip"/>
-    <span class="topbar-name">DRIP CLIENT</span>
-  </div>
-  <div class="topbar-center">
-    <span style="font-size:0.85rem;color:var(--purple-neon);letter-spacing:2px;text-transform:uppercase;">
-      <i class="fa fa-shield-alt"></i> &nbsp;Admin Panel
-    </span>
-  </div>
-  <div class="topbar-right">
-    <a href="home.html" style="text-decoration:none;">
-      <div class="credit-badge" style="cursor:pointer;">
-        <i class="fa fa-arrow-left"></i>
-        <span>Dashboard</span>
+  <!-- APPROVE KEYS MODAL -->
+  <div id="approveModal" class="mini-popup-overlay hidden">
+    <div class="mini-popup" style="max-width:500px;">
+      <div class="mini-popup-header">
+        <img class="mini-popup-logo" src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="" />
+        <div class="mini-popup-title" id="approveModalTitle">Approve Transaksi</div>
+        <button class="popup-close" onclick="closeApproveModal()" style="position:relative;top:auto;right:auto;"><i class="fas fa-times"></i></button>
       </div>
-    </a>
-  </div>
-</div>
-
-<!-- Edit Product Modal -->
-<div class="modal-overlay" id="edit-product-modal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div class="modal-title">Edit Produk</div>
-      <button class="modal-close" onclick="closeEditModal()"><i class="fa fa-times"></i></button>
-    </div>
-    <input type="hidden" id="edit-product-id"/>
-    <div class="form-group">
-      <label class="form-label">Nama Produk</label>
-      <input type="text" class="form-control" id="edit-product-name"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Image URL</label>
-      <input type="text" class="form-control" id="edit-product-image"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Deskripsi</label>
-      <input type="text" class="form-control" id="edit-product-desc"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Fitur (pisah dengan koma)</label>
-      <input type="text" class="form-control" id="edit-product-features"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Harga (format: label:harga, pisah dengan |)</label>
-      <input type="text" class="form-control" id="edit-product-prices" placeholder="1 Day:1|3 Days:3|7 Days:7"/>
-    </div>
-    <button class="btn-primary" onclick="saveEditProduct()">
-      <i class="fa fa-save"></i> &nbsp;Simpan Perubahan
-    </button>
-  </div>
-</div>
-
-<!-- Approve Modal -->
-<div class="modal-overlay" id="approve-modal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div class="modal-title"><i class="fa fa-check-circle" style="color:var(--accent-green)"></i> &nbsp;Approve Pesanan</div>
-      <button class="modal-close" onclick="closeApproveModal()"><i class="fa fa-times"></i></button>
-    </div>
-    <input type="hidden" id="approve-trx-id"/>
-    <div class="info-banner">
-      <i class="fa fa-info-circle"></i>
-      Masukan key/lisensi yang akan dikirimkan ke user. Bisa tambah lebih dari 1 key.
-    </div>
-    <div class="keys-input-area" id="keys-input-area">
-      <div class="key-input-row">
-        <input type="text" class="form-control" placeholder="Key / Lisensi 1" style="font-family:var(--font-mono);font-size:0.85rem;"/>
-        <button class="btn-add-key" onclick="addKeyRow()"><i class="fa fa-plus"></i> Tambah</button>
-      </div>
-    </div>
-    <button class="btn-primary" style="margin-top:15px;" onclick="submitApprove()">
-      <i class="fa fa-paper-plane"></i> &nbsp;Kirim & Approve
-    </button>
-  </div>
-</div>
-
-<!-- Admin Layout -->
-<div class="admin-wrapper" id="admin-content" style="display:none;">
-
-  <!-- Sidebar -->
-  <div class="admin-sidebar" id="admin-sidebar">
-    <div style="padding:10px 5px 20px; border-bottom:1px solid var(--border-purple); margin-bottom:20px;">
-      <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--purple-bright);display:block;margin:0 auto 10px;"/>
-      <div style="text-align:center;font-family:var(--font-display);font-weight:700;color:var(--purple-neon);font-size:0.9rem;letter-spacing:2px;">ADMIN</div>
-    </div>
-
-    <div class="admin-nav-section">
-      <div class="admin-nav-label">Overview</div>
-      <div class="admin-nav-item active" onclick="showSection('dashboard')" data-section="dashboard">
-        <i class="fa fa-chart-bar"></i> Dashboard
-      </div>
-    </div>
-
-    <div class="admin-nav-section">
-      <div class="admin-nav-label">Produk</div>
-      <div class="admin-nav-item" onclick="showSection('add-product')" data-section="add-product">
-        <i class="fa fa-plus-circle"></i> Tambah Produk
-      </div>
-      <div class="admin-nav-item" onclick="showSection('manage-product')" data-section="manage-product">
-        <i class="fa fa-box"></i> Kelola Produk
-      </div>
-    </div>
-
-    <div class="admin-nav-section">
-      <div class="admin-nav-label">Promosi</div>
-      <div class="admin-nav-item" onclick="showSection('add-promo')" data-section="add-promo">
-        <i class="fa fa-tag"></i> Tambah Promo
-      </div>
-      <div class="admin-nav-item" onclick="showSection('running-text')" data-section="running-text">
-        <i class="fa fa-align-left"></i> Running Text
-      </div>
-    </div>
-
-    <div class="admin-nav-section">
-      <div class="admin-nav-label">Users</div>
-      <div class="admin-nav-item" onclick="showSection('add-saldo')" data-section="add-saldo">
-        <i class="fa fa-wallet"></i> Tambah Saldo
-      </div>
-    </div>
-
-    <div class="admin-nav-section">
-      <div class="admin-nav-label">System</div>
-      <div class="admin-nav-item" onclick="showSection('reset-system')" data-section="reset-system">
-        <i class="fa fa-tools"></i> Reset System
-      </div>
-      <div class="admin-nav-item" onclick="showSection('transactions')" data-section="transactions">
-        <i class="fa fa-receipt"></i> Logs Transaksi
-      </div>
+      <div id="approveModalContent"></div>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="admin-main">
-
-    <!-- Dashboard Overview -->
-    <div class="admin-section active" id="section-dashboard">
-      <div class="admin-section-title">📊 Dashboard Overview</div>
-      <div class="admin-stats-grid" id="admin-stats-grid">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-users">-</div>
-          <div class="stat-label">Total Users</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-products">-</div>
-          <div class="stat-label">Produk Aktif</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-trx">-</div>
-          <div class="stat-label">Total Transaksi</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-waiting">-</div>
-          <div class="stat-label">Menunggu Proses</div>
-        </div>
+  <!-- EDIT PRODUCT MODAL -->
+  <div id="editProductModal" class="mini-popup-overlay hidden">
+    <div class="mini-popup" style="max-width:540px;max-height:90vh;overflow-y:auto;">
+      <div class="mini-popup-header">
+        <img class="mini-popup-logo" src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="" />
+        <div class="mini-popup-title">Edit Produk</div>
+        <button class="popup-close" onclick="closeEditProductModal()" style="position:relative;top:auto;right:auto;"><i class="fas fa-times"></i></button>
       </div>
+      <div id="editProductContent"></div>
+    </div>
+  </div>
 
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-clock"></i> Transaksi Terbaru</div>
-        <div id="recent-trx-list">
-          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Memuat data...</p></div>
-        </div>
-      </div>
+  <!-- PAGE WRAPPER -->
+  <div class="page-wrapper" id="mainContent" style="display:none;">
+
+    <!-- ADMIN HEADER -->
+    <div class="admin-header">
+      <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" style="width:38px;height:38px;border-radius:50%;border:2px solid var(--purple-3);box-shadow:0 0 15px rgba(139,0,255,0.5);" alt="Logo" />
+      <span style="font-family:var(--font-display);font-size:1rem;font-weight:900;background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;">DRIP CLIENT</span>
+      <span class="admin-badge"><i class="fas fa-crown" style="margin-right:4px;"></i> ADMIN</span>
+      <div style="flex:1;"></div>
+      <a href="home.html" style="color:var(--text-muted);font-family:var(--font-ui);font-size:0.85rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:var(--transition);" onmouseover="this.style.color='var(--purple-3)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fas fa-home"></i> Dashboard User
+      </a>
     </div>
 
-    <!-- Add Product -->
-    <div class="admin-section" id="section-add-product">
-      <div class="admin-section-title">➕ Tambah Produk Baru</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-box"></i> Informasi Produk</div>
+    <!-- ADMIN CONTENT -->
+    <div style="padding:24px;max-width:1200px;margin:0 auto;">
 
-        <div class="form-group">
-          <label class="form-label">Nama Produk</label>
-          <input type="text" class="form-control" id="new-product-name" placeholder="Contoh: DRIP CLIENT - Cheat Android"/>
+      <!-- STATS -->
+      <div class="admin-stats-grid">
+        <div class="stat-card fade-in">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-value" id="statTotalPembeli">0</div>
+          <div class="stat-label">Total Pembeli</div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Image URL (.jpg/.png)</label>
-          <input type="text" class="form-control" id="new-product-image" placeholder="https://example.com/image.jpg"/>
+        <div class="stat-card fade-in fade-in-delay-1">
+          <div class="stat-icon" style="background:rgba(0,255,136,0.15);color:var(--accent-green);"><i class="fas fa-dollar-sign"></i></div>
+          <div class="stat-value" id="statPenghasilan" style="color:var(--accent-green);">Rp 0</div>
+          <div class="stat-label">Total Penghasilan</div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Deskripsi Produk</label>
-          <input type="text" class="form-control" id="new-product-desc" placeholder="Deskripsi singkat produk"/>
+        <div class="stat-card fade-in fade-in-delay-2">
+          <div class="stat-icon" style="background:rgba(255,196,0,0.15);color:#ffc400;"><i class="fas fa-fire"></i></div>
+          <div class="stat-value" id="statTerjualHari" style="color:#ffc400;">0</div>
+          <div class="stat-label">Terjual Hari Ini</div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Fitur (pisah dengan koma)</label>
-          <input type="text" class="form-control" id="new-product-features" placeholder="Antiban, Silent Aim, No Recoil, Auto Headshot"/>
-        </div>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label">Pilihan Harga (max 5)</label>
-          <div class="price-fields-dynamic" id="price-fields">
-            <div class="price-field-row">
-              <input type="text" class="form-control" placeholder="Label" value="1 Day"/>
-              <input type="number" class="form-control" placeholder="Harga ($)" value="1"/>
-              <input type="text" class="form-control" placeholder="Keterangan"/>
-              <button onclick="removePriceRow(this)" title="Hapus"><i class="fa fa-trash"></i></button>
+      <!-- TABS -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="adminTab('logs')"><i class="fas fa-receipt"></i> Logs Transaksi</button>
+        <button class="admin-tab" onclick="adminTab('products')"><i class="fas fa-store"></i> Produk</button>
+        <button class="admin-tab" onclick="adminTab('promo')"><i class="fas fa-tag"></i> Kode Promo</button>
+        <button class="admin-tab" onclick="adminTab('ticker')"><i class="fas fa-bullhorn"></i> Running Teks</button>
+        <button class="admin-tab" onclick="adminTab('saldo')"><i class="fas fa-wallet"></i> Tambah Saldo</button>
+        <button class="admin-tab" onclick="adminTab('settings')"><i class="fas fa-cog"></i> Settings</button>
+      </div>
+
+      <!-- LOGS PANEL -->
+      <div class="admin-tab-panel active" id="panel-logs">
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-receipt"></i> Semua Transaksi</div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID Trx</th>
+                  <th>Username</th>
+                  <th>Produk</th>
+                  <th>Plan</th>
+                  <th>Total</th>
+                  <th>WA</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="adminLogsTableBody">
+                <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS PANEL -->
+      <div class="admin-tab-panel" id="panel-products">
+        <!-- ADD PRODUCT FORM -->
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-plus-circle"></i> Tambah Produk Baru</div>
+          <div class="admin-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nama Produk</label>
+              <input type="text" class="form-input" id="newProdName" placeholder="Contoh: DRIP CLIENT" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Link Gambar (.jpg/.png)</label>
+              <input type="text" class="form-input" id="newProdImage" placeholder="https://..." />
             </div>
           </div>
-          <button onclick="addPriceRow()" class="btn-sm" style="margin-top:10px;">
-            <i class="fa fa-plus"></i> Tambah Pilihan Harga
+          <div class="form-group">
+            <label class="form-label">Deskripsi Produk</label>
+            <input type="text" class="form-input" id="newProdDesc" placeholder="Deskripsi singkat produk..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fitur (pisah dengan koma)</label>
+            <input type="text" class="form-input" id="newProdFeatures" placeholder="Anti Ban, Silent Aim, No Recoil..." />
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label-text"><i class="fas fa-clock" style="color:var(--purple-3);margin-right:8px;"></i> Aktifkan Rental Keys</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="newProdRentalEnabled" onchange="toggleRentalSection('new')" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- ACCESS FULL KEY PRICES -->
+          <div style="margin-top:16px;">
+            <label class="form-label" style="margin-bottom:12px;"><i class="fas fa-key" style="color:var(--purple-3);margin-right:6px;"></i> Harga Access Full Key</label>
+            <div id="fullKeyPricesNew">
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label (contoh: 1 DAYS)" id="fk_label_1" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="fk_price_1" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="fk_label_2" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="fk_price_2" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="fk_label_3" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="fk_price_3" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="fk_label_4" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="fk_price_4" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="fk_label_5" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="fk_price_5" />
+              </div>
+            </div>
+          </div>
+
+          <!-- RENTAL KEY PRICES (hidden by default) -->
+          <div id="rentalPricesNew" style="display:none;margin-top:16px;">
+            <label class="form-label" style="margin-bottom:12px;"><i class="fas fa-clock" style="color:var(--purple-3);margin-right:6px;"></i> Harga Rental Keys</label>
+            <div id="rentalKeyPricesNew">
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label (contoh: 1 Jam)" id="rk_label_1" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="rk_price_1" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="rk_label_2" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="rk_price_2" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="rk_label_3" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="rk_price_3" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="rk_label_4" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="rk_price_4" />
+              </div>
+              <div class="price-input-row">
+                <input type="text" class="form-input" placeholder="Label" id="rk_label_5" />
+                <input type="number" class="form-input" placeholder="Harga (Rp)" id="rk_price_5" />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-admin" style="margin-top:20px;" onclick="adminAddProduct()">
+            <i class="fas fa-plus-circle"></i> ADD PRODUCT
           </button>
         </div>
 
-        <button class="btn-primary" onclick="adminAddProduct()" style="max-width:250px;">
-          <i class="fa fa-plus-circle"></i> &nbsp;Tambah Produk
-        </button>
-      </div>
-    </div>
-
-    <!-- Manage Products -->
-    <div class="admin-section" id="section-manage-product">
-      <div class="admin-section-title">📦 Kelola Produk</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-list"></i> Daftar Produk</div>
-        <div class="product-edit-list" id="admin-product-list">
-          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Memuat produk...</p></div>
+        <!-- EXISTING PRODUCTS -->
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-boxes"></i> Daftar Produk</div>
+          <div class="admin-product-list" id="adminProductList">
+            <div style="color:var(--text-muted);font-family:var(--font-ui);padding:20px;">Memuat produk...</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Add Promo -->
-    <div class="admin-section" id="section-add-promo">
-      <div class="admin-section-title">🏷️ Tambah Kode Promo</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-tag"></i> Buat Kode Promo Baru</div>
-
-        <div class="form-group">
-          <label class="form-label">Kode Promo</label>
-          <input type="text" class="form-control" id="new-promo-code" placeholder="Contoh: DISKON70" style="text-transform:uppercase;"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Persen Diskon (%)</label>
-          <input type="number" class="form-control" id="new-promo-pct" placeholder="Contoh: 70 = 70%" min="1" max="99"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Maksimal Penggunaan (orang)</label>
-          <input type="number" class="form-control" id="new-promo-max" placeholder="Contoh: 10 (ketik 0 untuk bebas)" min="0"/>
-        </div>
-
-        <button class="btn-primary" onclick="adminAddPromo()" style="max-width:250px;">
-          <i class="fa fa-plus-circle"></i> &nbsp;Tambah Kode Promo
-        </button>
-
-        <div class="divider"></div>
-        <div class="admin-card-title" style="margin-bottom:15px;"><i class="fa fa-list"></i> Promo Aktif</div>
-        <div id="admin-promo-list">
-          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Memuat...</p></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Running Text -->
-    <div class="admin-section" id="section-running-text">
-      <div class="admin-section-title">📢 Running Text Dashboard</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-align-left"></i> Konfigurasi Running Text</div>
-
-        <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;">
-          <label class="form-label" style="margin:0;">Status Running Text</label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="ticker-toggle" onchange="adminToggleTicker()"/>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">Aktifkan/nonaktifkan tampilan running text di dashboard user</p>
-
-        <div class="form-group">
-          <label class="form-label">Teks Running</label>
-          <input type="text" class="form-control" id="ticker-text-input" placeholder="Contoh: KODE PROMO TERBARU : DISKON70%"/>
+      <!-- PROMO PANEL -->
+      <div class="admin-tab-panel" id="panel-promo">
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-tag"></i> Tambah Kode Promo</div>
+          <div class="admin-grid-2">
+            <div class="form-group">
+              <label class="form-label">Kode Promo</label>
+              <input type="text" class="form-input" id="promoCodeAdmin" placeholder="Contoh: DISKON70" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Persen Diskon (%)</label>
+              <input type="number" class="form-input" id="promoPercent" placeholder="Contoh: 70" min="1" max="100" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Maksimal Penggunaan (User)</label>
+            <input type="number" class="form-input" id="promoMaxUse" placeholder="Contoh: 10 (0 = bebas)" min="0" />
+          </div>
+          <button class="btn-admin" onclick="adminAddPromo()">
+            <i class="fas fa-plus-circle"></i> ADD PROMO CODE
+          </button>
         </div>
 
-        <button class="btn-primary" onclick="adminSaveTicker()" style="max-width:250px;">
-          <i class="fa fa-save"></i> &nbsp;Simpan Running Text
-        </button>
-      </div>
-    </div>
-
-    <!-- Add Saldo -->
-    <div class="admin-section" id="section-add-saldo">
-      <div class="admin-section-title">💰 Tambah Saldo User</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-wallet"></i> Transfer Saldo</div>
-
-        <div class="form-group">
-          <label class="form-label">Username Tujuan</label>
-          <input type="text" class="form-control" id="saldo-username" placeholder="Masukan username user"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Jumlah Credit ($)</label>
-          <input type="number" class="form-control" id="saldo-amount" placeholder="Contoh: 10 = $10" min="1"/>
-        </div>
-
-        <button class="btn-primary" onclick="adminAddSaldo()" style="max-width:250px;">
-          <i class="fa fa-paper-plane"></i> &nbsp;Transfer Saldo
-        </button>
-      </div>
-    </div>
-
-    <!-- Reset System -->
-    <div class="admin-section" id="section-reset-system">
-      <div class="admin-section-title">⚙️ Reset Key System</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-tools"></i> Kontrol Sistem Reset Key</div>
-        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:20px;line-height:1.6;">
-          Ketika <span style="color:var(--accent-green);font-weight:600;">ON</span>, user dapat menggunakan fitur Reset Key secara normal.<br>
-          Ketika <span style="color:var(--accent-red);font-weight:600;">OFF</span>, semua request reset key akan ditolak dengan pesan error.
-        </p>
-        <div style="display:flex;align-items:center;gap:15px;">
-          <label class="toggle-switch">
-            <input type="checkbox" id="reset-system-toggle" onchange="adminToggleResetSystem()"/>
-            <span class="toggle-slider"></span>
-          </label>
-          <span id="reset-system-status" style="font-weight:700;font-size:1rem;">Loading...</span>
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-list"></i> Daftar Promo Aktif</div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Kode</th>
+                  <th>Diskon</th>
+                  <th>Max Pakai</th>
+                  <th>Sudah Dipakai</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="promoTableBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Memuat...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Transactions -->
-    <div class="admin-section" id="section-transactions">
-      <div class="admin-section-title">🧾 Logs Transaksi Admin</div>
-      <div class="admin-card">
-        <div class="admin-card-title"><i class="fa fa-receipt"></i> Semua Transaksi</div>
-        <div id="admin-trx-list">
-          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Memuat transaksi...</p></div>
+      <!-- TICKER PANEL -->
+      <div class="admin-tab-panel" id="panel-ticker">
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-bullhorn"></i> Running Teks Dashboard</div>
+          <div class="toggle-row" style="margin-bottom:16px;">
+            <span class="toggle-label-text">Tampilkan Running Teks di Dashboard</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="tickerEnabled" onchange="adminToggleTicker()" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Isi Teks</label>
+            <input type="text" class="form-input" id="tickerTextAdmin" placeholder="Contoh: 🔥 KODE PROMO TERBARU : DISKON70%" />
+          </div>
+          <button class="btn-admin" onclick="adminSaveTicker()">
+            <i class="fas fa-save"></i> SIMPAN TEKS
+          </button>
         </div>
       </div>
+
+      <!-- SALDO PANEL -->
+      <div class="admin-tab-panel" id="panel-saldo">
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-wallet"></i> Transfer Saldo ke User</div>
+          <div class="form-group">
+            <label class="form-label">Username Target</label>
+            <input type="text" class="form-input" id="saldoUsername" placeholder="Masukan username user..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jumlah Credit (Rp)</label>
+            <input type="number" class="form-input" id="saldoAmount" placeholder="Contoh: 50000" />
+          </div>
+          <button class="btn-admin success" onclick="adminTransferSaldo()">
+            <i class="fas fa-paper-plane"></i> TRANSFER SALDO
+          </button>
+        </div>
+
+        <!-- USERS LIST -->
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-users"></i> Daftar User</div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Saldo (Rp)</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Memuat...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS PANEL -->
+      <div class="admin-tab-panel" id="panel-settings">
+        <div class="admin-form-card">
+          <div class="admin-form-title"><i class="fas fa-cog"></i> Pengaturan Sistem</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label-text"><i class="fas fa-sync-alt" style="color:var(--purple-3);margin-right:8px;"></i> Fitur Reset Key</div>
+              <div style="font-family:var(--font-ui);font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Aktifkan/nonaktifkan fitur reset key untuk semua user</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="resetKeyEnabled" onchange="adminToggleResetKey()" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-  </div><!-- admin-main -->
-</div><!-- admin-wrapper -->
-
-<script src="script.js"></script>
-<script>
-  initLoadingScreen('admin');
-  initParticles();
-</script>
+  <script src="script.js"></script>
+  <script>
+    initLoadingScreen('mainContent', function() {
+      initAdminPanel();
+    });
+  </script>
 </body>
 </html>
