@@ -1,162 +1,657 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Client - Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip Client – Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="home-page">
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
-            </div>
-            <div class="loading-text">
-                <span class="loading-letter">D</span>
-                <span class="loading-letter">R</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">P</span>
-                <span class="loading-letter">&nbsp;</span>
-                <span class="loading-letter">C</span>
-                <span class="loading-letter">L</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">E</span>
-                <span class="loading-letter">N</span>
-                <span class="loading-letter">T</span>
-            </div>
-            <div class="loading-progress">
-                <div class="loading-bar"></div>
-            </div>
-        </div>
+<body>
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- LOADING -->
+  <div id="loading-screen">
+    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" class="loading-logo" alt="Drip Client" />
+    <div class="loading-letters">
+      <span>D</span><span>R</span><span>I</span><span>P</span>
+      <span style="opacity:0;animation:none;width:12px"> </span>
+      <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
+    </div>
+    <div class="loading-subtitle">Loading Dashboard...</div>
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  </div>
+
+  <div class="page-content" id="main-content" style="display:none;">
+
+    <!-- WELCOME POPUP -->
+    <div class="welcome-popup" id="welcome-popup">
+      <div class="welcome-box">
+        <button class="welcome-close" onclick="closeWelcome()"><i class="fa-solid fa-xmark"></i></button>
+        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" />
+        <h3>👋 Welcome, <span id="welcome-username">User</span>!</h3>
+        <p>Untuk mengetahui perkembangan harga atau mendapatkan update terbaru, silahkan join saluran WhatsApp kami sekarang!</p>
+        <a href="https://whatsapp.com/channel/0029Vb5PSnZF1YlOrxEO4n23" target="_blank" class="btn btn-green btn-full" style="margin-bottom:10px;">
+          <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> Join Sekarang
+        </a>
+      </div>
     </div>
 
-    <!-- Main Dashboard -->
-    <div class="dashboard" id="dashboard" style="display: none;">
-        <!-- Welcome Popup -->
-        <div class="welcome-popup" id="welcomePopup">
-            <div class="popup-content">
-                <div class="popup-header">
-                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
-                    <h2>Welcome! <span id="welcomeUsername"></span>!</h2>
-                    <button class="popup-close" id="closeWelcomePopup"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="popup-body">
-                    <p>Untuk mengetahui perkembangan harga atau mendapatkan update silahkan join saluran whatsapp kami sekarang.</p>
-                    <a href="https://whatsapp.com/channel/0029Vb5PSnZF1YlOrxEO4n23" target="_blank" class="join-wa-btn">
-                        <i class="fab fa-whatsapp"></i> Join Now
-                    </a>
-                </div>
-            </div>
+    <!-- TOPBAR -->
+    <nav class="topbar">
+      <div class="topbar-brand">
+        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip" />
+        <span class="brand-name">DRIP CLIENT</span>
+      </div>
+      <div class="topbar-right">
+        <div class="user-greeting">
+          <span>👋</span>
+          <span><strong id="nav-username">User</strong></span>
         </div>
+        <div class="credit-badge">
+          <i class="fa-solid fa-dollar-sign"></i>
+          <span id="nav-credit">0</span>
+        </div>
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleDrawer()">
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+      </div>
+    </nav>
 
-        <!-- Navbar -->
-        <nav class="navbar">
-            <div class="nav-left">
-                <div class="logo-container">
-                    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="nav-logo">
-                    <span class="logo-text">DRIP CLIENT</span>
-                </div>
-            </div>
-            <div class="nav-right">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="navUsername"></span>
-                </div>
-                <div class="credit-info">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span id="navCredit">0</span>
-                </div>
-                <div class="hamburger-menu" id="hamburgerMenu">
-                    <i class="fas fa-ellipsis-h"></i>
-                </div>
-            </div>
-        </nav>
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 
-        <!-- Side Navigation -->
-        <div class="side-nav" id="sideNav">
-            <div class="side-nav-header">
-                <h3>Quick Actions</h3>
-                <button class="close-side-nav" id="closeSideNav"><i class="fas fa-times"></i></button>
-            </div>
-            <ul class="side-nav-menu">
-                <li><a href="#" id="resetKeyAction"><i class="fas fa-key"></i> Reset Key</a></li>
-                <li><a href="#" id="logsTransactionAction"><i class="fas fa-history"></i> Logs Transaksi</a></li>
-                <li><a href="#" id="profileAction"><i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="#" id="settingsAction"><i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="#" id="logoutAction"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <!-- QUICK ACTION DRAWER -->
+    <div class="quick-drawer" id="quick-drawer">
+      <div class="drawer-header">
+        <span class="drawer-title">QUICK ACTION</span>
+        <button class="close-drawer" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-item" onclick="openResetKey()">
+        <i class="fa-solid fa-rotate"></i> Reset Key
+      </div>
+      <div class="drawer-item" onclick="openTransactionLogs()">
+        <i class="fa-solid fa-receipt"></i> Logs Transaksi
+      </div>
+      <div class="drawer-item" onclick="openFAQ()">
+        <i class="fa-solid fa-circle-question"></i> FAQ
+      </div>
+      <div class="drawer-item" onclick="doLogout()" style="margin-top:auto;color:var(--accent-red);">
+        <i class="fa-solid fa-right-from-bracket" style="background:rgba(239,68,68,0.2);color:var(--accent-red);"></i> Logout
+      </div>
+    </div>
+
+    <!-- MARQUEE -->
+    <div class="marquee-wrapper" id="marquee-wrapper" style="display:none;">
+      <div class="marquee-track" id="marquee-track"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-wrap">
+
+      <!-- PRODUCTS SECTION -->
+      <div style="padding:0 0 8px 0;" class="fade-in-up">
+        <div class="section-title" style="font-size:1rem;letter-spacing:2px;margin-bottom:16px;">
+          <i class="fa-solid fa-box-open" style="color:var(--purple-bright);"></i> PRODUK TERSEDIA
+        </div>
+      </div>
+
+      <div class="products-grid" id="products-grid">
+        <!-- Products loaded dynamically -->
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+          <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--purple-main);"></i>
+          <p style="margin-top:12px;">Memuat produk...</p>
+        </div>
+      </div>
+
+      <!-- FAQ SECTION -->
+      <div id="faq-section" style="display:none;margin-top:10px;">
+        <div class="section-title fade-in-up">
+          <i class="fa-solid fa-circle-question" style="color:var(--purple-bright);"></i> FAQ
+        </div>
+        <div id="faq-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- PRODUCT BUY MODAL -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title" id="buy-product-name">Beli Produk</span>
+        <button class="modal-close" onclick="closeModal('product-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="buy-modal-body"><!-- dynamic --></div>
+    </div>
+  </div>
+
+  <!-- RESET KEY MODAL -->
+  <div class="modal-overlay" id="reset-modal">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--purple-bright);" />
+          <span class="modal-title">RESET KEY SYSTEM</span>
+        </div>
+        <button class="modal-close" onclick="closeModal('reset-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-key"></i> Masukan Key Anda</label>
+        <input type="text" id="reset-key-input" class="form-control" placeholder="Contoh: 8279290197" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doResetKey()" id="reset-key-btn">
+        <i class="fa-solid fa-rotate"></i> Reset Key
+      </button>
+      <div id="reset-terminal" style="display:none;margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION LOGS MODAL -->
+  <div class="modal-overlay" id="logs-modal">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-receipt"></i> LOGS TRANSAKSI</span>
+        <button class="modal-close" onclick="closeModal('logs-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="logs-list" style="max-height:400px;overflow-y:auto;">
+        <div style="text-align:center;padding:30px;color:var(--text-muted);">
+          <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--purple-main);"></i>
+          <p style="margin-top:10px;">Memuat transaksi...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRX DETAIL MODAL -->
+  <div class="modal-overlay" id="trx-detail-modal">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-file-invoice"></i> DETAIL TRANSAKSI</span>
+        <button class="modal-close" onclick="closeModal('trx-detail-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="trx-detail-body"><!-- dynamic --></div>
+    </div>
+  </div>
+
+  <!-- FAQ MODAL -->
+  <div class="modal-overlay" id="faq-modal">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-circle-question"></i> FAQ</span>
+        <button class="modal-close" onclick="closeModal('faq-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="faq-modal-body"><!-- dynamic --></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    let currentUser = null;
+    let allProducts = [];
+    let selectedProduct = null;
+    let selectedPlan = null;
+    let buyQty = 1;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initParticles();
+
+      // Auth guard
+      const userStr = sessionStorage.getItem('drip_user');
+      if (!userStr) { window.location.href = 'index.html'; return; }
+      currentUser = JSON.parse(userStr);
+
+      setTimeout(async () => {
+        document.getElementById('loading-screen').classList.add('hide');
+        setTimeout(async () => {
+          document.getElementById('loading-screen').style.display = 'none';
+          document.getElementById('main-content').style.display = 'block';
+          await initDashboard();
+        }, 800);
+      }, 3000);
+    });
+
+    async function initDashboard() {
+      // Refresh user credit from DB
+      const users = await dbGetUsers();
+      const freshUser = users.find(u => u.id === currentUser.id);
+      if (freshUser) { currentUser = freshUser; sessionStorage.setItem('drip_user', JSON.stringify(currentUser)); }
+
+      document.getElementById('nav-username').textContent = currentUser.username;
+      document.getElementById('nav-credit').textContent = '$' + (currentUser.credit || 0);
+      document.getElementById('welcome-username').textContent = currentUser.username;
+
+      // Welcome popup
+      if (!sessionStorage.getItem('welcomed')) {
+        sessionStorage.setItem('welcomed','1');
+        setTimeout(() => document.getElementById('welcome-popup').classList.add('show'), 500);
+      }
+
+      // Load settings
+      const settings = await dbGetSettings();
+
+      // Marquee
+      if (settings.marqueeOn && settings.marqueeText) {
+        const wrapper = document.getElementById('marquee-wrapper');
+        wrapper.style.display = 'block';
+        const track = document.getElementById('marquee-track');
+        let full = '';
+        for (let i=0;i<6;i++) full += `<span>${settings.marqueeText}</span><span class="sep">★</span>`;
+        track.innerHTML = full;
+      }
+
+      // Load products
+      await loadProducts();
+
+      // Scroll animation
+      initScrollFade();
+    }
+
+    async function loadProducts() {
+      const products = await dbGetProducts();
+      allProducts = products;
+      const grid = document.getElementById('products-grid');
+
+      if (!products.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">
+          <i class="fa-solid fa-box-open fa-3x" style="color:var(--purple-mid);"></i>
+          <p style="margin-top:16px;font-size:1.1rem;">Belum ada produk tersedia</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = products.map((p, i) => `
+        <div class="product-card fade-in-up" style="animation-delay:${i*0.1}s;" onclick="openBuyModal('${p.id}')">
+          ${p.image ? `<img class="product-card-img" src="${p.image}" alt="${p.name}" onerror="this.parentNode.innerHTML='<div class=product-card-img-placeholder><i class=fa-solid fa-gamepad></i></div>'+this.parentNode.innerHTML.replace(this.outerHTML,'')">` 
+            : `<div class="product-card-img-placeholder"><i class="fa-solid fa-gamepad"></i></div>`}
+          <div class="product-card-body">
+            <div class="product-card-name">${p.name}</div>
+            <div class="product-card-sub">${p.desc || ''}</div>
+            <ul class="product-features">
+              ${(p.features || []).map(f => `<li>${f}</li>`).join('')}
             </ul>
+          </div>
+        </div>
+      `).join('');
+
+      initScrollFade();
+    }
+
+    function openBuyModal(productId) {
+      selectedProduct = allProducts.find(p => p.id === productId);
+      if (!selectedProduct) return;
+      selectedPlan = null;
+      buyQty = 1;
+
+      document.getElementById('buy-product-name').textContent = selectedProduct.name;
+
+      const plans = selectedProduct.plans || [];
+      const body = document.getElementById('buy-modal-body');
+
+      body.innerHTML = `
+        <div style="margin-bottom:14px;">
+          <div class="form-label" style="margin-bottom:10px;"><i class="fa-solid fa-list"></i> PILIH PAKET</div>
+          <div class="pricing-grid">
+            ${plans.map((pl,i) => `
+              <div class="pricing-option" id="plan-opt-${i}" onclick="selectPlan(${i})">
+                <span class="pricing-label">${pl.label}</span>
+                <span class="pricing-price">$${pl.price}</span>
+              </div>
+            `).join('')}
+          </div>
         </div>
 
-        <!-- Running Text -->
-        <div class="running-text-container" id="runningTextContainer" style="display: none;">
-            <div class="running-text" id="runningText">
-                <!-- Dynamic running text will be inserted here -->
-            </div>
+        <div style="margin-bottom:14px;">
+          <div class="form-label"><i class="fa-solid fa-layer-group"></i> QUANTITY</div>
+          <div class="qty-row">
+            <button class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
+            <span class="qty-value" id="qty-display">1</span>
+            <button class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
+          </div>
         </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Products Grid -->
-            <div class="products-grid" id="productsGrid">
-                <!-- Products will be loaded here dynamically -->
-            </div>
-        </main>
-    </div>
-
-    <!-- Reset Key Modal -->
-    <div class="modal" id="resetKeyModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
-                <h3>Reset Key System</h3>
-                <button class="modal-close" id="closeResetModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <input type="text" id="resetInput" placeholder="Masukkan device ID" value="8279290197">
-                </div>
-                <button class="reset-button" id="resetButton">Reset</button>
-                <div class="reset-response" id="resetResponse"></div>
-            </div>
+        <div class="total-price-display">
+          <span class="label">TOTAL HARGA</span>
+          <span class="amount" id="total-display">$0</span>
         </div>
-    </div>
 
-    <!-- Product Detail Modal -->
-    <div class="modal" id="productModal">
-        <div class="modal-content product-modal">
-            <div class="modal-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
-                <h3 id="productModalTitle">Product Details</h3>
-                <button class="modal-close" id="closeProductModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="productModalBody">
-                <!-- Product details will be loaded here -->
-            </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-tag"></i> Kode Promo (Opsional)</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="promo-code-input" class="form-control" placeholder="Masukan kode promo..." style="flex:1;" />
+            <button class="btn btn-outline" onclick="applyPromo()" style="padding:12px 16px;white-space:nowrap;">Apply</button>
+          </div>
+          <div id="promo-status" style="font-size:0.78rem;margin-top:6px;"></div>
         </div>
-    </div>
 
-    <!-- Transactions Log Modal -->
-    <div class="modal" id="transactionsModal">
-        <div class="modal-content transactions-modal">
-            <div class="modal-header">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Logo">
-                <h3>Logs Transaksi</h3>
-                <button class="modal-close" id="closeTransactionsModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="transactionsList">
-                <!-- Transactions will be loaded here -->
-            </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-brands fa-whatsapp"></i> Nomor WhatsApp</label>
+          <input type="text" id="wa-number" class="form-control" placeholder="Contoh: 08123456789" />
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Untuk notifikasi pembelian Anda</div>
         </div>
-    </div>
 
-    <!-- Particles Background -->
-    <div id="particles-js"></div>
+        <button class="btn btn-primary btn-full" onclick="doBuyNow()" id="buy-now-btn">
+          <i class="fa-solid fa-cart-shopping"></i> Buy Now
+        </button>
+      `;
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="script.js"></script>
+      openModal('product-modal');
+    }
+
+    let appliedPromo = null;
+    let promoDiscount = 0;
+
+    function selectPlan(idx) {
+      selectedPlan = selectedProduct.plans[idx];
+      document.querySelectorAll('.pricing-option').forEach((el,i) => {
+        el.classList.toggle('selected', i === idx);
+      });
+      updateTotal();
+    }
+
+    function changeQty(delta) {
+      buyQty = Math.max(1, buyQty + delta);
+      document.getElementById('qty-display').textContent = buyQty;
+      updateTotal();
+    }
+
+    function updateTotal() {
+      if (!selectedPlan) { document.getElementById('total-display').textContent = '$0'; return; }
+      let base = selectedPlan.price * buyQty;
+      if (appliedPromo) base = base - (base * promoDiscount / 100);
+      document.getElementById('total-display').textContent = '$' + base.toFixed(2);
+    }
+
+    async function applyPromo() {
+      const code = document.getElementById('promo-code-input').value.trim().toUpperCase();
+      const statusEl = document.getElementById('promo-status');
+      if (!code) return;
+
+      const promos = await dbGetPromos();
+      const promo = promos.find(p => p.code.toUpperCase() === code);
+
+      if (!promo) {
+        statusEl.textContent = '✗ Kode promo tidak ditemukan!';
+        statusEl.style.color = 'var(--accent-red)';
+        appliedPromo = null; promoDiscount = 0; updateTotal(); return;
+      }
+
+      if (promo.usedCount >= promo.maxUse) {
+        statusEl.textContent = `✗ Promo telah mencapai batas pemakaian (${promo.maxUse} orang)!`;
+        statusEl.style.color = 'var(--accent-red)';
+        appliedPromo = null; promoDiscount = 0; updateTotal(); return;
+      }
+
+      // Check if user already used this promo
+      const usedBy = promo.usedBy || [];
+      if (usedBy.includes(currentUser.id)) {
+        statusEl.textContent = '✗ Anda sudah pernah menggunakan promo ini!';
+        statusEl.style.color = 'var(--accent-red)';
+        appliedPromo = null; promoDiscount = 0; updateTotal(); return;
+      }
+
+      appliedPromo = promo;
+      promoDiscount = promo.discount;
+      statusEl.textContent = `✓ Promo aktif! Diskon ${promo.discount}% berhasil diterapkan.`;
+      statusEl.style.color = 'var(--accent-green)';
+      updateTotal();
+    }
+
+    async function doBuyNow() {
+      if (!selectedPlan) {
+        Swal.fire({ icon: 'warning', title: 'Pilih Paket', text: 'Silahkan pilih paket terlebih dahulu!', background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+
+      const waNum = document.getElementById('wa-number').value.trim();
+      if (!waNum) {
+        Swal.fire({ icon: 'warning', title: 'Nomor WA Kosong', text: 'Masukan nomor WhatsApp Anda!', background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+
+      let total = selectedPlan.price * buyQty;
+      if (appliedPromo) total = total - (total * promoDiscount / 100);
+      total = parseFloat(total.toFixed(2));
+
+      if (currentUser.credit < total) {
+        Swal.fire({ icon: 'error', title: 'Saldo Tidak Cukup', html: `<p style="color:#a89ec9">Saldo Anda: <strong style="color:#a855f7">$${currentUser.credit}</strong><br>Total pembelian: <strong style="color:#ef4444">$${total}</strong></p>`, background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+
+      const btn = document.getElementById('buy-now-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+
+      try {
+        // Deduct credit
+        const users = await dbGetUsers();
+        const uIdx = users.findIndex(u => u.id === currentUser.id);
+        users[uIdx].credit -= total;
+        await dbSaveUsers(users);
+        currentUser.credit = users[uIdx].credit;
+        sessionStorage.setItem('drip_user', JSON.stringify(currentUser));
+        document.getElementById('nav-credit').textContent = '$' + currentUser.credit;
+
+        // Update promo usage
+        if (appliedPromo) {
+          const promos = await dbGetPromos();
+          const pIdx = promos.findIndex(p => p.code === appliedPromo.code);
+          if (pIdx >= 0) {
+            promos[pIdx].usedCount = (promos[pIdx].usedCount || 0) + 1;
+            promos[pIdx].usedBy = [...(promos[pIdx].usedBy || []), currentUser.id];
+            await dbSavePromos(promos);
+          }
+        }
+
+        // Create transaction
+        const trx = {
+          id: 'TRX-' + Date.now(),
+          userId: currentUser.id,
+          username: currentUser.username,
+          productId: selectedProduct.id,
+          productName: selectedProduct.name,
+          plan: selectedPlan.label,
+          quantity: buyQty,
+          total,
+          promoCode: appliedPromo ? appliedPromo.code : null,
+          waNumber: waNum,
+          status: 'waiting',
+          keys: [],
+          createdAt: new Date().toISOString()
+        };
+
+        const transactions = await dbGetTransactions();
+        transactions.push(trx);
+        await dbSaveTransactions(transactions);
+
+        closeModal('product-modal');
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Pembelian Berhasil! 🎉',
+          html: `<p style="color:#a89ec9">ID Transaksi: <strong style="color:#a855f7">${trx.id}</strong><br>Status: <strong style="color:#f59e0b">Menunggu konfirmasi admin</strong><br>Kami akan menghubungi: <strong>${waNum}</strong></p>`,
+          background: '#0d0d1a', color: '#e9d5ff'
+        });
+
+        appliedPromo = null; promoDiscount = 0;
+      } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Transaksi gagal: ' + e.message, background: '#0d0d1a', color: '#e9d5ff' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Buy Now';
+      }
+    }
+
+    async function doResetKey() {
+      const keyInput = document.getElementById('reset-key-input').value.trim();
+      const terminal = document.getElementById('reset-terminal');
+      const btn = document.getElementById('reset-key-btn');
+      if (!keyInput) {
+        Swal.fire({ icon: 'warning', title: 'Key Kosong', text: 'Masukan key Anda!', background: '#0d0d1a', color: '#e9d5ff' }); return;
+      }
+
+      const settings = await dbGetSettings();
+      btn.disabled = true;
+      terminal.style.display = 'block';
+      terminal.innerHTML = `<div class="terminal-output" id="term-out"></div>`;
+      const termOut = document.getElementById('term-out');
+
+      async function addLine(text, cls='', delay=400) {
+        await new Promise(r => setTimeout(r, delay));
+        const d = document.createElement('div');
+        d.className = 't-line ' + cls;
+        d.style.animationDelay = '0s';
+        d.textContent = text;
+        termOut.appendChild(d);
+        termOut.scrollTop = termOut.scrollHeight;
+      }
+
+      await addLine('> Connecting to server...', 't-info', 300);
+      await addLine('> Fetching Server.....', 't-info', 600);
+      await addLine('> Response Database....', 't-info', 700);
+
+      if (!settings.resetKeyOn) {
+        await addLine('> [ERROR] Service Unavailable', 't-error', 600);
+        await addLine('Maaf fitur ini sedang di nonaktifkan oleh admin atau sedang tidak beroperasi normal, Silahkan coba lagi nanti.', 't-error', 300);
+        btn.disabled = false;
+        return;
+      }
+
+      // Check reset limit (1x per day per user)
+      const today = new Date().toDateString();
+      const resetKey = `reset_${currentUser.id}_${today}`;
+      const resetCount = parseInt(localStorage.getItem(resetKey) || '0');
+      if (resetCount >= 1) {
+        await addLine('> [LIMIT] Max reset harian tercapai (1x/hari)', 't-error', 600);
+        await addLine('{"success":false,"message":"Daily reset limit reached","resetsused":1,"resetsmax":1}', 't-error', 300);
+        btn.disabled = false;
+        return;
+      }
+
+      localStorage.setItem(resetKey, resetCount + 1);
+      await addLine('> Status: 200 OK', 't-success', 600);
+      await addLine('✅ Reset Successful', 't-success', 400);
+      const newKey = 'DRIP-' + Math.random().toString(36).substring(2,8).toUpperCase() + '-' + Math.random().toString(36).substring(2,8).toUpperCase();
+      const resp = `{"success":true,"message":"Token reset successfully","resetsused":1,"resetsmax":1,"nextresettime":"${new Date(Date.now()+86400000).toISOString().slice(0,19).replace('T',' ')}","newkey":"${newKey}"}`;
+      await addLine('', '', 200);
+      await addLine(resp, 't-json', 100);
+      await addLine('', '', 100);
+      await addLine(`> NEW KEY: ${newKey}`, 't-success', 400);
+      btn.disabled = false;
+    }
+
+    async function openTransactionLogs() {
+      closeDrawer();
+      const listEl = document.getElementById('logs-list');
+      listEl.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--purple-main);"></i><p style="margin-top:10px;">Memuat...</p></div>`;
+      openModal('logs-modal');
+
+      const transactions = await dbGetTransactions();
+      const myTrx = transactions.filter(t => t.userId === currentUser.id).sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
+
+      if (!myTrx.length) {
+        listEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fa-solid fa-receipt fa-3x" style="color:var(--purple-mid);"></i><p style="margin-top:12px;">Belum ada transaksi</p></div>`;
+        return;
+      }
+
+      listEl.innerHTML = myTrx.map(t => `
+        <div class="trx-card" onclick="showTrxDetail('${t.id}')">
+          <div class="trx-header">
+            <span class="trx-product">${t.productName}</span>
+            <span class="badge badge-${t.status}">${t.status === 'waiting' ? 'Menunggu' : t.status === 'approved' ? 'Approved' : 'Rejected'}</span>
+          </div>
+          <div class="trx-meta">
+            <span><i class="fa-solid fa-tag"></i> ${t.plan} x${t.quantity}</span>
+            <span><i class="fa-solid fa-dollar-sign"></i> $${t.total}</span>
+            <span><i class="fa-solid fa-calendar"></i> ${new Date(t.createdAt).toLocaleDateString('id-ID')}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function showTrxDetail(trxId) {
+      closeModal('logs-modal');
+      const transactions = await dbGetTransactions();
+      const t = transactions.find(x => x.id === trxId);
+      if (!t) return;
+
+      const body = document.getElementById('trx-detail-body');
+      body.innerHTML = `
+        <div style="display:grid;gap:12px;">
+          <div style="background:rgba(11,11,22,0.8);border:1px solid var(--border-purple);border-radius:12px;padding:16px;">
+            <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--purple-glow);margin-bottom:10px;letter-spacing:2px;">${t.productName}</div>
+            <div style="display:grid;gap:6px;font-size:0.85rem;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Paket</span><span>${t.plan} x${t.quantity}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Total</span><span style="color:var(--purple-glow);font-family:var(--font-display);">$${t.total}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Tanggal</span><span>${new Date(t.createdAt).toLocaleString('id-ID')}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">ID Transaksi</span><span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent-cyan);">${t.id}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-muted);">Status</span><span class="badge badge-${t.status}" style="font-size:0.75rem;">${t.status === 'waiting' ? '⏳ Menunggu' : t.status === 'approved' ? '✅ Approved' : '❌ Rejected'}</span></div>
+            </div>
+          </div>
+          ${t.keys && t.keys.length ? `
+            <div style="background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;">
+              <div style="font-size:0.8rem;color:var(--accent-green);font-weight:700;letter-spacing:2px;margin-bottom:10px;"><i class="fa-solid fa-key"></i> KEYS ANDA</div>
+              ${t.keys.map(k => `<div style="font-family:var(--font-mono);font-size:0.88rem;color:var(--accent-green);background:rgba(0,0,0,0.4);border-radius:8px;padding:10px;margin-bottom:6px;word-break:break-all;">${k}</div>`).join('')}
+            </div>
+          ` : t.status === 'approved' ? '<div style="color:var(--text-muted);text-align:center;padding:10px;font-size:0.85rem;">Key sedang disiapkan admin...</div>' : ''}
+        </div>
+      `;
+
+      openModal('trx-detail-modal');
+    }
+
+    async function openFAQ() {
+      closeDrawer();
+      const faqs = [
+        { q: 'Bagaimana cara membeli key?', a: 'Pilih produk di dashboard, pilih paket yang diinginkan, masukan nomor WhatsApp, lalu klik Buy Now. Pastikan saldo Anda mencukupi.' },
+        { q: 'Bagaimana cara mengisi saldo?', a: 'Hubungi admin melalui saluran WhatsApp kami untuk melakukan top-up saldo.' },
+        { q: 'Berapa lama proses approve pesanan?', a: 'Admin akan memproses pesanan dalam 1x24 jam. Anda akan mendapat notifikasi melalui WhatsApp.' },
+        { q: 'Apakah key bisa di-reset?', a: 'Ya, fitur Reset Key tersedia. Namun dibatasi 1x per hari dan harus diaktifkan oleh admin.' },
+        { q: 'Apakah ada garansi anti-ban?', a: 'Produk kami menggunakan sistem anti-ban terbaru. Namun penggunaan yang berlebihan tetap berisiko.' },
+        { q: 'Bagaimana jika pesanan saya ditolak?', a: 'Jika pesanan Rejected, saldo Anda akan dikembalikan secara otomatis oleh admin.' },
+        { q: 'Bisakah menggunakan kode promo?', a: 'Ya! Masukan kode promo saat checkout. Setiap kode hanya bisa digunakan 1x per akun.' },
+      ];
+
+      document.getElementById('faq-modal-body').innerHTML = faqs.map((f,i) => `
+        <div class="faq-item" id="faq-${i}">
+          <div class="faq-question" onclick="toggleFaq(${i})">
+            <span>${f.q}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer"><div class="faq-answer-inner">${f.a}</div></div>
+        </div>
+      `).join('');
+
+      openModal('faq-modal');
+    }
+
+    function toggleFaq(i) {
+      const item = document.getElementById('faq-' + i);
+      item.classList.toggle('open');
+    }
+
+    function openResetKey() {
+      closeDrawer();
+      document.getElementById('reset-key-input').value = '';
+      document.getElementById('reset-terminal').style.display = 'none';
+      document.getElementById('reset-key-btn').disabled = false;
+      document.getElementById('reset-key-btn').innerHTML = '<i class="fa-solid fa-rotate"></i> Reset Key';
+      openModal('reset-modal');
+    }
+
+    function closeWelcome() {
+      document.getElementById('welcome-popup').classList.remove('show');
+    }
+
+    function doLogout() {
+      Swal.fire({
+        title: 'Logout?', text: 'Yakin ingin keluar dari dashboard?',
+        icon: 'question', showCancelButton: true,
+        confirmButtonText: 'Ya, Logout', cancelButtonText: 'Batal',
+        background: '#0d0d1a', color: '#e9d5ff'
+      }).then(r => {
+        if (r.isConfirmed) { sessionStorage.clear(); window.location.href = 'index.html'; }
+      });
+    }
+  </script>
 </body>
 </html>

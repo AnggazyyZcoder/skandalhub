@@ -1,91 +1,188 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Client - Register</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip Client – Register</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="register-page">
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
-            </div>
-            <div class="loading-text">
-                <span class="loading-letter">D</span>
-                <span class="loading-letter">R</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">P</span>
-                <span class="loading-letter">&nbsp;</span>
-                <span class="loading-letter">C</span>
-                <span class="loading-letter">L</span>
-                <span class="loading-letter">I</span>
-                <span class="loading-letter">E</span>
-                <span class="loading-letter">N</span>
-                <span class="loading-letter">T</span>
-            </div>
-            <div class="loading-progress">
-                <div class="loading-bar"></div>
-            </div>
-        </div>
+<body>
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- LOADING -->
+  <div id="loading-screen">
+    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" class="loading-logo" alt="Drip Client" />
+    <div class="loading-letters">
+      <span>D</span><span>R</span><span>I</span><span>P</span>
+      <span style="opacity:0;animation:none;width:12px"> </span>
+      <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
     </div>
+    <div class="loading-subtitle">Create Your Account</div>
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  </div>
 
-    <!-- Register Container -->
-    <div class="register-container" id="registerContainer" style="display: none;">
-        <div class="register-card animate-fade-in">
-            <div class="register-logo">
-                <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client Logo">
-                <div class="logo-glow"></div>
-            </div>
-            <h1 class="register-title">Buat Akun Baru</h1>
-            
-            <form id="registerForm">
-                <div class="input-group">
-                    <label for="regUsername">Username</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="regUsername" placeholder="Pilih username" required>
-                    </div>
-                </div>
+  <div class="page-content auth-wrapper" id="main-content" style="display:none;">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" />
+        <h2><i class="fa-solid fa-user-plus" style="color:var(--purple-bright);margin-right:8px;"></i>BUAT AKUN BARU</h2>
+      </div>
 
-                <div class="input-group">
-                    <label for="regPassword">Password</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="regPassword" placeholder="Buat password" required>
-                        <i class="fas fa-eye toggle-password" id="toggleRegPassword"></i>
-                    </div>
-                </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-user"></i> Username</label>
+        <input type="text" id="reg-username" class="form-control" placeholder="Pilih username unik..." />
+      </div>
 
-                <div class="input-group">
-                    <label for="confirmPassword">Konfirmasi Password</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="confirmPassword" placeholder="Konfirmasi password" required>
-                        <i class="fas fa-eye toggle-password" id="toggleConfirmPassword"></i>
-                    </div>
-                </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-envelope"></i> Email (Opsional)</label>
+        <input type="email" id="reg-email" class="form-control" placeholder="email@kamu.com" />
+      </div>
 
-                <button type="submit" class="register-button" id="registerButton">
-                    <span>Daftar</span>
-                    <i class="fas fa-user-plus"></i>
-                </button>
-
-                <p class="login-link">
-                    Sudah punya akun? <a href="index.html">Login</a>
-                </p>
-            </form>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-lock"></i> Password</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="reg-password" class="form-control" placeholder="Buat password kuat..." />
+          <button class="eye-toggle" onclick="togglePassword('reg-password',this)" tabindex="-1">
+            <i class="fa-solid fa-eye"></i>
+          </button>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-shield-halved"></i> Konfirmasi Password</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="reg-confirm" class="form-control" placeholder="Ulangi password..." />
+          <button class="eye-toggle" onclick="togglePassword('reg-confirm',this)" tabindex="-1">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Password strength indicator -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;gap:4px;margin-bottom:6px;" id="strength-bars">
+          <div style="flex:1;height:4px;border-radius:2px;background:var(--border-purple);transition:background 0.3s;" id="sb1"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:var(--border-purple);transition:background 0.3s;" id="sb2"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:var(--border-purple);transition:background 0.3s;" id="sb3"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:var(--border-purple);transition:background 0.3s;" id="sb4"></div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);" id="strength-text">Masukan password</div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">
+        <i class="fa-solid fa-user-plus"></i> Daftar Sekarang
+      </button>
+
+      <div class="auth-link">
+        Sudah punya akun? <a href="index.html">Login Sekarang</a>
+      </div>
     </div>
+  </div>
 
-    <!-- Particles Background -->
-    <div id="particles-js"></div>
+  <script src="script.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      initParticles();
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('hide');
+        setTimeout(() => {
+          document.getElementById('loading-screen').style.display = 'none';
+          document.getElementById('main-content').style.display = 'flex';
+        }, 800);
+      }, 3000);
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="script.js"></script>
+      // Password strength
+      document.getElementById('reg-password').addEventListener('input', function() {
+        const val = this.value;
+        const bars = [document.getElementById('sb1'),document.getElementById('sb2'),document.getElementById('sb3'),document.getElementById('sb4')];
+        const txt = document.getElementById('strength-text');
+        bars.forEach(b => b.style.background = 'var(--border-purple)');
+        if (val.length === 0) { txt.textContent = 'Masukan password'; txt.style.color = 'var(--text-muted)'; return; }
+        let score = 0;
+        if (val.length >= 6) score++;
+        if (val.length >= 10) score++;
+        if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+        if (/[!@#$%^&*]/.test(val)) score++;
+        const colors = ['#ef4444','#f59e0b','#22c55e','#6c23c0'];
+        const labels = ['Lemah','Sedang','Kuat','Sangat Kuat'];
+        for (let i = 0; i < score; i++) bars[i].style.background = colors[score-1];
+        txt.textContent = labels[score-1] || 'Terlalu pendek';
+        txt.style.color = colors[score-1] || '#ef4444';
+      });
+    });
+
+    async function doRegister() {
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+      const confirm = document.getElementById('reg-confirm').value.trim();
+      const btn = document.getElementById('register-btn');
+
+      if (!username || !password || !confirm) {
+        Swal.fire({ icon: 'warning', title: 'Form Tidak Lengkap', text: 'Username dan password wajib diisi!', background: '#0d0d1a', color: '#e9d5ff' });
+        return;
+      }
+
+      if (username.length < 3) {
+        Swal.fire({ icon: 'warning', title: 'Username Terlalu Pendek', text: 'Minimal 3 karakter!', background: '#0d0d1a', color: '#e9d5ff' });
+        return;
+      }
+
+      if (password !== confirm) {
+        Swal.fire({ icon: 'error', title: 'Password Tidak Cocok', text: 'Konfirmasi password tidak sesuai!', background: '#0d0d1a', color: '#e9d5ff' });
+        return;
+      }
+
+      if (password.length < 6) {
+        Swal.fire({ icon: 'warning', title: 'Password Lemah', text: 'Minimal 6 karakter!', background: '#0d0d1a', color: '#e9d5ff' });
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mendaftarkan...';
+
+      try {
+        const users = await dbGetUsers();
+        const exists = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+
+        if (exists) {
+          Swal.fire({ icon: 'error', title: 'Username Sudah Dipakai', text: 'Coba username lain!', background: '#0d0d1a', color: '#e9d5ff' });
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Daftar Sekarang';
+          return;
+        }
+
+        const newUser = {
+          id: 'usr_' + Date.now(),
+          username,
+          email: email || '',
+          password,
+          credit: 0,
+          createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        await dbSaveUsers(users);
+
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil!';
+        btn.style.background = 'linear-gradient(135deg,#14532d,#22c55e)';
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Akun Berhasil Dibuat! 🎉',
+          html: `<p style="color:#a89ec9">Akun <strong style="color:#a855f7">${username}</strong> telah terdaftar.<br>Silahkan login sekarang!</p>`,
+          confirmButtonText: 'Login Sekarang',
+          background: '#0d0d1a',
+          color: '#e9d5ff'
+        }).then(() => { window.location.href = 'index.html'; });
+      } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menyimpan ke database: ' + e.message, background: '#0d0d1a', color: '#e9d5ff' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Daftar Sekarang';
+      }
+    }
+  </script>
 </body>
 </html>
