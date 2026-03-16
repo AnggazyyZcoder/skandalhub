@@ -1,140 +1,95 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Drip Client – Login</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Drip Client - Login</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
-  <canvas id="particle-canvas"></canvas>
 
-  <!-- LOADING SCREEN -->
-  <div id="loading-screen">
-    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" class="loading-logo" alt="Drip Client" />
-    <div class="loading-letters">
-      <span>D</span><span>R</span><span>I</span><span>P</span>
-      <span style="opacity:0;animation:none;width:12px"> </span>
-      <span>C</span><span>L</span><span>I</span><span>E</span><span>N</span><span>T</span>
-    </div>
-    <div class="loading-subtitle">Buy Premium Keys</div>
-    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
-  </div>
+<!-- Particles Background -->
+<div id="particles-js"></div>
 
-  <!-- AUTH WRAPPER -->
-  <div class="page-content auth-wrapper" id="main-content" style="display:none;">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" />
-        <h2><i class="fa-solid fa-key" style="color:var(--purple-bright);margin-right:8px;"></i>LOGIN TO DASHBOARD</h2>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label"><i class="fa-solid fa-user"></i> Username</label>
-        <input type="text" id="login-username" class="form-control" placeholder="Masukan username..." autocomplete="username" />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label"><i class="fa-solid fa-lock"></i> Password</label>
-        <div class="input-icon-wrap">
-          <input type="password" id="login-password" class="form-control" placeholder="Masukan password..." autocomplete="current-password" />
-          <button class="eye-toggle" onclick="togglePassword('login-password',this)" tabindex="-1">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="remember-row">
-        <input type="checkbox" id="remember-me" />
-        <label for="remember-me">Remember Me</label>
-      </div>
-
-      <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">
-        <i class="fa-solid fa-right-to-bracket"></i> Login
-      </button>
-
-      <div class="auth-link">
-        Tidak punya akun? <a href="register.html">Daftar Sekarang</a>
-      </div>
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div class="loading-logo-wrapper">
+    <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="loading-logo-img"/>
+    <div class="loading-title-row" id="loading-chars"></div>
+    <div class="loading-subtitle">Buy Key Platform</div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-fill"></div>
     </div>
   </div>
+</div>
 
-  <script src="script.js"></script>
-  <script>
-    // INIT
-    window.addEventListener('DOMContentLoaded', () => {
-      initParticles();
-      setTimeout(() => {
-        document.getElementById('loading-screen').classList.add('hide');
-        setTimeout(() => {
-          document.getElementById('loading-screen').style.display = 'none';
-          document.getElementById('main-content').style.display = 'flex';
-        }, 800);
-      }, 3000);
+<!-- Welcome Overlay -->
+<div id="welcome-overlay">
+  <div class="welcome-text" id="welcome-text"></div>
+</div>
 
-      // Auto-fill remembered user
-      const remembered = localStorage.getItem('drip_remember');
-      if (remembered) {
-        document.getElementById('login-username').value = remembered;
-        document.getElementById('remember-me').checked = true;
-      }
-    });
+<!-- Auth Wrapper -->
+<div class="auth-wrapper" id="auth-content" style="display:none;">
+  <div class="auth-card" id="auth-card">
+    <div class="auth-logo-section">
+      <img src="https://cdn-uploads.huggingface.co/production/uploads/noauth/8W2qfrJxJ0G0EplunCycM.jpeg" alt="Drip Client" class="auth-logo-img animated-logo"/>
+      <div>
+        <div class="auth-title">DRIP CLIENT</div>
+        <div class="auth-subtitle">Login To Dashboard</div>
+      </div>
+    </div>
 
-    async function doLogin() {
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      const remember = document.getElementById('remember-me').checked;
-      const btn = document.getElementById('login-btn');
+    <div class="form-group">
+      <label class="form-label"><i class="fa fa-user"></i> &nbsp;Username</label>
+      <input type="text" class="form-control" id="login-username" placeholder="Masukan username" autocomplete="off"/>
+    </div>
 
-      if (!username || !password) {
-        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Username dan password wajib diisi!', background: '#0d0d1a', color: '#e9d5ff' });
-        return;
-      }
+    <div class="form-group">
+      <label class="form-label"><i class="fa fa-lock"></i> &nbsp;Password</label>
+      <div class="input-icon-wrap">
+        <input type="password" class="form-control" id="login-password" placeholder="Masukan password" autocomplete="off"/>
+        <button class="input-icon-btn" id="toggle-pass" type="button" onclick="togglePass('login-password','toggle-pass')">
+          <i class="fa fa-eye"></i>
+        </button>
+      </div>
+    </div>
 
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+    <div class="remember-row">
+      <label class="checkbox-wrap">
+        <input type="checkbox" id="remember-me"/>
+        <span>Remember Me</span>
+      </label>
+    </div>
 
-      try {
-        const users = await dbGetUsers();
-        const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">
+      <i class="fa fa-sign-in-alt"></i> &nbsp;LOGIN
+    </button>
 
-        if (!user) {
-          Swal.fire({ icon: 'error', title: 'Login Gagal', text: 'Username atau password salah!', background: '#0d0d1a', color: '#e9d5ff' });
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-          return;
-        }
+    <div class="auth-link">
+      Tidak punya akun? <a href="register.html">Daftar Sekarang</a>
+    </div>
+  </div>
+</div>
 
-        if (remember) localStorage.setItem('drip_remember', username);
-        else localStorage.removeItem('drip_remember');
+<script src="script.js"></script>
+<script>
+  // Init loading screen
+  initLoadingScreen('login');
+  initParticles();
 
-        sessionStorage.setItem('drip_user', JSON.stringify(user));
-
-        // Welcome animation
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Login Berhasil!';
-        btn.style.background = 'linear-gradient(135deg,#14532d,#22c55e)';
-
-        Swal.fire({
-          title: `Welcome, ${user.username}!`,
-          html: `<div style="font-size:2rem;margin:10px 0;">👋</div><p style="color:#a89ec9">Selamat datang di Drip Client</p>`,
-          timer: 3000,
-          timerProgressBar: true,
-          showConfirmButton: false,
-          background: '#0d0d1a',
-          color: '#e9d5ff',
-          didClose: () => { window.location.href = 'home.html'; }
-        });
-      } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal terhubung ke database. Coba lagi.', background: '#0d0d1a', color: '#e9d5ff' });
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-      }
+  // Auto-fill if remembered
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('drip_remember');
+    if (saved) {
+      const d = JSON.parse(saved);
+      document.getElementById('login-username').value = d.u || '';
+      document.getElementById('login-password').value = d.p || '';
+      document.getElementById('remember-me').checked = true;
     }
-
-    // Allow Enter key
-    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  </script>
+  });
+</script>
 </body>
 </html>
